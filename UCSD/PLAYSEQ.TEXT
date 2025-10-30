@@ -1,0 +1,117 @@
+if humanSide = gameSide then
+   begin
+    humanFlag := TRUE;
+    
+    {save current game state}
+    SaveMove;
+    
+    playerMove(playMove, lastMove, gameSide);
+    if humanSide <> gameSide then
+     i := 1;
+    if pieceCount = -1 then
+     exit(program);
+    if i = 1 then
+     goto 0;
+    {$I cthreat.text}
+   0:
+   end
+  else
+   begin
+    {opening move selection}
+    if gameMove = 1 then
+     begin
+      moveScore := 0;
+      i := Rnd_Int(3);
+      if gameSide = 0 then
+       begin
+        case i of
+         1 : begin
+              playMove.id := 0;
+              playMove.startSq := 12;
+              playMove.endSq := 28;
+             end;
+         2 : begin
+              playMove.id := 0;
+              playMove.startSq := 11;
+              playMove.endSq := 27;
+             end;
+         3 : begin
+              playMove.id := 16;
+              playMove.startSq := 6;
+              playMove.endSq := 21;
+             end;
+        end;
+       end
+      else
+       begin
+        case lastMove.endSq of
+         12 : begin
+               playMove.id := 0;
+               case i of 
+                1 : begin
+                     playMove.startSq := 52;
+                     playMove.endSq := 44;
+                    end;
+                2 : begin
+                     playMove.startSq := 51;
+                     playMove.endSq := 43;
+                    end;
+                3 : begin
+                     playMove.startSq := 51;
+                     playMove.endSq := 35;
+                    end;
+               end;
+              end;
+      11,21 : begin
+               case i of
+                1 : begin
+                     playMove.id := 0;
+                     playMove.startSq := 51;
+                     playMove.endSq := 35;
+                    end;
+                2 : begin
+                     playMove.id := 16;
+                     playMove.startSq := 62;
+                     playMove.endSq := 45;
+                    end;
+                3 : begin
+                     playMove.id := 0;
+                     playMove.startSq := 50;
+                     playMove.endSq := 34
+                    end;
+               end;
+              end;
+        end;
+        if not(lastMove.endSq in [11, 12, 21]) then
+         begin
+          playMove.id := 0;
+          playMove.startSq := 51;
+          playMove.endSq := 35;
+         end;
+       end;
+     end
+    else
+     begin
+      gotoxy(20, 7);
+      write('thinking...');
+      MoveGen(lastMove, playMove, moveScore, aVal, bVal, cFlag);
+     end;
+   end;
+
+{update move list}
+sPage := BASE2;
+dataSize := 8;
+offset := PLAYLIST + gamePointer;
+DataOps(1, sPage, dataSize, offset, playMove);
+gamePointer := gamePointer + 8;
+moveStore.id := 99;
+offset := offset + 8;
+DataOps(1, sPage, dataSize, offset, moveStore);
+
+
+
+
+
+
+
+

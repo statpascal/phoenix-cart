@@ -1,0 +1,75 @@
+program bitgen3;
+uses {$U chesslib.code} globals;
+
+var
+ i,  offset, initOffset : integer;
+
+begin
+ startPage := BASE;
+ sPage := BASE1;
+ dataSize := 8;
+ offset := FILEBLANK;
+ DataOps(2, startPage, dataSize, offset, bit3);
+ offset := FILEBLANK + 56;
+ DataOps(2, startPage, dataSize, offset, bit4);
+
+ {generate white en passant bitboards}
+ writeln('generating white en passant');
+ initOffset := PIECELOC + 64;
+ i := 0;
+
+ repeat
+  ClearBitboard(bitRes);
+  offset := initOffset + i;
+  DataOps(2, startPage, dataSize,offset, bit1);
+  {left side}
+  BitAnd(bit1, bit3, bit2);
+  if not(IsClear(bit2)) then
+   begin
+    RShift(bit2, bit2, 15);
+    BitOr(bit2, bitRes, bitRes);
+   end;
+  {right side}
+  BitAnd(bit1, bit4, bit2);
+  if not(IsClear(bit2)) then
+   begin
+    RShift(bit2, bit2, 17);
+    BitOr(bit2, bitRes, bitRes);
+   end;
+  offset := WEP + i;
+  DataOps(1, sPage, dataSize, offset, bitRes);
+  i := i + 8;
+ until i > 56;
+
+ {generate black en passant bitboards}
+ writeln('generating black en passant');
+ initOffset := PIECELOC + 384;
+ i := 0;
+
+ repeat
+  ClearBitboard(bitRes);
+  offset := initOffset + i;
+  DataOps(2, startPage, dataSize, offset, bit1);
+  {left side}
+  BitAnd(bit1, bit3, bit2);
+  if not(IsClear(bit2)) then
+   begin
+    LShift(bit2, bit2, 17);
+    BitOr(bit2, bitRes, bitRes);
+   end;
+  {right side}
+  BitAnd(bit1, bit4, bit2);
+  if not(IsClear(bit2)) then
+   begin
+    LShift(bit2, bit2, 15);
+    BitOr(bit2, bitRes, bitRes);
+   end;
+  offset := BEP + i;
+  DataOps(1, sPage, dataSize, offset, bitRes); 
+  i := i + 8;
+ until i > 56;
+
+end. (* main *)
+
+
+   

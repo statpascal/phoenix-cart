@@ -1,0 +1,146 @@
+;routines for sams card access
+;walid maalouli
+;march 2024
+
+        .func samsinit
+;initialize the sams card and verify card is present
+;returns 0 for absent, 1 for <= 1mb and 2 for > 1mb
+;usage: statusint := samsinit
+
+        .def    procret,pmeret,pcodeon,pcodoff
+        mov     r11,@procret
+        bl      @pcodoff
+        li      r12,1e00h       ;cru address of sams card
+        sbo     0               ;turn card on
+        li      r1,0ff00h
+        li      r0,4000h        ;start address of sams registers
+nxtpage ai      r1,0100h        ;increment page number starting at 0
+        mov     r1,*r0+         ;load page number into sams register
+        ci      r0,4020h        ;beyond last register (401eh)?
+        jlt     nxtpage
+        cb      r1,@401eh       ;if match then card present
+        jne     nocard
+        li      r1,0102h
+        mov     r1,@401eh
+        c       r1,@401eh
+        jeq     lgcard
+        li      r2,1
+        jmp     endinit
+lgcard  li      r2,2
+        jmp     endinit
+nocard  clr     r2
+endinit li      r1,0f00h
+        mov     r1,@401eh
+        mov     r2,*r10         ;place card indicator on return stack
+        sbz     0               ;turn sams card off
+        bl      @pcodeon
+        mov     @procret,r11
+        b       *r11
+
+pcodeon li      r12,1f00h       ;activate the pcode card
+        sbo     0
+        mov     @pmeret,r12     ;restore the pme pointer
+        b       *r11
+
+pcodoff mov     r12,@pmeret     ;save the pme pointer
+        li      r12,1f00h       ;deactivate the pcode card
+        sbz     0
+        b       *r11
+
+pmeret  .word
+procret .word
+
+        .proc   samssize,2
+;returns the number of pages available
+;usage: samssize(sizecode, var pagenum)
+;sizecode 1: <= 1mb, 2: > 1mb
+
+        .ref    pcodeon,pcodoff,procret
+        mov     r11,@procret
+        bl      @pcodoff
+        mov     *r10+,r5        ;get pointer to pagenum variable
+        mov     *r10,r6         ;get sizecode
+        li      r12,1e00h       ;cru address of sams card
+        sbo     0               ;turn on card
+        sbo     1               ;turn mapping on
+        li      r4,16           ;page counter. skip over first 16 pages
+        li      r1,15           ;starting bank/page
+        mov     @2000h,r3       ;save contents of test memory location
+        li      r2,0ffffh       ;test value
+        mov     r2,@2000h       ;load test memory with value
+incpage ai      r1,1            ;add page/bank starting at page >10 bank 0
+        swpb    r1
+        mov     r1,@4004h       ;map address >2000 to page/bank
+        ci      r6,1            ;check size of sams
+        jne     large
+        cb      r2,@4004h       ;did it write correctly?
+        jeq     endpage
+        jmp     newpage
+large   c       r2,@2000h       ;did it write correctly?
+        jeq     endpage         ;new page should not equal initial value
+newpage swpb    r1
+        inc     r4              ;increment page counter
+        jmp     incpage         ;try next page
+endpage li      r1,0200h        ;restore original mapping
+        mov     r1,@4004h
+        mov     r3,@2000h       ;restore contents of test memory location
+        sbz     1               ;turn mapping off
+        sbz     0               ;turn off sams card
+        mov     r4,*r5          ;return page counter
+        bl      @pcodeon
+        mov     @procret,r11
+        b       *r11
+
+        .proc   dataops,5
+;read/save data to sams pages up to maximum card capacity
+;usage: dataops(rwcode, startpage, datasize, offset, data)
+;rwcode : 1=save, 2=read
+;startpage is the starting page for the save operation. 
+;subsequent pages will be automatically assigned if needed
+;datasize can be obtained by sizeof(data)
+;offset is the number of bytes from the start of the page
+;data is a packed array of byte
+
+        .ref    pcodeon,pcodoff,procret
+        mov     r11,@procret
+        bl      @pcodoff
+        mov     *r10+,r4        ;get pointer to data array
+        mov     *R10+,r3        ;get pointer to page offset
+        mov     *r10+,r2        ;get pointer to number of bytes to transfer
+        mov     *r10+,r1        ;get pointer to starting page
+        mov     *r2,r7          ;save byte number to transfer
+        li      r6,4004h        ;starting sams register (memory >2000)
+        li      r12,1e00h       ;cru address of sams card
+        sbo     0               ;turn card on
+        li      r5,2000h        ;base memory address
+        a       *r3,r5          ;apply byte offset
+        mov     *r3,r0          ;store offset in byte counter at start
+        mov     *r10,r3         ;get r/w code
+        sbo     1               ;turn mapper on
+nxtpage swpb    *r1
+        mov     *r1,*r6         ;assign page to sams register
+        swpb    *r1
+rwops   ci      r3,1            ;is it a write operation?
+        jne     getops
+saveops mov     *r4+,*r5+       ;save 2 bytes at a time (word)
+        jmp     contops
+getops  mov     *r5+,*r4+       ;get 2 bytes at a time
+contops dect    r7
+        jle     opsdone         ;no more data
+        inct    r0
+        ci      r0,4096         ;are we past 4k of data?
+        jlt     rwops
+        inc     *r1             ;next page number
+        clr     r0
+        li      r5,2000h
+        jmp     nxtpage         ;continue data ops
+opsdone li      r1,0200h        ;restore sams register to original page
+        mov     r1,@4004h
+        sbz     1               ;turn mapper off
+        sbz     0               ;turn off sams card
+        bl      @pcodeon
+        mov     @procret,r11
+        b       *r11
+
+        .end
+

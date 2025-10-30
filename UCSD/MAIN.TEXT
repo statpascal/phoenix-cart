@@ -1,0 +1,423 @@
+(* version 10-19-25 v1.6 *)
+(* MinMax, no iterative deepening, capture evaluation bonus *)
+(* fixed castling when rook has moved bug *)
+(* adjustments to scorepos
+   - modified the mobility bonus
+   - decreased opposite check to 100
+   - modified the capture bonus table
+   - removed the pawn count factor for bishops
+   - increased the castling bonus to 500
+   - increased pawn support bonus to 20
+   - reduced pawn en-passant capture penalty to 20
+   - added doubled pawns penalty *)
+(* cMoveFlag set only on initial ply *)
+(* reset the castling obstruction flags with every turn *)
+(* lastMove variable now local only *)
+(* capture flags only set on topmost ply *)
+(* fixed castling at ply > 2 *)
+(* fixed impending mate detection *)
+(* removed randomization of bestScore in MinMax *)
+(* replaced bitgen with direct file load *)
+(* fixed checkmate bug when attacking piece can be captured *)
+(* fixed bug in the BitTrim routine *)
+(* added pawn promotion piece choice for human side *)
+(* fixed discovery check bug *)
+(* moved Update routine to an Include file *)
+(* added mating move check during move generation *)
+(* reduced maximum ply to 5 *)
+(* fixed bugs with the GetBoards, matecheck and matechk routines *)
+(* removed move skipping when king in check during move generation *)
+(* added game moves saving to SAMS card *)
+(* added penalty for moving king when castling possible *)
+(* fixed bug in board update after en passant capture *)
+(* fixed bug in queen movement trimming *)
+(* fixed back row threat detection during castling *)
+(* added 3-fold repetition draw detection *)
+(* added game status storage to SAMS card *)
+(* fixed en-passant capture risk detection *)
+(* fixed stalemate function and added the resign function *)
+(* added the utility menu *)
+(* fixed bug in opening move *)
+(* Added rook move penalty before castling *)
+(* adjusted end game conditions *)
+(* added check condition evaluation to position setup *)
+(* ignored moves that did not eliminate own check *)
+(* 10-18-25: Fixed unnecessary own pieces sacrifices *)
+(* 10-19-25: Fixed castling when rook not present *)
+(* 10-19-25: Adjusted the resign parameters *)
+
+Program Main;
+uses random,
+{$U chesslib.code} globals, move,
+{$U interface.code} trimprocs, ui, pmove;
+
+label
+ 0, 1, 2;
+
+var
+ i, j, moveScore, offset, found, aVal, bVal, ans :integer;
+ sideOffset, offset1, offset2, cFlag, tempPointer : integer;
+ humanFlag, cmFlag, checkFlag, promFlag, repFlag : boolean;
+ moveArray : bitarray;
+ lastMove, playMove, moveStore, tempMove : moverec;
+ bit8 : bitboard;
+
+{$I update.text}
+
+segment procedure SaveBoards;
+
+var
+ offset, i : integer;
+
+begin
+ startPage := BASE;
+ dataSize := 120;
+
+ offset := WPO;
+ DataOps(2, startPage, dataSize, offset, buffer);
+ offset := TWPO;
+ DataOps(1, startPage, dataSize, offset, buffer);
+ dataSize := 8;
+end; (* SaveBoards *)
+
+segment procedure GetBoards;
+
+var
+ offset : integer;
+
+begin
+ startPage := BASE;
+ dataSize := 120;
+
+ offset := TWPO;
+ DataOps(2, startPage, dataSize, offset, buffer);
+ offset := WPO;
+ DataOps(1, startPage, dataSize, offset, buffer);
+ dataSize := 8;
+end; (* GetBoards *)
+
+segment procedure SaveMove;
+
+var
+ offset, offset1, storeBase, storePtr : integer;
+
+begin
+ {retrieve the storePtr and storeBase variables}
+ startPage := BASE2;
+ dataSize := 2;
+ offset := 4000;
+ DataOps(2, startPage, dataSize, offset, storePtr);
+ offset := 4002;
+ DataOps(2, startPage, dataSize, offset, storeBase);
+
+ offset1 := WPO;
+ offset := storePtr;
+ if offset > 4079 then
+  begin
+   storeBase := succ(storeBase);
+   storePtr := 0;
+   offset := 0;
+  end;
+ dataSize := 120;
+ startPage := BASE;
+ DataOps(2, startPage, dataSize, offset1, buffer);
+ DataOps(1, storeBase, dataSize, offset, buffer);
+ offset := offset + 120;
+ dataSize := 2;
+ DataOps(1, storeBase, dataSize, offset, wCastleFlag);
+ offset := offset + 2;
+ DataOps(1, storeBase, dataSize, offset, bCastleFlag);
+ offset := offset + 2;
+ DataOps(1, storeBase, dataSize, offset, wRookLFlag);
+ offset := offset + 2;
+ DataOps(1, storeBase, dataSize, offset, wRookRFlag);
+ offset := offset + 2;
+ DataOps(1, storeBase, dataSize, offset, bRookLFlag);
+ offset := offset + 2;
+ DataOps(1, storeBase, dataSize, offset, bRookRFlag);
+ offset := offset + 2;
+ DataOps(1, storeBase, dataSize, offset, cWarning);
+ offset := offset + 2;
+ DataOps(1, storeBase, dataSize, offset, gameMove);
+ offset := offset + 2;
+ storePtr := offset;
+
+ {save the storePtr and storeBase variables}
+ startPage := BASE2;
+ offset := 4000;
+ DataOps(1, startPage, dataSize, offset, storePtr);
+ offset := 4002;
+ DataOps(1, startPage, dataSize, offset, storeBase);
+
+ startPage := BASE;
+ dataSize := 8;
+end; (* SaveMove *)
+
+begin (* main *)
+ Page(OUTPUT);
+ Randomize;
+ turn := 0;
+ gameSide := turn;
+ gameMove := 1;
+ wCastleFlag := 0;
+ bCastleFlag := 0;
+ wRookRFlag := 0;
+ wRookLFlag := 0;
+ bRookRFlag := 0;
+ bRookLFlag := 0;
+ lastMove.id := 99;
+ lastMove.startSq := 0;
+ lastMove.endSq := 0;
+ lastMove.link := NIL;
+ moveStore.id := 99;
+ moveStore.startSq := 99;
+ moveStore.endSq := 99;
+ wMobility := 0;
+ bMobility := 0;
+ gamePointer := 0;
+
+ {initialize the game storage pointers}
+ startPage := BASE2;
+ dataSize := 2;
+
+ {storePtr}
+ offset := 4000;
+ offset1 := 0;
+ DataOps(1, startPage, dataSize, offset, offset1);
+
+ {storeBase}
+ offset := 4002;
+ offset1 := BASE4;
+ DataOps(1, startPage, dataSize, offset, offset1);
+ startPage := BASE;
+
+ {initialize the game record}
+ sPage := BASE2;
+ dataSize := 6;
+ offset := PLAYLIST;
+ DataOps(1, sPage, dataSize, offset, moveStore);
+ dataSize := 8;
+
+ write(chr(7), 'enter ply: [2-5] ');
+ repeat
+  ans := GetKey;
+ until ans in[50..53];
+ writeln(chr(ans));
+ ply := ans - 48;
+ gamePly := ply;
+
+ writeln(chr(7), 'select side to play: [w]hite/[b]lack');
+ repeat
+  ans := GetKey;
+ until ans in[66, 87];
+ if ans = 66 then
+  begin
+   humanSide := 1;
+   writeln('***playing as black***');
+  end
+ else
+  begin
+   humanSide := 0;
+   writeln('***playing as white***');
+  end;
+ 
+ cWarning := 0;
+ write(chr(7), 'enter position? (y/n)');
+ repeat
+  ans := GetKey;
+ until ans in[78, 89];
+ if ans = 89 then
+  begin
+   EnterPos;
+   gameSide := turn;
+   {look for check condition}
+   lastMove.id := 0;
+   lastMove.startSq := 0;
+   lastMove.endSq := 0;
+   CombineTrim(bit3, bit5, lastMove);
+   if gameSide = 0 then
+    offset := WKO
+   else
+    offset := BKO;
+   DataOps(2, startPage, dataSize, offset, bit1);
+   if gameSide = 0 then
+    BitAnd(bit1, bit5, bit2)
+   else
+    BitAnd(bit1, bit3, bit2);
+   if not(IsClear(bit2)) then
+    cWarning := 1;
+  end
+ else
+  begin
+   turn := 0;
+   gameSide := turn;
+  end;
+
+ {start game}
+ BoardDisplay;
+ gotoxy(10, 1);
+ writeln('move: ', gameMove);
+ if gameSide = 0 then
+  write('turn: white')
+ else
+  write('turn: black');
+ if cWarning = 1 then
+  begin
+   gotoxy(20, 1);
+   write(chr(7), chr(7), 'check!');
+  end;
+ ans := GetKey;
+
+ repeat
+  wLAFlag := 0;
+  wRAFlag := 0;
+  bLAFlag := 0;
+  bRAFlag := 0;
+  cFlag := 0;
+
+  {transfer current board state to temp boards}
+  dataSize := 120;
+  offset := WPO;
+  DataOps(2, startPage, dataSize, offset, buffer);
+  offset := TWPO;
+  DataOps(1, startPage, dataSize, offset, buffer);
+
+  dataSize := 8;
+  moveNum := 0;
+  
+  aVal := -20000;
+  bVal := 20000;
+  moveScore := 0;
+ 
+  humanFlag := FALSE;
+
+  i := 0;
+  {$I playseq.text}
+  if i = 1 then
+   goto 2;
+
+  lastMove := playMove;
+
+  if humanFlag then
+   sPage := 1
+  else
+   sPage := 0;
+
+  UpdateMove(playMove);
+
+  if (wCastleFlag = 0) and (gameSide = 0) then
+   begin
+    if playMove.id = 40 then
+     wCastleFlag := 1;
+
+    if playMove.id = 8 then
+     begin
+      if playMove.startSq = 0 then
+       wRookLFlag := 1;
+      if playMove.startSq = 7 then
+       wRookRFlag := 1;
+     end;
+   end;
+  if (bCastleFlag = 0) and (gameSide = 1) then
+   begin
+    if playMove.id = 40 then
+     bCastleFlag := 1;
+
+    if playMove.id = 8 then
+     begin
+      if playMove.startSq = 56 then
+       bRookLFlag := 1;
+      if playMove.startSq = 63 then
+       bRookRFlag := 1;
+     end;
+   end;
+
+  {convert move to coordinates}
+  BoardDisplay;
+  CombineTrim(bit3, bit5, lastMove);
+
+  {look for check condition}
+  checkFlag := FALSE;
+  cWarning := 0;
+  if gameSide = 0 then
+   offset := BKO
+  else
+   offset := WKO;
+  DataOps(2, startPage, dataSize, offset, bit1);
+  if gameSide = 0 then
+   BitAnd(bit1, bit3, bit2)
+  else
+   BitAnd(bit1, bit5, bit2);
+  if not(IsClear(bit2)) then
+   begin
+    gotoxy(20, 1);
+    write(chr(7), chr(7), 'check!');
+    checkFlag := TRUE;
+    cWarning := 1;
+   end;
+
+  {$I matecheck.text} 
+
+  if humanFlag then
+   begin
+    gotoxy(20, 7);
+    write('thinking...');
+   end;
+
+  if gameSide = 0 then
+   begin
+    gameSide := 1;
+    turn := 1;
+    gotoxy(0, 2);
+    write('turn: black');
+   end
+  else
+   begin
+    gameSide := 0;
+    turn := 0;
+    gameMove := succ(gameMove);
+    gotoxy(0, 2);
+    write('turn: white');
+   end;
+
+  {check for 3-move repetition}
+  if gameMove > 6 then
+   begin
+    repFlag := TRUE;
+    sPage := BASE2;
+    tempPointer := gamePointer;
+    for i := 1 to 4 do
+     begin
+      tempPointer := tempPointer - 8;
+      offset := PLAYLIST + tempPointer;
+      DataOps(2, sPage, dataSize, offset, moveStore);
+      offset := PLAYLIST + tempPointer - 32;
+      DataOps(2, sPage, dataSize, offset, tempMove);
+      if moveStore <> tempMove then
+       repFlag := FALSE;
+      offset := PLAYLIST + tempPointer - 64;
+      DataOps(2, sPage, dataSize, offset, tempMove);
+      if moveStore <> tempMove then
+       repFlag := FALSE;
+     end;
+    if repFlag then
+     {3x repetition. Draw}
+     begin
+      gotoxy(20, 0);
+      write(chr(7), chr(7), 'draw by 3-fold repetition!');
+      ans := GetKey;
+      readln;
+      Utility(i);
+      exit(program);
+     end;
+   end;
+
+  gotoxy(10, 1);
+  writeln('move: ', gameMove);
+  
+  MoveCoord(moveScore, playMove.startSq, playMove.endSq, humanFlag);
+  ans := GetKey;
+  ply := gamePly;
+ 2:
+ until FALSE;
+end. (* main *)

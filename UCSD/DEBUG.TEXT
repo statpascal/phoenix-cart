@@ -1,0 +1,324 @@
+
+segment procedure NewBoard(x, y : integer);
+
+var
+ i, j, xFlip, yFlip : integer;
+ 
+begin
+ xFlip := 0;
+ yFlip := 1;
+ for i := 0 to 7 do
+  begin
+   if yFlip = 0 then
+    yFlip := 1
+   else
+    yFlip := 0;
+   xFlip := yFlip;
+   for j := 0 to 7 do
+    begin
+     gotoxy(x + j, y + i);
+     if xFlip = 1 then
+      begin
+       write('=');
+       xFlip := 0;
+      end
+     else
+      begin
+       xFlip := 1;
+       write('-');
+      end;
+    end;
+  end;
+end; (* NewBoard *)
+
+segment procedure DebugDisp;
+
+var
+ i, j, k, x, y, xDelta, yDelta : integer;
+ wPieceName, bPieceName : array[0..5] of char;
+ posArray : bitarray;
+
+begin
+ startPage := BASE;
+ dataSize := 8;
+ wPieceName[0] := 'P';
+ wPieceName[1] := 'R';
+ wPieceName[2] := 'N';
+ wPieceName[3] := 'B';
+ wPieceName[4] := 'Q';
+ wPieceName[5] := 'K';
+ bPieceName[0] := 'p';
+ bPieceName[1] := 'r';
+ bPieceName[2] := 'n';
+ bPieceName[3] := 'b';
+ bPieceName[4] := 'q';
+ bPieceName[5] := 'k';
+
+ NewBoard(0, 6);
+ NewBoard(9, 6);
+ NewBoard(18, 6);
+ NewBoard(0, 15);
+ NewBoard(9, 15);
+ NewBoard(18, 15);
+ NewBoard(27, 15);
+
+ for k := 0 to 1 do
+  begin
+   i := 0;
+   repeat
+    if k = 0 then
+     offset := WPO + i
+    else
+     offset := BPO + i;
+    DataOps(2, startPage, dataSize, offset, bit1);
+    BitPos(bit1, posArray);
+    for j := 1 to posArray[0] do
+     begin
+      gotoxy(posArray[j] mod 8, 6 + (7 - (posArray[j] div 8)));
+      if k = 0 then
+       write(wPieceName[i div 8])
+      else
+       write(bPieceName[i div 8]);
+      case i of
+       0 : begin
+            xDelta := 0;
+            yDelta := 15;
+           end;
+       8 : begin
+            xDelta := 9;
+            yDelta := 15;
+           end;
+       16: begin
+            xDelta := 18;
+            yDelta := 15;
+           end;
+       24: begin
+            xDelta := 27;
+            yDelta := 15
+           end;
+       32: begin
+            xDelta := 18;
+            yDelta := 6;
+           end;
+       40: begin
+            xDelta := 9;
+            yDelta := 6;
+           end;
+      end;
+      x := (posArray[j] mod 8) + xDelta;
+      y := (7 - (posArray[j] div 8)) + yDelta;
+      gotoxy(x, y);
+      if k = 0 then
+       write(wPieceName[i div 8])
+      else
+       write(bPieceName[i div 8]);
+     end;
+    i := i + 8;
+   until i > 40;
+  end;
+
+ gotoxy(38, 22);
+end; (* DebugDisp *)
+
+segment procedure EnterPos;
+
+var
+ i, j, pieceType, x, y, px, py, pLoc, flipX, pFlipX : integer;
+ cursorPos : char;
+ piecePos : array [2..9, 2..9] of integer;
+ pieceName : array [0..12] of char;
+ bit : array[0..11] of bitboard;
+ 
+begin
+ Page(output);
+ NewBoard(2, 2);
+ x := 2;
+ y := 9;
+ px := 2;
+ py := 9;
+ flipX := 1;
+ pFlipX := 1;
+ startPage := BASE;
+ dataSize := 8;
+ 
+ for i := 2 to 9 do
+  for j := 2 to 9 do
+   piecePos[i][j] := 12;
+   
+ for i := 0 to 11 do
+  ClearBitboard(bit[i]);
+  
+ ClearBitboard(bit2);
+ ClearBitboard(bit3);
+ ClearBitboard(bit4);
+ 
+ gotoxy(11, 2);
+ writeln('wP: 0  wR: 1  wN: 2  wB: 3');
+ gotoxy(11, 3);
+ writeln('wQ: 4 wK: 5');
+ gotoxy(11, 5);
+ writeln('bP: 6  bR: 7  bN: 8  bB: 9');
+ gotoxy(11, 6);
+ writeln('bQ: 10  bK: 11');
+ gotoxy(11, 8);
+ writeln('blank: 12 End: 13');
+ gotoxy(x, y);
+ write('*');
+ 
+ pieceName[0] := 'P';
+ pieceName[1] := 'R';
+ pieceName[2] := 'N';
+ pieceName[3] := 'B';
+ pieceName[4] := 'Q';
+ pieceName[5] := 'K';
+ pieceName[6] := 'p';
+ pieceName[7] := 'r';
+ pieceName[8] := 'n';
+ pieceName[9] := 'b';
+ pieceName[10] := 'q';
+ pieceName[11] := 'k';
+ pieceName[12] := ' ';
+ 
+ repeat
+  repeat
+   gotoxy(2, 11);
+   write('             ');
+   gotoxy(2, 11);
+   write('Piece: ');
+   readln(pieceType);
+  until pieceType in[0..13];
+   
+  if pieceType = 13 then
+   begin
+    offset := APIECES;
+    DataOps(1, startPage, dataSize, offset, bit4);
+    offset := WPIECES;
+    DataOps(1, startPage, dataSize, offset, bit2);
+    offset := BPIECES;
+    DataOps(1, startPage, dataSize, offset, bit3);
+    for i := 0 to 11 do
+     begin
+      if i <= 5 then
+       begin
+        offset := WPO + (i * 8);
+        DataOps(1, startPage, dataSize, offset, bit[i]);
+       end
+      else
+       begin
+        offset := BPO + ((i - 6) * 8);
+        DataOps(1, startPage, dataSize, offset, bit[i]);
+       end;
+     end;
+    gotoxy(0, 21);
+    write('allow white castle? ');
+    readln(ans);
+    if ans = 'n' then
+     wCastleFlag := 1;
+    gotoxy(0, 21);
+    write('allow black castle? ');
+    readln(ans);
+    if ans = 'n' then
+     bCastleFlag := 1;
+    exit(EnterPos);
+   end;
+   
+  repeat
+   gotoxy(2, 13);
+   write('select location: (e/s/d/x - q) ');
+   readln(cursorPos);
+   if cursorPos in['e', 's', 'd', 'x'] then
+    begin
+     case cursorPos of
+      'e': begin
+            if y > 2 then
+             begin
+              y := pred(y);
+              if flipX = 1 then
+               flipX := 0
+              else
+               flipX := 1;
+             end;
+           end;
+      'x': begin
+            if y < 9 then
+             begin
+              y := succ(y);
+              if flipX = 1 then
+               flipX := 0
+              else
+               flipX := 1;
+             end;
+           end;
+      's': begin
+            if x > 2 then
+             begin
+              x := pred(x);
+              if flipX = 1 then
+               flipX := 0
+              else
+               flipX := 1;
+             end;
+           end;
+      'd': begin
+            if x < 9 then
+             x := succ(x);
+             if flipX = 1 then
+              flipX := 0
+             else
+              flipX := 1;
+           end;
+     end;
+
+     gotoxy(px, py);
+     if piecePos[px][py] = 12 then
+      begin
+       if pFlipX = 0 then
+        write('-')
+       else
+        write('=');
+       pFlipX := flipX;
+      end
+     else
+      begin
+       pFlipX := flipX;
+       write(pieceName[piecePos[px][py]]);
+      end;
+
+     px := x;
+     py := y;
+     gotoxy(x, y);
+     write('*');
+    end;     
+   until cursorPos = 'q';
+  
+   pLoc := ((9 - y) * 8) + (x - 2);
+   offset := PIECELOC + (pLoc * 8);
+   DataOps(2, startPage, dataSize, offset, bit1);
+   
+   if pieceType < 12 then
+    begin
+     BitOr(bit1, bit[pieceType], bit[pieceType]);
+     if pieceType <= 5 then
+      BitOr(bit1, bit2, bit2)
+     else
+      BitOr(bit1, bit3, bit3);
+     BitOr(bit1, bit4, bit4);
+    end
+   else
+    begin
+     if piecePos[x][y] <> 12 then
+      begin
+       BitNot(bit1, bit1);
+       BitAnd(bit1, bit[piecePos[x][y]], bit[piecePos[x][y]]);
+       if piecePos[x][y] <= 5 then
+        BitAnd(bit1, bit2, bit2)
+       else
+        BitAnd(bit1, bit3, bit3);
+       BitAnd(bit1, bit4, bit4);
+      end;
+    end;
+   piecePos[x][y] := pieceType;
+ until FALSE;
+ 
+end; (* EnterPos *)
+

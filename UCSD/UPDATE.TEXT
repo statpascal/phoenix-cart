@@ -1,0 +1,285 @@
+{update main boards with current move}
+segment procedure UpdateMove(var playMove : moverec);
+
+var
+ offset1, offset2, offset3, offset4, qCastleFlag, kCastleFlag, ans : integer;
+
+begin
+ qCastleFlag := 0;
+ kCastleFlag := 0;
+
+ {check for castling move}
+ if (gameSide = 0) and (wCastleFlag = 0) or
+    (gameSide = 1) and (bCastleFlag = 0) then
+  begin
+   if  (playMove.id = 40) and (abs(playMove.startSq - playMove.endSq) = 2) then
+    begin
+     if playMove.startSq - playMove.endSq > 0 then
+      qCastleFlag := 1
+     else
+      kCastleFlag := 1;
+    end;
+  end;
+
+ {check if rooks have moved from home square}
+ if (gameSide = 0) and (wCastleFlag = 0) and (playMove.id = 8) then
+  begin
+   if (playMove.startSq = 0) and (qCastleFlag = 0) then
+    wRookLFlag := 1
+   else
+    if (playMove.startSq = 7) and (kCastleFlag = 0) then
+     wRookRFlag := 1;
+  end
+ else
+  if (gameSide = 1) and (bCastleFlag = 0) and (playMove.id = 8) then
+   begin
+    if (playMove.startSq = 58) and (qCastleFlag = 0) then
+     bRookLFlag := 1
+    else
+     if (playMove.startSq = 63) and (kCastleFlag = 0) then
+      bRookRFlag := 1;
+   end;
+
+ promFlag := FALSE;
+
+ {check for pawn promotion}
+ if (playMove.id = 0) and ((playMove.endSq in[56..63]) or
+    (playMove.endSq in[0..7])) then
+  begin
+   promFlag := TRUE;
+   if turn = 0 then
+    offset := WPO
+   else
+    offset := BPO;
+   
+   DataOps(2, startPage, dataSize, offset, bit1);
+   offset1 := PIECELOC + (playMove.endSq * 8);
+   DataOps(2, startPage, dataSize, offset1, bit2);
+   BitNot(bit2, bit2);
+   BitAnd(bit1, bit2, bit1);
+   DataOps(1, startPage, dataSize, offset, bit1);
+  end;
+
+ {erase initial position}
+ offset := PIECELOC + (playMove.startSq * 8);
+ DataOps(2, startPage, dataSize, offset, bit1);
+ offset := APIECES;
+ DataOps(2, startPage, dataSize, offset, bit2);
+ BitNot(bit1, bit1);
+ BitAnd(bit1, bit2, bit2);
+ DataOps(1, startPage, dataSize, offset, bit2);
+
+ if gameSide = 0 then
+  begin
+   offset := WPO + playMove.id;
+   offset1 := WPIECES;
+   offset4 := BPIECES;
+   if qCastleFlag = 1 then
+    begin
+     wCastleFlag := 1;
+     offset2 := PIECELOC;
+     offset3 := WRO;
+    end
+   else
+    if kCastleFlag = 1 then
+     begin
+      wCastleFlag := 1;
+      offset2 := PIECELOC + 56;
+      offset3 := WRO;
+     end;
+  end
+ else
+  begin
+   offset := BPO + playMove.id;
+   offset1 := BPIECES;
+   offset4 := WPIECES;
+   if qCastleFlag = 1 then
+    begin
+     bCastleFlag := 1;
+     offset2 := PIECELOC + 448;
+     offset3 := BRO;
+    end
+   else
+    if kCastleFalg = 1 then
+     begin
+      bCastleFlag := 1;
+      offset2 := PIECELOC + 504;
+      offset3 := BRO;
+     end;
+  end;
+
+ DataOps(2, startPage, dataSize, offset, bit2);
+ BitAnd(bit1, bit2, bit2);
+ DataOps(1, startPage, dataSize, offset, bit2);
+ DataOps(2, startPage, dataSize, offset1, bit2);
+ BitAnd(bit1, bit2, bit2);
+ DataOps(1, startPage, dataSize, offset1, bit2);
+
+ if (kCastleFlag = 1) or (qCastleFlag = 1) then
+  begin
+   DataOps(2, startPage, dataSize, offset2, bit1);
+   BitNot(bit1, bit1);
+   DataOps(2, startPage, dataSize, offset3, bit2);
+   BitAnd(bit1, bit2, bit2);
+   DataOps(1, startPage, dataSize, offset3, bit2);
+   DataOps(2, startPage, dataSize, offset1, bit2);
+   BitAnd(bit1, bit2, bit2);
+   DataOps(1, startPage, dataSize, offset1, bit2);
+   offset := APIECES;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitAnd(bit1, bit2, bit2);
+   DataOps(1, startPage, dataSize, offset, bit2);
+  end;
+
+ {erase any potential captures}
+ offset := PIECELOC + (playMove.endSq * 8);
+ DataOps(2, startPage, dataSize, offset, bit1);
+ bit3 := bit1;
+ BitNot(bit1, bit1);
+
+ if gameSide = 0 then
+  offset := BPO
+ else
+  offset := WPO;
+
+ i := 0;
+ found := 0;
+ repeat
+  offset1 := offset + i;
+  DataOps(2, startPage, dataSize, offset1, bit2);
+  BitAnd(bit3, bit2, bitRes);
+  if not(IsClear(bitRes)) then
+   begin
+    found := 1;
+    if (wCastleFlag = 0) and (offset1 = WRO) then
+     begin
+      if playMove.endSq = 0 then
+       begin
+        wRookLFlag := 1;
+       end;
+      if playMove.endSq = 7 then
+       begin
+        wRookRFlag := 1;
+       end;
+     end;
+    if (bCastleFlag = 0) and (offset1 = BRO) then
+     begin
+      if playMove.endSq = 56 then
+       begin
+        bRookLFlag := 1;
+       end;
+      if playMove.endSq = 63 then
+       begin
+        bRookRFlag := 1;
+       end;
+     end;
+   end;
+  BitAnd(bit1, bit2, bit2);
+  DataOps(1, startPage, dataSize, offset1, bit2);
+  i := i + 8;
+ until i > 40;
+
+ {en passant capture handling}
+ if (found = 0) and (playMove.id = 0) then
+  begin
+   if abs(playMove.startSq - playMove.endSq) in[7, 9] then
+    begin
+     if gameSide = 0 then
+      offset1 := PIECELOC + ((playMove.endSq - 8) * 8)
+     else
+      offset1 := PIECELOC + ((playMove.endSq + 8) * 8);
+     DataOps(2, startPage, dataSize, offset1, bit3);
+     BitNot(bit3, bit3);
+     DataOps(2, startPage, dataSize, offset, bit2);
+     BitAnd(bit3, bit2, bit2);
+     DataOps(1, startPage, dataSize, offset, bit2);
+     offset1 := APIECES;
+     DataOps(2, startPage, dataSize, offset1, bit2);
+     BitAnd(bit3, bit2, bit2);
+     DataOps(1, startPage, dataSize, offset1, bit2);
+     if gameSide = 0 then
+      offset1 := BPIECES
+     else
+      offset1 := WPIECES;
+     DataOps(2, startPage, dataSize, offset1, bit2);
+     BitAnd(bit3, bit2, bit2);
+     DataOps(1, startPage, dataSize, offset1, bit2);
+    end;
+  end;
+
+ DataOps(2, startPage, dataSize, offset4, bit2);
+ BitAnd(bit1, bit2, bit2);
+ DataOps(1, startPage, dataSize, offset4, bit2);
+
+ {promote pawn if applicable}
+ if (promFlag) and (sPage = 1) then
+  begin
+   ans := GetKey;
+   gotoxy(20, 8);
+   writeln(chr(7),'promote pawn to');
+   gotoxy(22, 9);
+   writeln('1- rook');
+   gotoxy(22, 10);
+   writeln('2- knight');
+   gotoxy(22, 11);
+   writeln('3- bishop');
+   gotoxy(22, 12);
+   writeln('4- queen');
+   repeat
+    ans := GetKey
+   until ans in[49..52];
+   playMove.id := (ans - 48) * 8;
+  end
+ else
+  if (promFlag) and (sPage = 0) then
+   playMove.id := 32;
+
+ {update new piece position}
+ offset := PIECELOC + (playMove.endSq * 8);
+ DataOps(2, startPage, dataSize, offset, bit1);
+ offset := APIECES;
+ DataOps(2, startPage, dataSize, offset, bit2);
+ BitOr(bit1, bit2, bit2);
+ DataOps(1, startPage, dataSize, offset, bit2);
+
+ if gameSide = 0 then
+  begin
+   offset := WPO + playMove.id;
+   offset1 := WPIECES;
+   if qCastleFlag = 1 then
+    offset2 := PIECELOC + 24;
+   if kCastleFlag = 1 then
+    offset2 := PIECELOC + 40;
+  end
+ else
+  begin
+   offset := BPO + playMove.id;
+   offset1 := BPIECES;
+   if qCastleFlag = 1 then
+    offset2 := PIECELOC + 472;
+   if kCastleFlag = 1 then
+    offset2 := PIECELOC + 488; 
+  end;
+
+ DataOps(2, startPage, dataSize, offset, bit2);
+ BitOr(bit1, bit2, bit2);
+ DataOps(1, startPage, dataSize, offset, bit2);
+ DataOps(2, startPage, dataSize, offset1, bit2);
+ BitOr(bit1, bit2, bit2);
+ DataOps(1, startPage, dataSize, offset1, bit2);
+ if (qCastleFlag = 1) or (kCastleFlag = 1) then
+  begin
+   DataOps(2, startPage, dataSize, offset2, bit1);
+   DataOps(2, startPage, dataSize, offset3, bit2);
+   BitOr(bit1, bit2, bit2);
+   DataOps(1, startPage, dataSize, offset3, bit2);
+   DataOps(2, startPage, dataSize, offset1, bit2);
+   BitOr(bit1, bit2, bit2);
+   DataOps(1, startPage, dataSize, offset1, bit2);
+   offset := APIECES;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitOr(bit1, bit2, bit2);
+   DataOps(1, startPage, dataSize, offset, bit2);
+  end;
+end; (* Update *)
+

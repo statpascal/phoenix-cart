@@ -1,0 +1,21 @@
+program bitcheck;
+uses {$U chesslib.code} globals;
+
+var
+ offset : integer;
+ 
+begin
+ write('Enter base: ');
+ readln(startPage);
+ dataSize := 8;
+ repeat
+  page(OUTPUT);
+  write('offset: ');
+  readln(offset);
+  if offset = -1 then
+   Exit(program);
+  DataOps(2, startPage, dataSize, offset, bit1);
+  BitDisp(bit1);
+  readln;
+ until FALSE;
+end.

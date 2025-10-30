@@ -1,0 +1,211 @@
+ {look for checkmate or stalemate condition}
+ cmFlag := FALSE;
+  if checkFlag then
+   begin
+    SaveBoards;
+    if gameSide = 0 then
+     begin 
+      turn := 1;
+      offset := BKO;
+      offset1 := WPIECES;
+      sideOffset := BPIECES;
+     end
+    else
+     begin
+      turn := 0;
+      offset := WKO;
+      offset1 := BPIECES;
+      sideOffset := WPIECES;
+     end;
+
+    {get opposite king position}
+    DataOps(2, startPage, dataSize, offset, bit1);
+    BitPos(bit1, moveArray);
+    
+    {obtain list of all possible opposite king movement}
+    Trim(40, moveArray[1], sideOffset, lastMove, bit2);
+    
+    if not(IsCLear(bit2)) then
+     begin
+      BitPos(bit2, moveArray);
+      for i := 1 to moveArray[0] do
+       begin
+        {get opposite king's current move}
+        offset := PIECELOC + (moveArray[i] * 8);
+        DataOps(2, startPage, dataSize, offset, bit2);
+        
+        if gameSide = 0 then
+         offset := BKO
+        else
+         offset := WKO;
+         
+        {remove original opposite king from king board}
+        DataOps(2, startPage, dataSize, offset, bit3);
+        BitNot(bit3, bit3);
+        
+        {update opposite king board with king move}
+        DataOps(1, startPage, dataSize, offset, bit2);
+        
+        {remove original king position from APIECES}
+        offset := APIECES;
+        DataOps(2, startPage, dataSize, offset, bit1);
+        BitAnd(bit3, bit1, bit1);
+        
+        {add opposite king movement to APIECES}
+        BitOr(bit2, bit1, bit1);
+        DataOps(1, startPage, dataSize, offset, bit1);
+        
+        {remove own pieces captured by opposite king}
+        BitNot(bit2, bit2);
+        DataOps(2, startPage, dataSize, offset1, bit1);
+        BitAnd(bit2, bit1, bit1);
+        DataOps(1, startPage, dataSize, offset1, bit1);
+        j := 0;
+        if gameSide = 0 then
+         offset := WPO
+        else
+         offset := BPO;
+
+        repeat
+         offset2 := offset + j;
+         DataOps(2, startPage, dataSize, offset2, bit1);
+         BitAnd(bit2, bit1, bit1);
+         DataOps(1, startPage, dataSize, offset2, bit1);
+         j := j + 8;
+        until j > 32;
+
+        {remove original king position from opposite pieces board}
+        DataOps(2, startPage, dataSize, sideOffset, bit1);
+        BitAnd(bit3, bit1, bit1);
+
+        {add opposite king move to opposite pieces board}
+        BitNot(bit2, bit2);
+        
+        BitOr(bit2, bit1, bit1);
+        DataOps(1, startPage, dataSize, sideOffset, bit1);
+        
+        {check if opposite king attacked by own side}
+        bit8 := bit2;
+        
+        CombineTrim(bit3, bit5, lastMove);
+        
+        if gameSide = 0 then
+         BitAnd(bit8, bit3, bit2)
+        else
+         BitAnd(bit8, bit5, bit2);
+         
+        if IsClear(bit2) then
+         {if clear then no checkmate. cmFlag still FALSE at this point}
+         goto 1;
+        
+        GetBoards;
+       end;
+     end;
+      
+    {get combined trim boards without the opposite king}
+    if gameSide = 0 then
+     offset := BKO
+    else
+     offset := WKO;
+     
+    {remove opposite king from all opposite boards}
+    DataOps(2, startPage, dataSize, offset, bit2);
+    BitNot(bit2, bit2);
+    ClearBitboard(bit1);
+    DataOps(1, startPage, dataSize, offset, bit1);
+    DataOps(2, startPage, dataSize, sideOffset, bit1);
+    BitAnd(bit2, bit1, bit1);
+    DataOps(1, startPage, dataSize, sideOffset, bit1);
+    offset := APIECES;
+    DataOps(2, startPage, dataSize, offset, bit1);
+    BitAnd(bit2, bit1, bit1);
+    DataOps(1, startPage, dataSize, offset, bit1);
+    
+    CombineTrim(bit3, bit5, lastMove);
+    
+    if gameSide = 0 then
+     bit8 := bit5
+    else
+     bit8 := bit3;
+    
+    {check if attacking piece can be captured}
+    offset := PIECELOC + (playMove.endSq * 8);
+    DataOps(2, startPage, dataSize, offset, bit3);
+    BitAnd(bit8, bit3, bit3);
+    if not(IsClear(bit3)) then
+     goto 1;
+     
+    {generate trim board for attacking piece}
+    if gameSide = 0 then
+     begin
+      sideOffset := WPIECES;
+      turn := 0;
+     end
+    else
+     begin
+      sideOffset := BPIECES;
+      turn := 1;
+     end;
+    Trim(playMove.id, playMove.endSq, sideOffset, lastMove, bit2);
+
+    {check if any opposite piece movement blocks it}
+    BitAnd(bit2, bit8, bit1);
+    
+    {update bitboards with opposite combined trim board}
+    offset := APIECES;
+    DataOps(2, startPage, dataSize, offset, bit3);
+    BitOr(bit1, bit3, bit2);
+    DataOps(1, startPage, dataSize, offset, bit2);
+    if gameSide = 0 then
+     offset := BPIECES
+    else
+     offset := WPIECES;
+    DataOps(2, startPage, dataSize, offset, bit3);
+    BitOr(bit1, bit3, bit2);
+    DataOps(1, startPage, dataSize, offset, bit2);
+
+    {regenerate Trim board for attacking piece}
+    if gameSide = 0 then
+     begin
+      sideOffset := WPIECES;
+      offset := BKO;
+     end
+    else
+     begin
+      sideOffset := BPIECES;
+      offset := WKO;
+     end;
+    Trim(playMove.id, playMove.endSq, sideOffset, lastMove, bit2);
+    
+    {check if overalp with opposite king}
+    GetBoards;
+    DataOps(2, startPage, dataSize, offset, bit1);
+    BitAnd(bit2, bit1, bit1);
+    if not(IsCLear(bit1)) then
+     cmFlag := TRUE;
+     
+    1:
+    if cmFlag then
+     begin
+      gotoxy(20, 1);
+      write(chr(7), chr(7), 'checkmate!');
+      ans := GetKey;
+      readln;
+      Utility(i);
+      exit(program);
+     end
+    else
+     GetBoards;
+   end
+  else
+   begin
+    if abs(moveScore) = 20000 then
+     begin
+      gotoxy(20, 1);
+      write(chr(7), chr(7), 'resign!');
+      ans := GetKey;
+      readln;
+      Utility(i);
+      exit(program);
+     end;
+   end;

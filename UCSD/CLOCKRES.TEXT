@@ -1,0 +1,20 @@
+;system clock routines
+
+        .proc clockreset
+;reset system clock to 0
+;usage: clockreset
+
+        clr     @2ba4h          ;clear system clock memory locations
+        clr     @2ba6h
+        b       *r11
+        
+        .proc noblank
+;disable screen blanking
+;usage: noblank
+
+        li      r1,1
+        mov     r1,@288eh       ;set screen blanking counter to an odd value
+        b       *r11
+        
+        .end
+

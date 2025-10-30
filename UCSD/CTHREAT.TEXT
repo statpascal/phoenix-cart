@@ -1,0 +1,56 @@
+ {check if opponent's back row attacked}
+ if ((turn = 0) and (bCastleFlag = 0)) or
+    ((turn = 1) and (wCastleFlag = 0)) then
+  begin
+   offset := PIECELOC + (playMove.endSq * 8);
+   DataOps(2, startPage, dataSize, offset, bit1);
+   if turn = 0 then
+    offset := WPIECES
+   else
+    offset := BPIECES;
+   Trim(playMove.id, playMove.endSq, offset, lastMove, bit2);
+   
+   {combine piece location with trimmed move list}
+   BitOr(bit1, bit2, bit3);
+   {check right and left back rows}
+   if turn = 0 then
+    begin
+     offset := BRBRMASK;
+     offset1 := BLBRMASK;
+     if (bRAFlag = 0) and (bRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset, bit6);
+       BitAnd(bit3, bit6, bit6);
+       if not(IsClear(bit6)) then
+        bRAFlag := 1;
+      end;
+
+     if (bLAFlag = 0) and (bRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit6);
+       BitAnd(bit3, bit6, bit6);
+       If not(IsClear(bit6)) then
+        bLAFlag := 1;
+      end;
+    end
+   else
+    begin
+     offset := WRBRMASK;
+     offset1 := WLBRMASK;
+     if (wRAFlag = 0) and (wRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset, bit6);
+       BitAnd(bit3, bit6, bit6);
+       If not(IsClear(bit6)) then
+        wRAFlag := 1;
+      end;
+
+     if (wLAFlag = 0) and (wRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit6);
+       BitAnd(bit3, bit6, bit6);
+       if not(IsCLear(bit6)) then
+        wLAFlag := 1;
+      end;
+    end;
+  end;

@@ -1,0 +1,29 @@
+
+procedure BitDisp(var bit : bitboard);
+
+var
+ i, j, k, bitPos : integer;
+ bitVal : dual;
+
+begin
+ gotoxy(0, 14);
+ bitPos := 256;
+ for i := 3 downto 0 do
+  begin
+   bitVal.value := bit[i];
+    for j := 1 downto 0 do
+     begin
+      for k := 0 to 7 do
+       begin
+        bitPos := bitPos div 2;
+        if ord (odd(bitVal.bytes[j]) and odd(bitPos)) <> 0 then
+         write('1')
+        else
+         write('0');
+       end;
+      writeln;
+      bitPos := 256;
+     end;
+  end;
+end; (* BitDisp *)
+

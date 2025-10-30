@@ -1,0 +1,32 @@
+program BoardSave;
+uses {$U chesslib.code} globals;
+
+var
+ fResult, offset : integer;
+ datBuffer : packed array[0..4095] of byte;
+ boarddat : file;
+
+begin
+ startPage := BASE;
+ dataSize := 4096;
+ offset := 0;
+ DataOps(2, startPage, dataSize, offset, datBuffer);
+ 
+ ReWrite(boarddat, 'boarddat.data');
+ fResult := BlockWrite(boarddat, datBuffer, 8);
+
+ startPage := BASE1;
+ offset := 0;
+ DataOps(2, startPage, dataSize, offset, datBuffer);
+ fResult := BlockWrite(boarddat, datBuffer, 8);
+
+ startPage := BASE2;
+ offset := 0;
+ DataOps(2, startPage, dataSize, offset, datBuffer);
+ fResult := BlockWrite(boarddat, datBuffer, 8);
+
+ close(boarddat, lock);
+end.
+
+
+

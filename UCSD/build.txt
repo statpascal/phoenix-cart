@@ -1,0 +1,13 @@
+
+    compile the GLOBALS.TEXT file
+    link the GLOBALS.CODE file with the SAMSUTIL, GETKEY and BITOPS assembly modules
+    Create a library file called CHESSLIB and add the linked GLOBALS.CODE file to it
+    compile the TRIMPROCS.TEXT file
+    Create a library file called INTERFACE add the TRIMPROCS.CODE file to it
+    Compile the SCOREPOS.TEXT file and add it to the CHESSLIB library
+    Compile the UI.TEXT file and add it to the INTERFACE library
+    Compile the PMOVE.TEXT file and add it to the INTERFACE library
+    Compile the MOVE.TEXT file and add it to the CHESSLIB library
+    Compile the MAIN.TEXT file
+    Compile the PHOENIX.TEXT file
+    Link the PHOENIX.CODE file with the SAMSUTIL assembly module

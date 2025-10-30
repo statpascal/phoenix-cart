@@ -1,0 +1,51 @@
+program phoenix;
+{Phoenix Chess launcher}
+uses {$U chesslib.code} globals, {$U commandio.code} commandio;
+
+var
+ fResult, offset, n : integer;
+ datBuffer : packed array[0..4095] of byte;
+ boarddat : file;
+
+procedure SamsSize(sizeCode : integer; var size : integer); external;
+function SamsInit : integer; external;
+ 
+begin
+ Page(OUTPUT);
+ writeln('Phoenix Chess 1.6');
+ n := SamsInit;
+ if n = 0 then
+  begin
+   writeln('no SAMS card found! Exiting...');
+   halt;
+  end
+ else
+  begin
+   SamsSize(n, dataSize);
+   writeln('SAMS card detected: ',dataSize,' pages');
+  end;
+   
+ writeln('loading data...');
+ Reset(boarddat, 'boarddat.data');
+ startPage := BASE;
+ dataSize := 4096;
+ offset := 0;
+ 
+ fResult := BlockRead(boarddat, datBuffer, 8);
+ DataOps(1, startPage, dataSize, offset, datBuffer);
+
+ startPage := BASE1;
+ offset := 0;
+ fResult := BlockRead(boarddat, datBuffer, 8);
+ DataOps(1, startPage, dataSize, offset, datBuffer);
+
+ startPage := BASE2;
+ offset := 0;
+ fResult := BlockRead(boarddat, datBuffer, 8);
+ DataOps(1, startPage, dataSize, offset, datBuffer);
+ 
+ Close(boarddat);
+ writeln('starting Phoenix Chess...');
+ Chain('main');
+ 
+end. {phoenix}
