@@ -1,4 +1,4 @@
-(* version 10-19-25 v1.6 *)
+(* version 10-30-25 v1.7 *)
 (* MinMax, no iterative deepening, capture evaluation bonus *)
 (* fixed castling when rook has moved bug *)
 (* adjustments to scorepos
@@ -42,9 +42,9 @@
 (* adjusted end game conditions *)
 (* added check condition evaluation to position setup *)
 (* ignored moves that did not eliminate own check *)
-(* 10-18-25: Fixed unnecessary own pieces sacrifices *)
 (* 10-19-25: Fixed castling when rook not present *)
 (* 10-19-25: Adjusted the resign parameters *)
+(* 10-30-25: Added capture bonus in scorepos *)
 
 Program Main;
 uses random,

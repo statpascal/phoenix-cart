@@ -407,7 +407,7 @@ __l_98:
 __l_94:
         blwp  @>0000
 
-__str_cnst_0 text >1150686f656e697820436865737320312e36    ; Phoenix Chess 1.6
+__str_cnst_0 text >1150686f656e697820436865737320312e37    ; Phoenix Chess 1.7
 __str_cnst_1 text >1e6e6f2053414d53206361726420666f756e64212045786974696e672e2e2e    ; no SAMS card found! Exiting...
 __str_cnst_2 text >1453414d5320636172642064657465637465643a20    ; SAMS card detected: 
 __str_cnst_3 text >06207061676573    ;  pages
@@ -8858,6 +8858,9 @@ __l_898:
 __l_937:
         li    r1, >0001
         movb  @>8303, @>ff5a(r9)        ; foundflag
+        mov   @>ff74(r9), r1            ; currentmove
+        mov   *r1, @>ff2c(r9)           ;  l
+        mov   @>ff28(r9), @>ff2e(r9)    ; j n
 __l_938:
         ai    r10, >fff8
         mov   @>7ffe, @>0006(r10)
@@ -9573,12 +9576,12 @@ __l_1022:
         clr   @>fd90                    ;  movenumlo
         inc   @>fd8e                    ; movenumhi
 __l_1023:
-        ai    r10, >ffea
-        mov   @>7ffe, @>0014(r10)
+        ai    r10, >ffe4
+        mov   @>7ffe, @>001a(r10)
         mov   r9, r1
         ai    r1, >ff64                 ; tempmove
         mov   r10, r2
-        ai    r2, >000c
+        ai    r2, >0012
         li    r3, >0008
 __l_1026:
         movb  *r1+, *r2+
@@ -9587,12 +9590,15 @@ __l_1026:
         mov   r9, r1
         ai    r1, >0004                 ; lastmove
         mov   r10, r2
-        ai    r2, >0004
+        ai    r2, >000a
         li    r3, >0008
 __l_1027:
         movb  *r1+, *r2+
         dec   r3
         jne   __l_1027
+        mov   @>ff2e(r9), @>0008(r10)   ; n 
+        mov   @>ff2c(r9), @>0006(r10)   ; l 
+        mov   @>ff4c(r9), @>0004(r10)   ; attackflag 
         mov   @>0014(r9), @>0002(r10)   ; cmoveflag 
         mov   r9, r1
         ai    r1, >ff4e                 ; evalscore
@@ -9606,7 +9612,6 @@ __l_1027:
 __l_1028:
         c     @>ff4e(r9), @>ff34(r9)    ; evalscore bestscore 
         jlt   __l_1033
-        jeq   __l_1033
 __l_1032:
         mov   @>ff4e(r9), @>ff34(r9)    ; evalscore bestscore
         mov   @>ff64(r9), @>ff5c(r9)    ; tempmove bestmove
@@ -9630,7 +9635,6 @@ __l_1040:
 __l_1029:
         c     @>ff4e(r9), @>ff34(r9)    ; evalscore bestscore 
         jgt   __l_1045
-        jeq   __l_1045
 __l_1044:
         mov   @>ff4e(r9), @>ff34(r9)    ; evalscore bestscore
         mov   @>ff64(r9), @>ff5c(r9)    ; tempmove bestmove
@@ -9696,7 +9700,6 @@ __l_1065:
         mov   @>000e(r9), r1            ; score
         c     *r1, @>ff34(r9)           ;  bestscore 
         jlt   __l_1070
-        jeq   __l_1070
 __l_1069:
         mov   @>000e(r9), r1            ; score
         mov   *r1, @>ff34(r9)           ;  bestscore
@@ -9722,7 +9725,6 @@ __l_1066:
         mov   @>000e(r9), r1            ; score
         c     *r1, @>ff34(r9)           ;  bestscore 
         jgt   __l_1082
-        jeq   __l_1082
 __l_1081:
         mov   @>000e(r9), r1            ; score
         mov   *r1, @>ff34(r9)           ;  bestscore
@@ -21261,7 +21263,7 @@ __l_2298:
         ai    r1, >feee                 ; __rettmp_356
         mov   r1, *r10
         bl    @__far_call_1
-        data  >6018
+        data  >601a
         data  __short_str_equal_82
         movb  @>feee(r9), r1            ; __rettmp_356
         jeq   __l_2303
@@ -21348,26 +21350,35 @@ calldsr_2:
         bank 12, >6308
 
 ; Subroutine: evaluate_57, level: 2
-;   ff28    -216  __rettmp_357: int16
-;   ff28    -216  __rettmp_358: boolean
-;   ff28    -216  __rettmp_359: boolean
-;   ff28    -216  __rettmp_360: boolean
-;   ff28    -216  __rettmp_361: boolean
-;   ff28    -216  __rettmp_362: boolean
-;   ff28    -216  __rettmp_363: boolean
+;   ff28    -216  __rettmp_357: set of int64
+;   ff48    -184  __rettmp_358: boolean
+;   ff28    -216  __rettmp_359: set of int64
+;   ff48    -184  __rettmp_360: boolean
+;   ff28    -216  __rettmp_361: set of int64
+;   ff48    -184  __rettmp_362: boolean
+;   ff28    -216  __rettmp_363: int16
 ;   ff28    -216  __rettmp_364: boolean
 ;   ff28    -216  __rettmp_365: boolean
 ;   ff28    -216  __rettmp_366: boolean
 ;   ff28    -216  __rettmp_367: boolean
 ;   ff28    -216  __rettmp_368: boolean
-;   ff28    -216  __rettmp_369: int16
-;   ff30    -208  __rettmp_370: set of int64
-;   ff50    -176  __rettmp_371: boolean
-;   ff28    -216  __rettmp_372: int16
+;   ff28    -216  __rettmp_369: boolean
+;   ff28    -216  __rettmp_370: boolean
+;   ff28    -216  __rettmp_371: boolean
+;   ff28    -216  __rettmp_372: boolean
+;   ff28    -216  __rettmp_373: boolean
+;   ff28    -216  __rettmp_374: boolean
+;   ff28    -216  __rettmp_375: int16
+;   ff30    -208  __rettmp_376: set of int64
+;   ff50    -176  __rettmp_377: boolean
+;   ff28    -216  __rettmp_378: int16
 ;   0004       4  var result: reference to int16
 ;   0006       6  cmoveflag: int16
-;   0008       8  lastmove: record
-;   0010      16  tempmove: record
+;   0008       8  attackflag: int16
+;   000a      10  attackid: int16
+;   000c      12  capid: int16
+;   000e      14  lastmove: record
+;   0016      22  tempmove: record
 ;   ff52    -174  spage1: int16
 ;   ff54    -172  dsize: int16
 ;   ff56    -170  initoffset: int16
@@ -21415,80 +21426,202 @@ evaluate_57:
         mov   r1, @>fd5e                ;  startpage
         li    r1, >0008
         mov   r1, @>fd62                ;  datasize
-        mov   @>0010(r9), r1            ; tempmove
-        ci    r1, >0028
-        jne   __l_2332
-__l_2334:
-        mov   @>0006(r9), r1            ; cmoveflag
-        jne   __l_2332
-__l_2331:
+        mov   @>0008(r9), r1            ; attackflag
+        ci    r1, >0001
+        jeq   __l_2338
+        b     @__l_2336
+__l_2338:
+        c     @>fd64, @>fd66            ; turn gameside 
+        jeq   __l_2335
+        b     @__l_2336
+__l_2335:
+        clr   @>ff72(r9)                ; bonus
+        mov   @>000a(r9), r1            ; attackid
+; no-opt
+        jeq   __c_2311
+        ai    r1, >fff8
+        jeq   __c_2312
+        ai    r1, >fff8
+        jeq   __c_2313
+        ai    r1, >fff8
+        jeq   __c_2313
+        ai    r1, >fff8
+        jeq   __c_2314
+        jmp   __l_2341
+__c_2311:
+        mov   @>000c(r9), r1            ; capid
+        jne   __l_2348
+__l_2347:
+        li    r1, >000a
+        mov   r1, @>ff72(r9)            ; bonus
+        jmp   __l_2341
+__l_2348:
+        li    r1, >0032
+        mov   r1, @>ff72(r9)            ; bonus
+        jmp   __l_2341
+__c_2312:
+        mov   @>000c(r9), r1            ; capid
+        li    r14, >0001
+        mov   r1, r0
+        andi  r0, >000f
+        jeq   __l_2355
+        sla   r14, 0
+__l_2355:
+        sra   r1, 3
+        li    r2, __set_cnst_141
+        a     r1, r2
+        mov   *r2, r2
+        clr   r1
+        coc   r14, r2
+        jne   __l_2356
+        inc   r1
+__l_2356:
+        ci    r1, >0000
+        jeq   __l_2341
+__l_2351:
+        li    r1, >0032
+        mov   r1, @>ff72(r9)            ; bonus
+        jmp   __l_2341
+__c_2313:
+        mov   @>000c(r9), r1            ; capid
+        li    r14, >0001
+        mov   r1, r0
+        andi  r0, >000f
+        jeq   __l_2361
+        sla   r14, 0
+__l_2361:
+        sra   r1, 3
+        li    r2, __set_cnst_142
+        a     r1, r2
+        mov   *r2, r2
+        clr   r1
+        coc   r14, r2
+        jne   __l_2362
+        inc   r1
+__l_2362:
+        ci    r1, >0000
+        jeq   __l_2358
+__l_2357:
+        li    r1, >0032
+        mov   r1, @>ff72(r9)            ; bonus
+        jmp   __l_2341
+__l_2358:
+        mov   @>000c(r9), r1            ; capid
+        li    r14, >0001
+        mov   r1, r0
+        andi  r0, >000f
+        jeq   __l_2367
+        sla   r14, 0
+__l_2367:
+        sra   r1, 3
+        li    r2, __set_cnst_143
+        a     r1, r2
+        mov   *r2, r2
+        clr   r1
+        coc   r14, r2
+        jne   __l_2368
+        inc   r1
+__l_2368:
+        ci    r1, >0000
+        jeq   __l_2341
+__l_2363:
+        li    r1, >0019
+        mov   r1, @>ff72(r9)            ; bonus
+        jmp   __l_2341
+__c_2314:
+        mov   @>000c(r9), r1            ; capid
+        ci    r1, >0020
+        jne   __l_2341
+__l_2369:
+        li    r1, >0032
+        mov   r1, @>ff72(r9)            ; bonus
+__l_2341:
         mov   @>fd64, r1                ; turn
-        jne   __l_2338
-__l_2340:
+        jne   __l_2374
+__l_2373:
+        mov   @>ff6a(r9), r1            ; wscore
+        a     @>ff72(r9), r1            ; bonus 
+        mov   r1, @>ff6a(r9)            ; wscore
+        jmp   __l_2336
+__l_2374:
+        mov   @>ff6c(r9), r1            ; bscore
+        a     @>ff72(r9), r1            ; bonus 
+        mov   r1, @>ff6c(r9)            ; bscore
+__l_2336:
+        mov   @>0016(r9), r1            ; tempmove
+        ci    r1, >0028
+        jne   __l_2378
+__l_2380:
+        mov   @>0006(r9), r1            ; cmoveflag
+        jne   __l_2378
+__l_2377:
+        mov   @>fd64, r1                ; turn
+        jne   __l_2384
+__l_2386:
         mov   @>fd6c, r1                ; wcastleflag
-        jne   __l_2338
-__l_2337:
+        jne   __l_2384
+__l_2383:
         mov   @>ff6a(r9), r1            ; wscore
         li    r2, >0190
         s     r2, r1
         mov   r1, @>ff6a(r9)            ; wscore
-        jmp   __l_2332
-__l_2338:
+        jmp   __l_2378
+__l_2384:
         mov   @>fd64, r1                ; turn
         ci    r1, >0001
-        jne   __l_2332
-__l_2346:
+        jne   __l_2378
+__l_2392:
         mov   @>fd6e, r1                ; bcastleflag
-        jne   __l_2332
-__l_2343:
+        jne   __l_2378
+__l_2389:
         mov   @>ff6c(r9), r1            ; bscore
         li    r2, >0190
         s     r2, r1
         mov   r1, @>ff6c(r9)            ; bscore
-__l_2332:
-        mov   @>0010(r9), r1            ; tempmove
+__l_2378:
+        mov   @>0016(r9), r1            ; tempmove
         ci    r1, >0008
-        jne   __l_2350
-__l_2352:
+        jne   __l_2396
+__l_2398:
         mov   @>fd7a, r1                ; gamemove
         ci    r1, >000d
-        jgt   __l_2350
-        jeq   __l_2350
-__l_2349:
+        jgt   __l_2396
+        jeq   __l_2396
+__l_2395:
         mov   @>fd64, r1                ; turn
-        jne   __l_2356
-__l_2358:
+        jne   __l_2402
+__l_2404:
         mov   @>fd6c, r1                ; wcastleflag
-        jne   __l_2356
-__l_2355:
+        jne   __l_2402
+__l_2401:
         mov   @>ff6a(r9), r1            ; wscore
         li    r2, >01f4
         s     r2, r1
         mov   r1, @>ff6a(r9)            ; wscore
-        jmp   __l_2350
-__l_2356:
+        jmp   __l_2396
+__l_2402:
         mov   @>fd64, r1                ; turn
         ci    r1, >0001
-        jne   __l_2350
-__l_2364:
+        jne   __l_2396
+__l_2410:
         mov   @>fd6e, r1                ; bcastleflag
-        jne   __l_2350
-__l_2361:
+        jne   __l_2396
+__l_2407:
         mov   @>ff6c(r9), r1            ; bscore
         li    r2, >01f4
         s     r2, r1
         mov   r1, @>ff6c(r9)            ; bscore
-__l_2350:
+__l_2396:
         mov   @>fd64, r1                ; turn
-        jne   __l_2368
-__l_2367:
+        jne   __l_2414
+__l_2413:
         li    r1, >0fde
         mov   r1, @>ff5a(r9)            ; offset1
-        jmp   __l_2369
-__l_2368:
+        jmp   __l_2415
+__l_2414:
         li    r1, >0fd6
         mov   r1, @>ff5a(r9)            ; offset1
-__l_2369:
+__l_2415:
         ai    r10, >fff4
         mov   @>7ffe, @>000a(r10)
         li    r1, >fd92                 ; bit1
@@ -21513,58 +21646,58 @@ __l_2369:
         data  bitpos
         mov   @>ff78(r9), r1            ; locarray
         ci    r1, >0005
-        jgt   __l_2372
-__l_2371:
+        jgt   __l_2418
+__l_2417:
         li    r1, >0001
         mov   r1, @>ff74(r9)            ; endgame
-__l_2372:
+__l_2418:
         mov   @>ff78(r9), r1            ; locarray
         ci    r1, >0003
-        jgt   __l_2376
-__l_2375:
+        jgt   __l_2422
+__l_2421:
         li    r1, >0002
         mov   r1, @>ff74(r9)            ; endgame
-__l_2376:
+__l_2422:
         c     @>fd76, @>fd78            ; wmobility bmobility 
-        jlt   __l_2380
-        jeq   __l_2380
-__l_2379:
+        jlt   __l_2426
+        jeq   __l_2426
+__l_2425:
         mov   @>ff6a(r9), r1            ; wscore
         ai    r1, >0064
         mov   r1, @>ff6a(r9)            ; wscore
-        jmp   __l_2384
-__l_2380:
+        jmp   __l_2430
+__l_2426:
         c     @>fd78, @>fd76            ; bmobility wmobility 
-        jlt   __l_2384
-        jeq   __l_2384
-__l_2383:
+        jlt   __l_2430
+        jeq   __l_2430
+__l_2429:
         mov   @>ff6c(r9), r1            ; bscore
         ai    r1, >0064
         mov   r1, @>ff6c(r9)            ; bscore
-__l_2384:
+__l_2430:
         clr   @>ff68(r9)                ; side
         li    r1, >0001
         mov   r1, @>fffe(r9)            ; $side
-        jmp   __l_2328
-__l_2327:
+        jmp   __l_2332
+__l_2331:
         inc   @>ff68(r9)                ; side
-__l_2328:
-        mov   @>0010(r9), r1            ; tempmove
-        jeq   __l_2390
-        b     @__l_2388
-__l_2390:
-        mov   @>0012(r9), r1            ; tempmove
-        s     @>0014(r9), r1            ; tempmove 
+__l_2332:
+        mov   @>0016(r9), r1            ; tempmove
+        jeq   __l_2436
+        b     @__l_2434
+__l_2436:
+        mov   @>0018(r9), r1            ; tempmove
+        s     @>001a(r9), r1            ; tempmove 
         abs   r1
         ci    r1, >0010
-        jeq   __l_2387
-        b     @__l_2388
-__l_2387:
+        jeq   __l_2433
+        b     @__l_2434
+__l_2433:
         mov   @>ff68(r9), r1            ; side
-        jne   __l_2394
-__l_2393:
+        jne   __l_2440
+__l_2439:
         li    r1, >0580
-        mov   @>0012(r9), r2            ; tempmove
+        mov   @>0018(r9), r2            ; tempmove
         li    r3, >0008
         s     r3, r2
         li    r3, >0008
@@ -21573,10 +21706,10 @@ __l_2393:
         mov   r1, @>ff5a(r9)            ; offset1
         li    r1, >0f9e
         mov   r1, @>ff5c(r9)            ; offset2
-        jmp   __l_2395
-__l_2394:
+        jmp   __l_2441
+__l_2440:
         li    r1, >05c0
-        mov   @>0012(r9), r2            ; tempmove
+        mov   @>0018(r9), r2            ; tempmove
         li    r3, >0030
         s     r3, r2
         li    r3, >0008
@@ -21585,7 +21718,7 @@ __l_2394:
         mov   r1, @>ff5a(r9)            ; offset1
         li    r1, >0f6e
         mov   r1, @>ff5c(r9)            ; offset2
-__l_2395:
+__l_2441:
         ai    r10, >fff4
         mov   @>7ffe, @>000a(r10)
         li    r1, >fd9a                 ; bit2
@@ -21626,43 +21759,43 @@ __l_2395:
         li    r1, >fd9a                 ; bit2
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_358
+        ai    r1, >ff28                 ; __rettmp_364
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_358
-        jne   __l_2388
-__l_2397:
+        movb  @>ff28(r9), r1            ; __rettmp_364
+        jne   __l_2434
+__l_2443:
         mov   @>ff68(r9), r1            ; side
-        jne   __l_2402
-__l_2401:
+        jne   __l_2448
+__l_2447:
         mov   @>ff6a(r9), r1            ; wscore
         li    r2, >0064
         s     r2, r1
         mov   r1, @>ff6a(r9)            ; wscore
-        jmp   __l_2388
-__l_2402:
+        jmp   __l_2434
+__l_2448:
         mov   @>ff6c(r9), r1            ; bscore
         li    r2, >0064
         s     r2, r1
         mov   r1, @>ff6c(r9)            ; bscore
-__l_2388:
+__l_2434:
         li    r1, >0016
         mov   r1, @>ff52(r9)            ; spage1
         mov   @>ff68(r9), r1            ; side
-        jne   __l_2406
-__l_2405:
+        jne   __l_2452
+__l_2451:
         li    r1, >0f6e
         mov   r1, @>ff56(r9)            ; initoffset
-        jmp   __l_2407
-__l_2406:
+        jmp   __l_2453
+__l_2452:
         li    r1, >0f9e
         mov   r1, @>ff56(r9)            ; initoffset
-__l_2407:
+__l_2453:
         clr   @>ff6e(r9)                ; evalscore
         clr   @>ff60(r9)                ; j
-__l_2311:
+__l_2315:
         mov   @>ff56(r9), r1            ; initoffset
         a     @>ff60(r9), r1            ; j 
         mov   r1, @>ff58(r9)            ; offset
@@ -21683,15 +21816,15 @@ __l_2311:
         li    r1, >fd92                 ; bit1
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_359
+        ai    r1, >ff28                 ; __rettmp_365
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_359
-        jeq   __l_2409
-        b     @__l_2410
-__l_2409:
+        movb  @>ff28(r9), r1            ; __rettmp_365
+        jeq   __l_2455
+        b     @__l_2456
+__l_2455:
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
         mov   r9, r1
@@ -21706,12 +21839,12 @@ __l_2409:
         mov   r1, @>ff5e(r9)            ; i
         mov   @>ff78(r9), @>fffc(r9)    ; locarray $i
         c     @>ff5e(r9), @>fffc(r9)    ; i $i 
-        jlt   __l_2325
-        jeq   __l_2325
-        b     @__l_2410
-__l_2324:
+        jlt   __l_2329
+        jeq   __l_2329
+        b     @__l_2456
+__l_2328:
         inc   @>ff5e(r9)                ; i
-__l_2325:
+__l_2329:
         mov   r9, r1
         ai    r1, >ff78                 ; locarray
         mov   @>ff5e(r9), r2            ; i
@@ -21738,36 +21871,36 @@ __l_2325:
         data  dataops_12
         mov   @>ff60(r9), r1            ; j
 ; no-opt
-        jeq   __c_2312
+        jeq   __c_2316
         ai    r1, >fff8
-        jne   __l_2417
-        b     @__c_2319
-__l_2417:
-        ai    r1, >fff8
-        jne   __l_2418
-        b     @__c_2320
-__l_2418:
-        ai    r1, >fff8
-        jne   __l_2419
-        b     @__c_2321
-__l_2419:
-        ai    r1, >fff8
-        jne   __l_2420
-        b     @__c_2322
-__l_2420:
-        ai    r1, >fff8
-        jne   __l_2421
+        jne   __l_2463
         b     @__c_2323
-__l_2421:
-        b     @__l_2415
-__c_2312:
+__l_2463:
+        ai    r1, >fff8
+        jne   __l_2464
+        b     @__c_2324
+__l_2464:
+        ai    r1, >fff8
+        jne   __l_2465
+        b     @__c_2325
+__l_2465:
+        ai    r1, >fff8
+        jne   __l_2466
+        b     @__c_2326
+__l_2466:
+        ai    r1, >fff8
+        jne   __l_2467
+        b     @__c_2327
+__l_2467:
+        b     @__l_2461
+__c_2316:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >0064
         mov   r1, @>ff6e(r9)            ; evalscore
         mov   @>ff68(r9), r1            ; side
-        jeq   __l_2422
-        b     @__l_2423
-__l_2422:
+        jeq   __l_2468
+        b     @__l_2469
+__l_2468:
         clr   r1
         mov   @>ff76(r9), r2            ; ploc
         li    r3, >0002
@@ -21775,13 +21908,13 @@ __l_2422:
         a     r4, r1                    ;  
         mov   r1, @>ff5a(r9)            ; offset1
         mov   @>ff74(r9), r1            ; endgame
-        jlt   __l_2427
-        jeq   __l_2427
-__l_2429:
+        jlt   __l_2473
+        jeq   __l_2473
+__l_2475:
         mov   @>ff76(r9), r1            ; ploc
         ci    r1, >0018
-        jlt   __l_2427
-__l_2426:
+        jlt   __l_2473
+__l_2472:
         mov   @>ff6e(r9), r1            ; evalscore
         li    r2, >0008
         mov   @>ff76(r9), r4            ; ploc
@@ -21792,27 +21925,27 @@ __l_2426:
         mpy   r2, r3
         a     r4, r1                    ;  
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2427:
+__l_2473:
         mov   @>ff76(r9), r1            ; ploc
         ci    r1, >0038
-        jlt   __l_2433
-__l_2432:
+        jlt   __l_2479
+__l_2478:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >03e8
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2433:
+__l_2479:
         mov   @>ff76(r9), r1            ; ploc
         ci    r1, >000f
-        jgt   __l_2436
-        b     @__l_2437
-__l_2436:
+        jgt   __l_2482
+        b     @__l_2483
+__l_2482:
         clr   @>ff64(r9)                ; l
         li    r1, >0001
         mov   r1, @>fffa(r9)            ; $l
-        jmp   __l_2314
-__l_2313:
+        jmp   __l_2318
+__l_2317:
         inc   @>ff64(r9)                ; l
-__l_2314:
+__l_2318:
         li    r1, >00c0
         li    r2, >0038
         mov   @>ff64(r9), r3            ; l
@@ -21846,18 +21979,18 @@ __l_2314:
         li    r1, >fdaa                 ; bit4
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_360
+        ai    r1, >ff28                 ; __rettmp_366
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_360
-        jeq   __l_2440
-        b     @__l_2441
-__l_2440:
+        movb  @>ff28(r9), r1            ; __rettmp_366
+        jeq   __l_2486
+        b     @__l_2487
+__l_2486:
         mov   @>ff64(r9), r1            ; l
-        jne   __l_2445
-__l_2444:
+        jne   __l_2491
+__l_2490:
         li    r1, >0180
         mov   @>ff76(r9), r2            ; ploc
         li    r3, >0009
@@ -21866,8 +21999,8 @@ __l_2444:
         mpy   r2, r3
         a     r4, r1                    ;  
         mov   r1, @>ff5c(r9)            ; offset2
-        jmp   __l_2446
-__l_2445:
+        jmp   __l_2492
+__l_2491:
         li    r1, >0180
         mov   @>ff76(r9), r2            ; ploc
         li    r3, >0007
@@ -21876,7 +22009,7 @@ __l_2445:
         mpy   r2, r3
         a     r4, r1                    ;  
         mov   r1, @>ff5c(r9)            ; offset2
-__l_2446:
+__l_2492:
         ai    r10, >fff4
         mov   @>7ffe, @>000a(r10)
         li    r1, >fdaa                 ; bit4
@@ -21916,27 +22049,27 @@ __l_2446:
         li    r1, >fdaa                 ; bit4
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_361
+        ai    r1, >ff28                 ; __rettmp_367
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_361
-        jne   __l_2441
-__l_2448:
+        movb  @>ff28(r9), r1            ; __rettmp_367
+        jne   __l_2487
+__l_2494:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >000f
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2441:
+__l_2487:
         c     @>ff64(r9), @>fffa(r9)    ; l $l 
-        jeq   __l_2437
-        b     @__l_2313
-__l_2437:
+        jeq   __l_2483
+        b     @__l_2317
+__l_2483:
         mov   @>ff76(r9), r1            ; ploc
         ci    r1, >0038
-        jgt   __l_2455
-        jeq   __l_2455
-__l_2454:
+        jgt   __l_2501
+        jeq   __l_2501
+__l_2500:
         li    r1, >0180
         mov   @>ff76(r9), r2            ; ploc
         ai    r2, >0008
@@ -21971,21 +22104,21 @@ __l_2454:
         li    r1, >fdaa                 ; bit4
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_362
+        ai    r1, >ff28                 ; __rettmp_368
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_362
-        jne   __l_2455
-__l_2458:
+        movb  @>ff28(r9), r1            ; __rettmp_368
+        jne   __l_2501
+__l_2504:
         mov   @>ff6e(r9), r1            ; evalscore
         li    r2, >0019
         s     r2, r1
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2455:
-        b     @__l_2491
-__l_2423:
+__l_2501:
+        b     @__l_2537
+__l_2469:
         li    r1, >0080
         mov   @>ff76(r9), r2            ; ploc
         li    r3, >0002
@@ -21993,13 +22126,13 @@ __l_2423:
         a     r4, r1                    ;  
         mov   r1, @>ff5a(r9)            ; offset1
         mov   @>ff74(r9), r1            ; endgame
-        jlt   __l_2463
-        jeq   __l_2463
-__l_2465:
+        jlt   __l_2509
+        jeq   __l_2509
+__l_2511:
         mov   @>ff76(r9), r1            ; ploc
         ci    r1, >0020
-        jgt   __l_2463
-__l_2462:
+        jgt   __l_2509
+__l_2508:
         mov   @>ff6e(r9), r1            ; evalscore
         li    r2, >0008
         li    r4, >003f
@@ -22011,29 +22144,29 @@ __l_2462:
         mpy   r2, r3
         a     r4, r1                    ;  
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2463:
+__l_2509:
         mov   @>ff76(r9), r1            ; ploc
         ci    r1, >0007
-        jgt   __l_2469
-__l_2468:
+        jgt   __l_2515
+__l_2514:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >03e8
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2469:
+__l_2515:
         mov   @>ff76(r9), r1            ; ploc
         ci    r1, >0037
-        jgt   __l_2475
-        jne   __l_2472
-__l_2475:
-        b     @__l_2473
-__l_2472:
+        jgt   __l_2521
+        jne   __l_2518
+__l_2521:
+        b     @__l_2519
+__l_2518:
         clr   @>ff64(r9)                ; l
         li    r1, >0001
         mov   r1, @>fffa(r9)            ; $l
-        jmp   __l_2317
-__l_2316:
+        jmp   __l_2321
+__l_2320:
         inc   @>ff64(r9)                ; l
-__l_2317:
+__l_2321:
         li    r1, >00c0
         li    r2, >0038
         mov   @>ff64(r9), r3            ; l
@@ -22067,18 +22200,18 @@ __l_2317:
         li    r1, >fdaa                 ; bit4
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_363
+        ai    r1, >ff28                 ; __rettmp_369
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_363
-        jeq   __l_2476
-        b     @__l_2477
-__l_2476:
+        movb  @>ff28(r9), r1            ; __rettmp_369
+        jeq   __l_2522
+        b     @__l_2523
+__l_2522:
         mov   @>ff64(r9), r1            ; l
-        jne   __l_2481
-__l_2480:
+        jne   __l_2527
+__l_2526:
         li    r1, >0180
         mov   @>ff76(r9), r2            ; ploc
         ai    r2, >0009
@@ -22086,8 +22219,8 @@ __l_2480:
         mpy   r2, r3
         a     r4, r1                    ;  
         mov   r1, @>ff5c(r9)            ; offset2
-        jmp   __l_2482
-__l_2481:
+        jmp   __l_2528
+__l_2527:
         li    r1, >0180
         mov   @>ff76(r9), r2            ; ploc
         ai    r2, >0007
@@ -22095,7 +22228,7 @@ __l_2481:
         mpy   r2, r3
         a     r4, r1                    ;  
         mov   r1, @>ff5c(r9)            ; offset2
-__l_2482:
+__l_2528:
         ai    r10, >fff4
         mov   @>7ffe, @>000a(r10)
         li    r1, >fdaa                 ; bit4
@@ -22135,27 +22268,27 @@ __l_2482:
         li    r1, >fdaa                 ; bit4
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_364
+        ai    r1, >ff28                 ; __rettmp_370
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_364
-        jne   __l_2477
-__l_2484:
+        movb  @>ff28(r9), r1            ; __rettmp_370
+        jne   __l_2523
+__l_2530:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >000f
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2477:
+__l_2523:
         c     @>ff64(r9), @>fffa(r9)    ; l $l 
-        jeq   __l_2473
-        b     @__l_2316
-__l_2473:
+        jeq   __l_2519
+        b     @__l_2320
+__l_2519:
         mov   @>ff76(r9), r1            ; ploc
         ci    r1, >0007
-        jlt   __l_2491
-        jeq   __l_2491
-__l_2490:
+        jlt   __l_2537
+        jeq   __l_2537
+__l_2536:
         li    r1, >0180
         mov   @>ff76(r9), r2            ; ploc
         li    r3, >0008
@@ -22191,19 +22324,19 @@ __l_2490:
         li    r1, >fdaa                 ; bit4
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_365
+        ai    r1, >ff28                 ; __rettmp_371
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_365
-        jne   __l_2491
-__l_2494:
+        movb  @>ff28(r9), r1            ; __rettmp_371
+        jne   __l_2537
+__l_2540:
         mov   @>ff6e(r9), r1            ; evalscore
         li    r2, >0019
         s     r2, r1
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2491:
+__l_2537:
         ai    r10, >fff4
         mov   @>7ffe, @>000a(r10)
         mov   r9, r1
@@ -22220,13 +22353,13 @@ __l_2491:
         mov   @>ff6e(r9), r1            ; evalscore
         a     @>ff64(r9), r1            ; l 
         mov   r1, @>ff6e(r9)            ; evalscore
-        b     @__l_2415
-__c_2319:
+        b     @__l_2461
+__c_2323:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >020d
         mov   r1, @>ff6e(r9)            ; evalscore
-        b     @__l_2415
-__c_2320:
+        b     @__l_2461
+__c_2324:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >0190
         mov   r1, @>ff6e(r9)            ; evalscore
@@ -22252,8 +22385,8 @@ __c_2320:
         mov   @>ff6e(r9), r1            ; evalscore
         a     @>ff64(r9), r1            ; l 
         mov   r1, @>ff6e(r9)            ; evalscore
-        b     @__l_2415
-__c_2321:
+        b     @__l_2461
+__c_2325:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >0190
         mov   r1, @>ff6e(r9)            ; evalscore
@@ -22279,32 +22412,32 @@ __c_2321:
         mov   @>ff6e(r9), r1            ; evalscore
         a     @>ff64(r9), r1            ; l 
         mov   r1, @>ff6e(r9)            ; evalscore
-        jmp   __l_2415
-__c_2322:
+        jmp   __l_2461
+__c_2326:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >03cd
         mov   r1, @>ff6e(r9)            ; evalscore
-        jmp   __l_2415
-__c_2323:
+        jmp   __l_2461
+__c_2327:
         mov   @>ff74(r9), r1            ; endgame
-        jlt   __l_2499
-        jeq   __l_2499
-__l_2498:
+        jlt   __l_2545
+        jeq   __l_2545
+__l_2544:
         li    r1, >0280
         mov   @>ff76(r9), r2            ; ploc
         li    r3, >0002
         mpy   r2, r3
         a     r4, r1                    ;  
         mov   r1, @>ff5a(r9)            ; offset1
-        jmp   __l_2500
-__l_2499:
+        jmp   __l_2546
+__l_2545:
         li    r1, >0200
         mov   @>ff76(r9), r2            ; ploc
         li    r3, >0002
         mpy   r2, r3
         a     r4, r1                    ;  
         mov   r1, @>ff5a(r9)            ; offset1
-__l_2500:
+__l_2546:
         ai    r10, >fff4
         mov   @>7ffe, @>000a(r10)
         mov   r9, r1
@@ -22323,53 +22456,53 @@ __l_2500:
         mov   r1, @>ff6e(r9)            ; evalscore
         mov   @>0006(r9), r1            ; cmoveflag
         ci    r1, >0001
-        jne   __l_2415
-__l_2505:
+        jne   __l_2461
+__l_2551:
         c     @>ff68(r9), @>fd66        ; side gameside 
-        jne   __l_2415
-__l_2502:
+        jne   __l_2461
+__l_2548:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >012c
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2415:
+__l_2461:
         c     @>ff5e(r9), @>fffc(r9)    ; i $i 
-        jeq   __l_2410
-        b     @__l_2324
-__l_2410:
+        jeq   __l_2456
+        b     @__l_2328
+__l_2456:
         mov   @>ff60(r9), r1            ; j
         ai    r1, >0008
         mov   r1, @>ff60(r9)            ; j
         ci    r1, >0028
-        jgt   __l_2510
-        b     @__l_2311
-__l_2510:
+        jgt   __l_2556
+        b     @__l_2315
+__l_2556:
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
         li    r1, >fd92                 ; bit1
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_366
+        ai    r1, >ff28                 ; __rettmp_372
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_366
-        jeq   __l_2513
-__l_2512:
+        movb  @>ff28(r9), r1            ; __rettmp_372
+        jeq   __l_2559
+__l_2558:
         li    r1, >b1e0
         mov   r1, @>ff6e(r9)            ; evalscore
-        b     @__l_2525
-__l_2513:
+        b     @__l_2571
+__l_2559:
         mov   @>ff68(r9), r1            ; side
-        jne   __l_2517
-__l_2516:
+        jne   __l_2563
+__l_2562:
         li    r1, >0fc6
         mov   r1, @>ff58(r9)            ; offset
-        jmp   __l_2518
-__l_2517:
+        jmp   __l_2564
+__l_2563:
         li    r1, >0f96
         mov   r1, @>ff58(r9)            ; offset
-__l_2518:
+__l_2564:
         ai    r10, >fff4
         mov   @>7ffe, @>000a(r10)
         li    r1, >fd92                 ; bit1
@@ -22387,32 +22520,32 @@ __l_2518:
         li    r1, >fd92                 ; bit1
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_367
+        ai    r1, >ff28                 ; __rettmp_373
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_367
-        jeq   __l_2521
-__l_2520:
+        movb  @>ff28(r9), r1            ; __rettmp_373
+        jeq   __l_2567
+__l_2566:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >0032
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2521:
+__l_2567:
         mov   @>ff74(r9), r1            ; endgame
-        jgt   __l_2524
-        b     @__l_2525
-__l_2524:
+        jgt   __l_2570
+        b     @__l_2571
+__l_2570:
         mov   @>ff68(r9), r1            ; side
-        jne   __l_2529
-__l_2528:
+        jne   __l_2575
+__l_2574:
         li    r1, >0fc6
         mov   r1, @>ff58(r9)            ; offset
-        jmp   __l_2530
-__l_2529:
+        jmp   __l_2576
+__l_2575:
         li    r1, >0f96
         mov   r1, @>ff58(r9)            ; offset
-__l_2530:
+__l_2576:
         ai    r10, >fff4
         mov   @>7ffe, @>000a(r10)
         li    r1, >fd92                 ; bit1
@@ -22455,22 +22588,22 @@ __l_2530:
         li    r1, >fda2                 ; bit3
         mov   r1, @>0002(r10)
         mov   r9, r1
-        ai    r1, >ff28                 ; __rettmp_368
+        ai    r1, >ff28                 ; __rettmp_374
         mov   r1, *r10
         bl    @__far_call_1
         data  >6004
         data  isclear_8
-        movb  @>ff28(r9), r1            ; __rettmp_368
-        jne   __l_2533
-__l_2532:
+        movb  @>ff28(r9), r1            ; __rettmp_374
+        jne   __l_2579
+__l_2578:
         mov   @>ff6e(r9), r1            ; evalscore
         ai    r1, >0064
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2533:
+__l_2579:
         mov   @>ff74(r9), r1            ; endgame
         ci    r1, >0002
-        jne   __l_2525
-__l_2536:
+        jne   __l_2571
+__l_2582:
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
         mov   r9, r1
@@ -22487,21 +22620,21 @@ __l_2536:
         li    r14, >0001
         mov   r1, r0
         andi  r0, >000f
-        jeq   __l_2544
+        jeq   __l_2590
         sla   r14, 0
-__l_2544:
+__l_2590:
         sra   r1, 3
-        li    r2, __set_cnst_141
+        li    r2, __set_cnst_144
         a     r1, r2
         mov   *r2, r2
         clr   r1
         coc   r14, r2
-        jne   __l_2545
+        jne   __l_2591
         inc   r1
-__l_2545:
+__l_2591:
         ci    r1, >0000
-        jne   __l_2525
-__l_2540:
+        jne   __l_2571
+__l_2586:
         mov   @>ff6e(r9), r1            ; evalscore
         li    r2, >0008
         li    r3, >0002
@@ -22515,23 +22648,23 @@ __l_2540:
         mpy   r2, r3
         a     r4, r1                    ;  
         mov   r1, @>ff6e(r9)            ; evalscore
-__l_2525:
+__l_2571:
         mov   @>ff68(r9), r1            ; side
-        jne   __l_2547
-__l_2546:
+        jne   __l_2593
+__l_2592:
         mov   @>ff6a(r9), r1            ; wscore
         a     @>ff6e(r9), r1            ; evalscore 
         mov   r1, @>ff6a(r9)            ; wscore
-        jmp   __l_2548
-__l_2547:
+        jmp   __l_2594
+__l_2593:
         mov   @>ff6c(r9), r1            ; bscore
         a     @>ff6e(r9), r1            ; evalscore 
         mov   r1, @>ff6c(r9)            ; bscore
-__l_2548:
+__l_2594:
         c     @>ff68(r9), @>fffe(r9)    ; side $side 
-        jeq   __l_2550
-        b     @__l_2327
-__l_2550:
+        jeq   __l_2596
+        b     @__l_2331
+__l_2596:
         mov   @>ff6a(r9), r1            ; wscore
         s     @>ff6c(r9), r1            ; bscore 
         mov   @>0004(r9), r2            ; result
@@ -22544,14 +22677,20 @@ __l_2550:
         mov   r9, r10
         mov   *r10+, r9
         mov   *r10+, r11
-        ai    r10, >0014
+        ai    r10, >001a
         b     @__far_ret
 
 ; ; Set Constants
 __set_cnst_141:
+        text >0100000000010000000000000000000000000000000000000000000000000000
+__set_cnst_142:
+        text >0100000000010000000000000000000000000000000000000000000000000000
+__set_cnst_143:
+        text >0000010100000000000000000000000000000000000000000000000000000000
+__set_cnst_144:
         text >8004000300000000000000000000000000000000000000000000000000000000
 
-        bank 12, >7174
+        bank 12, >72fa
 
 ; Subroutine: getkey_58, level: 2
 ;   0004       4  var result: reference to char
@@ -22579,18 +22718,18 @@ getkey_58:
         srl   r1, 8
         andi  r1, >0020
         ci    r1, >0000
-        jeq   __l_2554
-__l_2553:
+        jeq   __l_2600
+__l_2599:
         movb  @>8375, r1                ; keypressed
         srl   r1, 8
         mov   @>0004(r9), r2            ; result
         movb  @>8303, *r2               ; low R1
-        jmp   __l_2555
-__l_2554:
+        jmp   __l_2601
+__l_2600:
         li    r1, >00ff
         mov   @>0004(r9), r2            ; result
         movb  @>8303, *r2               ; low R1
-__l_2555:
+__l_2601:
         dect  r10
         mov   @>7ffe, *r10
         bl    @__far_call_1
@@ -22612,7 +22751,7 @@ scankey:
         lwpi  >8300
         b     *r11
 
-        bank 12, >71fa
+        bank 12, >7380
 
 ; Subroutine: move, level: 2
 ;   0000       0  var src: reference to void
@@ -22632,7 +22771,7 @@ move_2:
         ai    r10, >0006
         b     @__far_ret
 
-        bank 12, >7214
+        bank 12, >739a
 
 ; Subroutine: moveword, level: 2
 ;   0000       0  var src: reference to void
@@ -22652,7 +22791,7 @@ moveword_2:
         ai    r10, >0006
         b     @__far_ret
 
-        bank 12, >722e
+        bank 12, >73b4
 
 ; Subroutine: compareword, level: 2
 ;   0000       0  var result: reference to boolean
@@ -22682,7 +22821,7 @@ comparebyte_4:
         ai    r10, >0008
         b     @__far_ret
 
-        bank 12, >725a
+        bank 12, >73e0
 
 ; Subroutine: fillchar, level: 2
 ;   0000       0  var dest: reference to void
@@ -22702,7 +22841,7 @@ fillchar_2:
         ai    r10, >0006
         b     @__far_ret
 
-        bank 12, >7274
+        bank 12, >73fa
 
 ; Subroutine: fillchar_59, level: 2
 ;   0004       4  var dest: reference to void
@@ -22729,7 +22868,7 @@ fillchar_59:
         ai    r10, >0006
         b     @__far_ret
 
-        bank 12, >72b2
+        bank 12, >7438
 
 ; Subroutine: __write_lf_60, level: 2
 ;   0004       4  var f: reference to file
@@ -22743,22 +22882,22 @@ __write_lf_60:
         mov   r11, @>0002(r12)
         mov   @>0004(r9), r1            ; f
         mov   *r1, r1
-        jne   __l_2560
-__l_2559:
+        jne   __l_2606
+__l_2605:
         dect  r10
         mov   @>7ffe, *r10
         bl    @__far_call_1
         data  >6004
         data  outputline_26
-        jmp   __l_2561
-__l_2560:
+        jmp   __l_2607
+__l_2606:
         ai    r10, >fffc
         mov   @>7ffe, @>0002(r10)
         mov   @>0004(r9), *r10          ; f 
         bl    @__far_call_1
         data  >6018
         data  __end_line_72
-__l_2561:
+__l_2607:
         mov   *r10, r1
         mov   r9, r10
         mov   *r10+, r9
@@ -22766,7 +22905,7 @@ __l_2561:
         inct  r10
         b     @__far_ret
 
-        bank 12, >72fe
+        bank 12, >7484
 
 ; Subroutine: __write_int_61, level: 2
 ;   0004       4  var f: reference to file
@@ -22792,7 +22931,7 @@ __write_int_61:
         mov   @>0008(r9), @>0002(r10)   ; length 
         mov   @>0006(r9), *r10          ; n 
         bl    @__far_call_1
-        data  >6018
+        data  >601a
         data  __str_int_81
         ai    r10, >fff6
         mov   @>7ffe, @>0008(r10)
@@ -22812,7 +22951,7 @@ __write_int_61:
         ai    r10, >0008
         b     @__far_ret
 
-        bank 12, >7376
+        bank 12, >74fc
 
 ; Subroutine: __write_char_62, level: 2
 ;   0004       4  var f: reference to file
@@ -22832,9 +22971,9 @@ __write_char_62:
         movb  @>0006(r9), r1            ; ch
         srl   r1, 8
         ci    r1, >001f
-        jlt   __l_2566
-        jeq   __l_2566
-__l_2565:
+        jlt   __l_2612
+        jeq   __l_2612
+__l_2611:
         li    r1, >0001
         movb  @>8303, @>fffe(r9)        ; s
         movb  @>0006(r9), @>ffff(r9)    ; ch s
@@ -22849,7 +22988,7 @@ __l_2565:
         bl    @__far_call_1
         data  >6018
         data  __write_string_63
-__l_2566:
+__l_2612:
         mov   *r10, r1
         mov   r9, r10
         mov   *r10+, r9
@@ -22857,7 +22996,7 @@ __l_2566:
         ai    r10, >0008
         b     @__far_ret
 
-        bank 12, >73de
+        bank 12, >7564
 
 ; Subroutine: __write_string_63, level: 2
 ;   fff6     -10  __rettmp_113: int16
@@ -22886,14 +23025,14 @@ __write_string_63:
         mov   @>0008(r9), r2            ; length
 ; no.opt
         c     r1, r2
-        jgt   __l_2576
+        jgt   __l_2622
         mov   r2, r1
-__l_2576:
+__l_2622:
         mov   r1, @>fffc(r9)            ; outlen
         mov   @>0004(r9), r1            ; f
         mov   *r1, r1
-        jne   __l_2578
-__l_2577:
+        jne   __l_2624
+__l_2623:
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
         mov   @>fffc(r9), @>0002(r10)   ; outlen 
@@ -22901,19 +23040,19 @@ __l_2577:
         bl    @__far_call_1
         data  >6004
         data  outputstring_25
-        b     @__l_2595
-__l_2578:
+        b     @__l_2641
+__l_2624:
         mov   @>fffa(r9), r1            ; len
         inc   r1
         mov   r1, @>fff8(r9)            ; i
         mov   @>fffc(r9), @>fffe(r9)    ; outlen $i
         c     @>fff8(r9), @>fffe(r9)    ; i $i 
-        jlt   __l_2570
-        jeq   __l_2570
-        jmp   __l_2587
-__l_2569:
+        jlt   __l_2616
+        jeq   __l_2616
+        jmp   __l_2633
+__l_2615:
         inc   @>fff8(r9)                ; i
-__l_2570:
+__l_2616:
         mov   @>0004(r9), r1            ; f
         mov   @>0002(r1), r1
         mov   @>0004(r9), r2            ; f
@@ -22921,9 +23060,9 @@ __l_2570:
         movb  *r2, r2
         srl   r2, 8
         c     r1, r2
-        jgt   __l_2584
-        jeq   __l_2584
-__l_2583:
+        jgt   __l_2630
+        jeq   __l_2630
+__l_2629:
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
         li    r1, >2000
@@ -22939,20 +23078,20 @@ __l_2583:
         mov   @>0004(r9), r1            ; f
         inct  r1                        ; .bufpos
         inc   *r1
-__l_2584:
+__l_2630:
         c     @>fff8(r9), @>fffe(r9)    ; i $i 
-        jne   __l_2569
-__l_2587:
+        jne   __l_2615
+__l_2633:
         li    r1, >0001
         mov   r1, @>fff8(r9)            ; i
         mov   @>fffa(r9), @>fffe(r9)    ; len $i
         c     @>fff8(r9), @>fffe(r9)    ; i $i 
-        jlt   __l_2573
-        jeq   __l_2573
-        jmp   __l_2595
-__l_2572:
+        jlt   __l_2619
+        jeq   __l_2619
+        jmp   __l_2641
+__l_2618:
         inc   @>fff8(r9)                ; i
-__l_2573:
+__l_2619:
         mov   @>0004(r9), r1            ; f
         mov   @>0002(r1), r1
         mov   @>0004(r9), r2            ; f
@@ -22960,9 +23099,9 @@ __l_2573:
         movb  *r2, r2
         srl   r2, 8
         c     r1, r2
-        jgt   __l_2592
-        jeq   __l_2592
-__l_2591:
+        jgt   __l_2638
+        jeq   __l_2638
+__l_2637:
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
         mov   @>0006(r9), r1            ; p
@@ -22979,10 +23118,10 @@ __l_2591:
         mov   @>0004(r9), r1            ; f
         inct  r1                        ; .bufpos
         inc   *r1
-__l_2592:
+__l_2638:
         c     @>fff8(r9), @>fffe(r9)    ; i $i 
-        jne   __l_2572
-__l_2595:
+        jne   __l_2618
+__l_2641:
         mov   *r10+, r2
         mov   *r10, r1
         mov   r9, r10
@@ -22991,7 +23130,7 @@ __l_2595:
         ai    r10, >0008
         b     @__far_ret
 
-        bank 12, >7536
+        bank 12, >76bc
 
 ; Subroutine: __assign_64, level: 2
 ;   0004       4  var f: reference to void
@@ -23013,17 +23152,17 @@ __assign_64:
         li    r0, >1900
         movb  *r1+, r3
         cb    r3, r0
-        jl    __l_2598
+        jl    __l_2644
         mov   r0, r3
-__l_2598:
+__l_2644:
         movb  r3, *r2+
-        jeq   __l_2599
+        jeq   __l_2645
         srl   r3, 8
-__l_2600:
+__l_2646:
         movb  *r1+, *r2+
         dec   r3
-        jne   __l_2600
-__l_2599:
+        jne   __l_2646
+__l_2645:
         mov   *r10+, r3
         mov   *r10+, r2
         mov   *r10, r1
@@ -23033,7 +23172,7 @@ __l_2599:
         ai    r10, >0102
         b     @__far_ret
 
-        bank 12, >7584
+        bank 12, >770a
 
 ; Subroutine: __rewrite_bin_65, level: 2
 ;   0004       4  var f: reference to void
@@ -23068,7 +23207,7 @@ __rewrite_bin_65:
         ai    r10, >0004
         b     @__far_ret
 
-        bank 12, >75d8
+        bank 12, >775e
 
 ; Subroutine: __reset_bin_66, level: 2
 ;   0004       4  var f: reference to void
@@ -23103,7 +23242,7 @@ __reset_bin_66:
         ai    r10, >0004
         b     @__far_ret
 
-        bank 12, >762c
+        bank 12, >77b2
 
 ; Subroutine: __write_bin_typed_67, level: 2
 ;   0004       4  var f: reference to void
@@ -23132,7 +23271,7 @@ __write_bin_typed_67:
         ai    r10, >0004
         b     @__far_ret
 
-        bank 12, >7670
+        bank 12, >77f6
 
 ; Subroutine: __write_bin_ign_68, level: 2
 ;   fffa      -6  __rettmp_121: boolean
@@ -23162,12 +23301,12 @@ __write_bin_ign_68:
         dec   r1
         mov   r1, @>fffe(r9)            ; $i
         c     @>fffc(r9), @>fffe(r9)    ; i $i 
-        jlt   __l_2605
-        jeq   __l_2605
-        jmp   __l_2610
-__l_2604:
+        jlt   __l_2651
+        jeq   __l_2651
+        jmp   __l_2656
+__l_2650:
         inc   @>fffc(r9)                ; i
-__l_2605:
+__l_2651:
         ai    r10, >fff8
         mov   @>7ffe, @>0006(r10)
         mov   @>0004(r9), r1            ; f
@@ -23199,8 +23338,8 @@ __l_2605:
         data  >601a
         data  execdsr_90
         c     @>fffc(r9), @>fffe(r9)    ; i $i 
-        jne   __l_2604
-__l_2610:
+        jne   __l_2650
+__l_2656:
         mov   *r10+, r4
         mov   *r10+, r3
         mov   *r10+, r2
@@ -23211,7 +23350,7 @@ __l_2610:
         ai    r10, >0006
         b     @__far_ret
 
-        bank 12, >773c
+        bank 12, >78c2
 
 ; Subroutine: __read_bin_typed_69, level: 2
 ;   0004       4  var f: reference to void
@@ -23240,7 +23379,7 @@ __read_bin_typed_69:
         ai    r10, >0004
         b     @__far_ret
 
-        bank 12, >7780
+        bank 12, >7906
 
 ; Subroutine: __read_bin_ign_70, level: 2
 ;   fffa      -6  __rettmp_122: boolean
@@ -23270,12 +23409,12 @@ __read_bin_ign_70:
         dec   r1
         mov   r1, @>fffe(r9)            ; $i
         c     @>fffc(r9), @>fffe(r9)    ; i $i 
-        jlt   __l_2614
-        jeq   __l_2614
-        jmp   __l_2619
-__l_2613:
+        jlt   __l_2660
+        jeq   __l_2660
+        jmp   __l_2665
+__l_2659:
         inc   @>fffc(r9)                ; i
-__l_2614:
+__l_2660:
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
         mov   @>0004(r9), @>0002(r10)   ; f 
@@ -23307,8 +23446,8 @@ __l_2614:
         data  >6004
         data  vmbr
         c     @>fffc(r9), @>fffe(r9)    ; i $i 
-        jne   __l_2613
-__l_2619:
+        jne   __l_2659
+__l_2665:
         mov   *r10+, r4
         mov   *r10+, r3
         mov   *r10+, r2
@@ -23319,7 +23458,7 @@ __l_2619:
         ai    r10, >0006
         b     @__far_ret
 
-        bank 12, >784c
+        bank 12, >79d2
 
 ; Subroutine: __close_71, level: 2
 ;   fffe      -2  __rettmp_132: boolean
@@ -23338,9 +23477,9 @@ __close_71:
         clr   @>ffb2                    ;  inoutres
         mov   @>0004(r9), r1            ; f
         mov   *r1, r1
-        jlt   __l_2623
-        jeq   __l_2623
-__l_2622:
+        jlt   __l_2669
+        jeq   __l_2669
+__l_2668:
         li    r1, >0001
         mov   @>0004(r9), r2            ; f
         ai    r2, >0004                 ; .pab
@@ -23366,16 +23505,16 @@ __l_2622:
         seto  r1
         mov   @>0004(r9), r2            ; f
         mov   r1, *r2
-        jmp   __l_2627
-__l_2623:
+        jmp   __l_2673
+__l_2669:
         mov   @>0004(r9), r1            ; f
         mov   *r1, r1
-        jgt   __l_2627
-        jeq   __l_2627
-__l_2626:
+        jgt   __l_2673
+        jeq   __l_2673
+__l_2672:
         li    r1, >0001
         mov   r1, @>ffb2                ;  inoutres
-__l_2627:
+__l_2673:
         mov   *r10+, r3
         mov   *r10+, r2
         mov   *r10, r1
@@ -23385,7 +23524,7 @@ __l_2627:
         inct  r10
         b     @__far_ret
 
-        bank 12, >78e6
+        bank 12, >7a6c
 
 ; Subroutine: __end_line_72, level: 2
 ;   fffe      -2  __rettmp_136: boolean
@@ -23402,9 +23541,9 @@ __end_line_72:
         mov   r11, @>0002(r12)
         mov   @>0004(r9), r1            ; f
         mov   *r1, r1
-        jlt   __l_2632
-        jeq   __l_2632
-__l_2631:
+        jlt   __l_2678
+        jeq   __l_2678
+__l_2677:
         li    r1, >0003
         mov   @>0004(r9), r2            ; f
         ai    r2, >0004                 ; .pab
@@ -23426,7 +23565,7 @@ __l_2631:
         clr   r1
         mov   @>0004(r9), r2            ; f
         mov   r1, @>0002(r2)
-__l_2632:
+__l_2678:
         mov   *r10+, r2
         mov   *r10, r1
         mov   r9, r10
@@ -23435,7 +23574,7 @@ __l_2632:
         inct  r10
         b     @__far_ret
 
-        bank 12, >7960
+        bank 12, >7ae6
 
 ; Subroutine: __read_int_73, level: 2
 ;   fed2    -302  __rettmp_124: int16
@@ -23485,25 +23624,25 @@ __read_int_73:
         clr   r2
         c     r1, r2
         clr   r1
-        jeq   __l_2638
+        jeq   __l_2684
         inc   r1
-__l_2638:
+__l_2684:
         ci    r1, >0001
-        jne   __l_2640
+        jne   __l_2686
         li    r1, >002d
         movb  @>fefc(r9), r2            ; s
         srl   r2, 8
         c     r2, r1
         clr   r1
-        jne   __l_2640
+        jne   __l_2686
         inc   r1
-__l_2640:
+__l_2686:
         movb  @>8303, @>fffe(r9)        ; neg
         movb  @>fffe(r9), r1            ; neg
         srl   r1, 8
         inc   r1
         mov   r1, @>fffc(r9)            ; i
-__l_2635:
+__l_2681:
         mov   @>fffc(r9), r1            ; i
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
@@ -23517,8 +23656,8 @@ __l_2635:
         data  >6018
         data  length_77
         c     r1, @>fed2(r9)            ; __rettmp_125 
-        jgt   __l_2636
-__l_2642:
+        jgt   __l_2682
+__l_2688:
         mov   r9, r1
         ai    r1, >fefb                 ; s
         a     @>fffc(r9), r1            ; i 
@@ -23527,21 +23666,21 @@ __l_2642:
         li    r14, >0001
         mov   r1, r0
         andi  r0, >000f
-        jeq   __l_2645
+        jeq   __l_2691
         sla   r14, 0
-__l_2645:
+__l_2691:
         sra   r1, 3
-        li    r2, __set_cnst_142
+        li    r2, __set_cnst_145
         a     r1, r2
         mov   *r2, r2
         clr   r1
         coc   r14, r2
-        jne   __l_2646
+        jne   __l_2692
         inc   r1
-__l_2646:
+__l_2692:
         ci    r1, >0000
-        jeq   __l_2636
-__l_2641:
+        jeq   __l_2682
+__l_2687:
         mov   @>0004(r9), r1            ; result
         mov   *r1, r1
         li    r2, >000a
@@ -23558,17 +23697,17 @@ __l_2641:
         mov   @>0004(r9), r2            ; result
         mov   r1, *r2
         inc   @>fffc(r9)                ; i
-        jmp   __l_2635
-__l_2636:
+        jmp   __l_2681
+__l_2682:
         movb  @>fffe(r9), r1            ; neg
-        jeq   __l_2648
-__l_2647:
+        jeq   __l_2694
+__l_2693:
         mov   @>0004(r9), r1            ; result
         mov   *r1, r1
         neg   r1
         mov   @>0004(r9), r2            ; result
         mov   r1, *r2
-__l_2648:
+__l_2694:
         mov   *r10+, r3
         mov   *r10+, r2
         mov   *r10, r1
@@ -23579,10 +23718,10 @@ __l_2648:
         b     @__far_ret
 
 ; ; Set Constants
-__set_cnst_142:
+__set_cnst_145:
         text >00000000000003ff000000000000000000000000000000000000000000000000
 
-        bank 12, >7ad6
+        bank 12, >7c5c
 
 ; Subroutine: __read_string_74, level: 2
 ;   ff00    -256  __rettmp_130: string [255]
@@ -23602,8 +23741,8 @@ __read_string_74:
         mov   r11, @>0002(r12)
         mov   @>0006(r9), r1            ; f
         mov   *r1, r1
-        jne   __l_2653
-__l_2652:
+        jne   __l_2699
+__l_2698:
         ai    r10, >fffc
         mov   @>7ffe, @>0002(r10)
         mov   r9, r1
@@ -23618,23 +23757,23 @@ __l_2652:
         li    r0, >ff00
         movb  *r1+, r3
         cb    r3, r0
-        jl    __l_2656
+        jl    __l_2702
         mov   r0, r3
-__l_2656:
+__l_2702:
         movb  r3, *r2+
-        jeq   __l_2661
+        jeq   __l_2707
         srl   r3, 8
-__l_2658:
+__l_2704:
         movb  *r1+, *r2+
         dec   r3
-        jne   __l_2658
-        jmp   __l_2661
-__l_2653:
+        jne   __l_2704
+        jmp   __l_2707
+__l_2699:
         mov   @>0006(r9), r1            ; f
         mov   *r1, r1
-        jlt   __l_2660
-        jeq   __l_2660
-__l_2659:
+        jlt   __l_2706
+        jeq   __l_2706
+__l_2705:
         li    r1, >0002
         mov   @>0006(r9), r2            ; f
         ai    r2, >0004                 ; .pab
@@ -23669,11 +23808,11 @@ __l_2659:
         srl   r1, 8
         mov   @>0004(r9), r2            ; result
         movb  @>8303, *r2               ; low R1
-        jmp   __l_2661
-__l_2660:
+        jmp   __l_2707
+__l_2706:
         li    r1, >0004
         mov   r1, @>ffb2                ;  inoutres
-__l_2661:
+__l_2707:
         mov   *r10+, r3
         mov   *r10+, r2
         mov   *r10, r1
@@ -23683,7 +23822,7 @@ __l_2661:
         ai    r10, >0004
         b     @__far_ret
 
-        bank 12, >7bd4
+        bank 12, >7d5a
 
 ; Subroutine: __read_lf_75, level: 2
 ;   0004       4  var f: reference to file
@@ -23700,7 +23839,7 @@ __read_lf_75:
         inct  r10
         b     @__far_ret
 
-        bank 12, >7bee
+        bank 12, >7d74
 
 ; Subroutine: ioresult_76, level: 2
 ;   0004       4  var result: reference to int16
@@ -23725,7 +23864,7 @@ ioresult_76:
         inct  r10
         b     @__far_ret
 
-        bank 12, >7c1e
+        bank 12, >7da4
 
 ; Subroutine: length_77, level: 2
 ;   0004       4  var result: reference to int16
@@ -23752,7 +23891,7 @@ length_77:
         ai    r10, >0004
         b     @__far_ret
 
-        bank 12, >7c50
+        bank 12, >7dd6
 
 ; Subroutine: pos_78, level: 2
 ;   0004       4  var result: reference to int16
@@ -23777,12 +23916,12 @@ pos_78:
         srl   r1, 8
         mov   r1, @>fffe(r9)            ; $i
         c     @>fffc(r9), @>fffe(r9)    ; i $i 
-        jlt   __l_2667
-        jeq   __l_2667
-        jmp   __l_2676
-__l_2666:
+        jlt   __l_2713
+        jeq   __l_2713
+        jmp   __l_2722
+__l_2712:
         inc   @>fffc(r9)                ; i
-__l_2667:
+__l_2713:
         mov   @>0008(r9), r1            ; s
         a     @>fffc(r9), r1            ; i 
         movb  *r1, r1
@@ -23790,20 +23929,20 @@ __l_2667:
         movb  @>0006(r9), r2            ; ch
         srl   r2, 8
         c     r1, r2
-        jne   __l_2673
-__l_2672:
+        jne   __l_2719
+__l_2718:
         mov   @>fffc(r9), r1            ; i
         mov   @>0004(r9), r2            ; result
         mov   r1, *r2
-        jmp   __l_2669
-__l_2673:
+        jmp   __l_2715
+__l_2719:
         c     @>fffc(r9), @>fffe(r9)    ; i $i 
-        jne   __l_2666
-__l_2676:
+        jne   __l_2712
+__l_2722:
         clr   r1
         mov   @>0004(r9), r2            ; result
         mov   r1, *r2
-__l_2669:
+__l_2715:
         mov   *r10+, r2
         mov   *r10, r1
         mov   r9, r10
@@ -23812,7 +23951,7 @@ __l_2669:
         ai    r10, >0006
         b     @__far_ret
 
-        bank 12, >7cce
+        bank 12, >7e54
 
 ; Subroutine: copy_79, level: 2
 ;   0004       4  var result: reference to string [255]
@@ -23833,8 +23972,8 @@ copy_79:
         movb  *r2, r2
         srl   r2, 8
         c     r1, r2
-        jgt   __l_2680
-__l_2679:
+        jgt   __l_2726
+__l_2725:
         mov   @>0008(r9), r1            ; start
         a     @>000a(r9), r1            ; len 
         mov   @>0006(r9), r2            ; s
@@ -23842,16 +23981,16 @@ __l_2679:
         srl   r2, 8
         inc   r2
         c     r1, r2
-        jlt   __l_2684
-        jeq   __l_2684
-__l_2683:
+        jlt   __l_2730
+        jeq   __l_2730
+__l_2729:
         mov   @>0006(r9), r1            ; s
         movb  *r1, r1
         srl   r1, 8
         s     @>0008(r9), r1            ; start 
         inc   r1
         mov   r1, @>000a(r9)            ; len
-__l_2684:
+__l_2730:
         ai    r10, >fff8
         mov   @>7ffe, @>0006(r10)
         mov   @>000a(r9), @>0004(r10)   ; len 
@@ -23867,12 +24006,12 @@ __l_2684:
         mov   @>000a(r9), r1            ; len
         mov   @>0004(r9), r2            ; result
         movb  @>8303, *r2               ; low R1
-        jmp   __l_2681
-__l_2680:
+        jmp   __l_2727
+__l_2726:
         clr   r1
         mov   @>0004(r9), r2            ; result
         movb  @>8303, *r2               ; low R1
-__l_2681:
+__l_2727:
         mov   *r10+, r2
         mov   *r10, r1
         mov   r9, r10
@@ -23881,7 +24020,7 @@ __l_2681:
         ai    r10, >0008
         b     @__far_ret
 
-        bank 12, >7d70
+        bank 12, >7ef6
 
 ; Subroutine: upcase_80, level: 2
 ;   0004       4  var result: reference to char
@@ -23898,26 +24037,26 @@ upcase_80:
         movb  @>0006(r9), r1            ; ch
         srl   r1, 8
         ci    r1, >0061
-        jlt   __l_2689
-__l_2691:
+        jlt   __l_2735
+__l_2737:
         movb  @>0006(r9), r1            ; ch
         srl   r1, 8
         ci    r1, >007a
-        jgt   __l_2689
-__l_2688:
+        jgt   __l_2735
+__l_2734:
         movb  @>0006(r9), r1            ; ch
         srl   r1, 8
         li    r2, >0020
         s     r2, r1
         mov   @>0004(r9), r2            ; result
         movb  @>8303, *r2               ; low R1
-        jmp   __l_2690
-__l_2689:
+        jmp   __l_2736
+__l_2735:
         movb  @>0006(r9), r1            ; ch
         srl   r1, 8
         mov   @>0004(r9), r2            ; result
         movb  @>8303, *r2               ; low R1
-__l_2690:
+__l_2736:
         mov   *r10+, r2
         mov   *r10, r1
         mov   r9, r10
@@ -23926,7 +24065,7 @@ __l_2690:
         ai    r10, >0004
         b     @__far_ret
 
-        bank 12, >7dd0
+        bank 13, >6060
 
 ; Subroutine: __str_int_81, level: 2
 ;   fff2     -14  __rettmp_146: int16
@@ -23950,30 +24089,30 @@ __str_int_81:
         mov   r11, @>0002(r12)
         mov   @>0004(r9), r1            ; n
         ci    r1, >8000
-        jne   __l_2696
-__l_2695:
-        li    r1, __str_cnst_143
+        jne   __l_2742
+__l_2741:
+        li    r1, __str_cnst_146
         mov   r9, r2
         ai    r2, >fff6                 ; res
         li    r0, >0600
         movb  *r1+, r3
         cb    r3, r0
-        jl    __l_2699
+        jl    __l_2745
         mov   r0, r3
-__l_2699:
+__l_2745:
         movb  r3, *r2+
-        jeq   __l_2700
+        jeq   __l_2746
         srl   r3, 8
-__l_2701:
+__l_2747:
         movb  *r1+, *r2+
         dec   r3
-        jne   __l_2701
-__l_2700:
+        jne   __l_2747
+__l_2746:
         mov   r9, r1
         ai    r1, >fff6                 ; res
         mov   r1, @>fffe(r9)            ; p
-        jmp   __l_2697
-__l_2696:
+        jmp   __l_2743
+__l_2742:
         ai    r10, >fff8
         mov   r9, r1
         ai    r1, >fffc                 ; res
@@ -23995,15 +24134,15 @@ __l_2696:
         s     @>fffe(r9), r1            ; p 
         mov   @>fffe(r9), r2            ; p
         movb  @>8303, *r2               ; low R1
-__l_2697:
+__l_2743:
         mov   @>0006(r9), r1            ; length
         mov   @>fffe(r9), r2            ; p
         movb  *r2, r2
         srl   r2, 8
         c     r1, r2
-        jlt   __l_2703
-        jeq   __l_2703
-__l_2702:
+        jlt   __l_2749
+        jeq   __l_2749
+__l_2748:
         mov   @>0006(r9), r1            ; length
         mov   @>000a(r9), r2            ; s
         movb  @>8303, *r2               ; low R1
@@ -24046,8 +24185,8 @@ __l_2702:
         bl    @__far_call_1
         data  >6018
         data  move
-        jmp   __l_2704
-__l_2703:
+        jmp   __l_2750
+__l_2749:
         ai    r10, >fff8
         mov   @>7ffe, @>0006(r10)
         mov   @>fffe(r9), r1            ; p
@@ -24060,7 +24199,7 @@ __l_2703:
         bl    @__far_call_1
         data  >6018
         data  move
-__l_2704:
+__l_2750:
         mov   *r10+, r3
         mov   *r10+, r2
         mov   *r10, r1
@@ -24070,7 +24209,7 @@ __l_2704:
         ai    r10, >0008
         b     @__far_ret
 
-__str_cnst_143 text >062d3332373638    ; -32768
+__str_cnst_146 text >062d3332373638    ; -32768
         even 
 
 ; Subroutine: outint, level: 3
@@ -24103,7 +24242,7 @@ outint2:
         ai    r10, >0008
         b     *r11
 
-        bank 12, >7f7c
+        bank 13, >620c
 
 ; Subroutine: __short_str_equal_82, level: 2
 ;   fffe      -2  __rettmp_140: int16
@@ -24134,9 +24273,9 @@ __short_str_equal_82:
         clr   r2
         c     r1, r2
         clr   r1
-        jne   __l_2707
+        jne   __l_2753
         inc   r1
-__l_2707:
+__l_2753:
         mov   @>0004(r9), r2            ; result
         movb  @>8303, *r2               ; low R1
         mov   *r10+, r2
@@ -24147,7 +24286,7 @@ __l_2707:
         ai    r10, >0006
         b     @__far_ret
 
-        bank 13, >6060
+        bank 13, >626c
 
 ; Subroutine: keypressed, level: 2
 ;   0000       0  var result: reference to boolean
@@ -24173,7 +24312,7 @@ keypressed_2:
         ai    r10, >0002
         b     @__far_ret
 
-        bank 13, >6092
+        bank 13, >629e
 
 ; Subroutine: __new_83, level: 2
 ;   fff2     -14  __rettmp_107: string [10]
@@ -24202,9 +24341,9 @@ __new_83:
         mov   @>ffea, r1                ; heapptr
         a     @>fffe(r9), r1            ; n 
         c     r1, @>ffec                ; heapmax 
-        jlt   __l_2710
-        jeq   __l_2710
-__l_2709:
+        jlt   __l_2756
+        jeq   __l_2756
+__l_2755:
         clr   r1
         mov   @>0004(r9), r2            ; p
         mov   r1, *r2
@@ -24213,7 +24352,7 @@ __l_2709:
         seto  @>0006(r10)
         seto  @>0004(r10)
         ai    r10, >fffc
-        li    r1, __str_cnst_144
+        li    r1, __str_cnst_147
         mov   r1, @>0002(r10)
         mov   r9, r1
         ai    r1, >fff2                 ; __rettmp_107
@@ -24234,13 +24373,13 @@ __l_2709:
         bl    @__far_call_1
         data  >6018
         data  __write_lf_60
-        jmp   __l_2711
-__l_2710:
+        jmp   __l_2757
+__l_2756:
         mov   @>ffea, r1                ; heapptr
         mov   @>0004(r9), r2            ; p
         mov   r1, *r2
         a     @>fffe(r9), @>ffea        ; n  heapptr
-__l_2711:
+__l_2757:
         mov   *r10+, r3
         mov   *r10+, r2
         mov   *r10, r1
@@ -24250,10 +24389,10 @@ __l_2711:
         ai    r10, >0006
         b     @__far_ret
 
-__str_cnst_144 text >0a4f5554204f46204d454d    ; OUT OF MEM
+__str_cnst_147 text >0a4f5554204f46204d454d    ; OUT OF MEM
         even 
 
-        bank 13, >6164
+        bank 13, >6370
 
 ; Subroutine: mark_84, level: 2
 ;   0004       4  var p: reference to pointer to void
@@ -24277,7 +24416,7 @@ mark_84:
         inct  r10
         b     @__far_ret
 
-        bank 13, >6190
+        bank 13, >639c
 
 ; Subroutine: release_85, level: 2
 ;   0004       4  p: pointer to void
@@ -24295,7 +24434,7 @@ release_85:
         inct  r10
         b     @__far_ret
 
-        bank 13, >61b0
+        bank 13, >63bc
 
 ; Subroutine: initheap_86, level: 2
 ;   0004       4  first: int16
@@ -24319,7 +24458,7 @@ initheap_86:
         ai    r10, >0004
         b     @__far_ret
 
-        bank 13, >61e2
+        bank 13, >63ee
 
 ; Subroutine: __read_line_console_87, level: 2
 ;   fff4     -12  __rettmp_108: int16
@@ -24366,7 +24505,7 @@ __read_line_console_87:
         li    r1, >0001
         mov   r1, @>fffa(r9)            ; pos
         clr   @>fffc(r9)                ; count
-__l_2716:
+__l_2762:
         ai    r10, >fffc
         mov   @>7ffe, @>0002(r10)
         mov   r9, r1
@@ -24379,23 +24518,23 @@ __l_2716:
         srl   r1, 8
 ; no-opt
         ai    r1, >fff3
-        jne   __l_2722
-        b     @__c_2719
-__l_2722:
+        jne   __l_2768
+        b     @__c_2765
+__l_2768:
         ai    r1, >ffed
         ci    r1, >005f
-        jh    __l_2723
-        b     @__c_2718
-__l_2723:
+        jh    __l_2769
+        b     @__c_2764
+__l_2769:
         ai    r1, >ff98
-        jeq   __c_2717
-        b     @__l_2721
-__c_2717:
+        jeq   __c_2763
+        b     @__l_2767
+__c_2763:
         mov   @>fffa(r9), r1            ; pos
         ci    r1, >0001
-        jgt   __l_2725
-        b     @__l_2721
-__l_2725:
+        jgt   __l_2771
+        b     @__l_2767
+__l_2771:
         dec   @>fffa(r9)                ; pos
         mov   @>0004(r9), r1            ; result
         li    r2, >0100
@@ -24439,9 +24578,9 @@ __l_2725:
         data  >6004
         data  screenwidth_22
         c     r1, @>fff4(r9)            ; __rettmp_111 
-        jgt   __l_2730
-        jeq   __l_2730
-__l_2729:
+        jgt   __l_2776
+        jeq   __l_2776
+__l_2775:
         ai    r10, >fff6
         mov   @>7ffe, @>0008(r10)
         seto  @>0006(r10)
@@ -24453,10 +24592,10 @@ __l_2729:
         bl    @__far_call_1
         data  >6018
         data  __write_char_62
-__l_2730:
+__l_2776:
         clr   @>fffc(r9)                ; count
-        jmp   __l_2721
-__c_2718:
+        jmp   __l_2767
+__c_2764:
         movb  @>fffe(r9), r1            ; ch
         srl   r1, 8
         mov   @>0004(r9), r2            ; result
@@ -24473,14 +24612,14 @@ __c_2718:
         data  >6004
         data  screenwidth_22
         c     r1, @>fff4(r9)            ; __rettmp_112 
-        jgt   __l_2734
-        jeq   __l_2734
-__l_2733:
+        jgt   __l_2780
+        jeq   __l_2780
+__l_2779:
         inc   @>fffa(r9)                ; pos
         mov   @>0004(r9), r1            ; result
         li    r2, >0100
         ab    r2, *r1
-__l_2734:
+__l_2780:
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
         mov   @>fff6(r9), @>0002(r10)   ; row 
@@ -24499,17 +24638,17 @@ __l_2734:
         data  >6018
         data  __write_string_63
         clr   @>fffc(r9)                ; count
-        jmp   __l_2721
-__c_2719:
+        jmp   __l_2767
+__c_2765:
         li    r1, >0100
         mov   r1, @>fffc(r9)            ; count
-__l_2721:
+__l_2767:
         inc   @>fffc(r9)                ; count
         mov   @>fffc(r9), r1            ; count
         andi  r1, >00ff
         ci    r1, >0001
-        jne   __l_2738
-__l_2737:
+        jne   __l_2784
+__l_2783:
         ai    r10, >fffa
         mov   @>7ffe, @>0004(r10)
         mov   @>fff6(r9), @>0002(r10)   ; row 
@@ -24524,8 +24663,8 @@ __l_2737:
         sra   r1, 8
         andi  r1, >0001
         ci    r1, >0000
-        jeq   __l_2742
-__l_2741:
+        jeq   __l_2788
+__l_2787:
         ai    r10, >fff6
         mov   @>7ffe, @>0008(r10)
         seto  @>0006(r10)
@@ -24537,8 +24676,8 @@ __l_2741:
         bl    @__far_call_1
         data  >6018
         data  __write_char_62
-        jmp   __l_2738
-__l_2742:
+        jmp   __l_2784
+__l_2788:
         ai    r10, >fff6
         mov   @>7ffe, @>0008(r10)
         seto  @>0006(r10)
@@ -24550,13 +24689,13 @@ __l_2742:
         bl    @__far_call_1
         data  >6018
         data  __write_char_62
-__l_2738:
+__l_2784:
         movb  @>fffe(r9), r1            ; ch
         srl   r1, 8
         ci    r1, >000d
-        jeq   __l_2746
-        b     @__l_2716
-__l_2746:
+        jeq   __l_2792
+        b     @__l_2762
+__l_2792:
         ai    r10, >fffc
         mov   @>7ffe, @>0002(r10)
         li    r1, >ff8a                 ; output
@@ -24572,7 +24711,7 @@ __l_2746:
         inct  r10
         b     @__far_ret
 
-        bank 13, >64d6
+        bank 13, >66e2
 
 ; Subroutine: reservevdpbufs_88, level: 2
 ;   fffc      -4  i: int16
@@ -24592,10 +24731,10 @@ reservevdpbufs_88:
         mov   r1, @>fffc(r9)            ; i
         li    r1, >0003
         mov   r1, @>fffe(r9)            ; $i
-        jmp   __l_2749
-__l_2748:
+        jmp   __l_2795
+__l_2794:
         inc   @>fffc(r9)                ; i
-__l_2749:
+__l_2795:
         li    r1, >8370                 ; vdpfree
         li    r2, >00f5
         s     r2, *r1
@@ -24629,8 +24768,8 @@ __l_2749:
         a     r13, r2                   ;  
         mov   r1, @>0002(r2)
         c     @>fffc(r9), @>fffe(r9)    ; i $i 
-        jne   __l_2748
-__l_2752:
+        jne   __l_2794
+__l_2798:
         mov   *r10+, r3
         mov   *r10+, r2
         mov   *r10, r1
@@ -24639,7 +24778,7 @@ __l_2752:
         mov   *r10+, r11
         b     @__far_ret
 
-        bank 13, >6580
+        bank 13, >678c
 
 ; Subroutine: getfiledescriptor_89, level: 2
 ;   fffc      -4  __rettmp_116: string [0]
@@ -24680,7 +24819,7 @@ getfiledescriptor_89:
         ai    r10, >fff8
         mov   @>7ffe, @>0006(r10)
         ai    r10, >fffc
-        li    r1, __str_cnst_145
+        li    r1, __str_cnst_148
         mov   r1, @>0002(r10)
         mov   r9, r1
         ai    r1, >fffc                 ; __rettmp_116
@@ -24696,26 +24835,26 @@ getfiledescriptor_89:
         ai    r1, >fffd                 ; __rettmp_117
         mov   r1, *r10
         bl    @__far_call_1
-        data  >6018
+        data  >601a
         data  __short_str_equal_82
         movb  @>fffd(r9), r1            ; __rettmp_117
-        jeq   __l_2757
-__l_2756:
+        jeq   __l_2803
+__l_2802:
         movb  @>0008(r9), r1            ; istextfile
-        jeq   __l_2761
-__l_2760:
+        jeq   __l_2807
+__l_2806:
         clr   r1
         mov   @>0006(r9), r2            ; f
         mov   r1, *r2
-        jmp   __l_2768
-__l_2761:
+        jmp   __l_2814
+__l_2807:
         li    r1, >0003
         mov   r1, @>ffb2                ;  inoutres
-        jmp   __l_2768
-__l_2757:
+        jmp   __l_2814
+__l_2803:
         li    r1, >0001
         mov   r1, @>fffe(r9)            ; i
-__l_2754:
+__l_2800:
         li    r1, >ffb4                 ; openfiles
         mov   @>fffe(r9), r2            ; i
         dec   r2
@@ -24723,8 +24862,8 @@ __l_2754:
         mpy   r2, r12
         a     r13, r1                   ;  
         movb  *r1, r1
-        jne   __l_2765
-__l_2764:
+        jne   __l_2811
+__l_2810:
         li    r1, >0001
         li    r2, >ffb4                 ; openfiles
         mov   @>fffe(r9), r3            ; i
@@ -24746,36 +24885,36 @@ __l_2764:
         mov   @>0004(r1), r1
         mov   @>0006(r9), r2            ; f
         mov   r1, @>0006(r2)
-__l_2765:
+__l_2811:
         inc   @>fffe(r9)                ; i
         mov   @>fffe(r9), r1            ; i
         ci    r1, >0003
-        jlt   __l_2769
-        jne   __l_2768
-__l_2769:
+        jlt   __l_2815
+        jne   __l_2814
+__l_2815:
         mov   @>0006(r9), r1            ; f
         mov   *r1, r1
         ci    r1, >ffff
-        jeq   __l_2754
-__l_2768:
+        jeq   __l_2800
+__l_2814:
         li    r1, >0001
         mov   @>0006(r9), r2            ; f
         mov   *r2, r2
         seto  r3
         c     r2, r3
         clr   r2
-        jne   __l_2772
+        jne   __l_2818
         inc   r2
-__l_2772:
+__l_2818:
         mpy   r1, r2
         mov   r3, @>ffb2                ;   inoutres
         mov   r3, r1                    ; inoutres
         clr   r2
         c     r1, r2
         clr   r1
-        jne   __l_2773
+        jne   __l_2819
         inc   r1
-__l_2773:
+__l_2819:
         mov   @>0004(r9), r2            ; result
         movb  @>8303, *r2               ; low R1
         mov   *r10+, r3
@@ -24787,10 +24926,10 @@ __l_2773:
         ai    r10, >0006
         b     @__far_ret
 
-__str_cnst_145 text >00    ; 
+__str_cnst_148 text >00    ; 
         even 
 
-        bank 13, >66fe
+        bank 13, >690a
 
 ; Subroutine: execdsr_90, level: 2
 ;   fffe      -2  __rettmp_118: boolean
@@ -24837,7 +24976,7 @@ execdsr_90:
         ai    r10, >0004
         b     @__far_ret
 
-        bank 13, >6770
+        bank 13, >697c
 
 ; Subroutine: openfile_91, level: 2
 ;   fffe      -2  __rettmp_119: boolean
@@ -24869,12 +25008,12 @@ openfile_91:
         data  >601a
         data  getfiledescriptor_89
         movb  @>fffe(r9), r1            ; __rettmp_119
-        jeq   __l_2777
-__l_2779:
+        jeq   __l_2823
+__l_2825:
         mov   @>0004(r9), r1            ; f
         mov   *r1, r1
-        jeq   __l_2777
-__l_2776:
+        jeq   __l_2823
+__l_2822:
         movb  @>0006(r9), r1            ; opcode
         srl   r1, 8
         mov   @>0004(r9), r2            ; f
@@ -24906,7 +25045,7 @@ __l_2776:
         xor   r12, r2
         mpy   r1, r2
         mov   r3, @>ffb2                ;   inoutres
-__l_2777:
+__l_2823:
         mov   *r10+, r3
         mov   *r10+, r2
         mov   *r10, r1
@@ -24916,7 +25055,7 @@ __l_2777:
         ai    r10, >000a
         b     @__far_ret
 
-        bank 13, >6836
+        bank 13, >6a42
 
 ; Subroutine: strcompare_92, level: 2
 ;   fffa      -6  __rettmp_139: int16
@@ -24945,17 +25084,17 @@ strcompare_92:
         srl   r2, 8
 ; no.opt
         c     r1, r2
-        jlt   __l_2786
+        jlt   __l_2832
         mov   r2, r1
-__l_2786:
+__l_2832:
         mov   r1, @>fffe(r9)            ; $i
         c     @>fffc(r9), @>fffe(r9)    ; i $i 
-        jlt   __l_2783
-        jeq   __l_2783
-        jmp   __l_2793
-__l_2782:
+        jlt   __l_2829
+        jeq   __l_2829
+        jmp   __l_2839
+__l_2828:
         inc   @>fffc(r9)                ; i
-__l_2783:
+__l_2829:
         mov   @>0006(r9), r1            ; s
         a     @>fffc(r9), r1            ; i 
         movb  *r1, r1
@@ -24965,8 +25104,8 @@ __l_2783:
         movb  *r2, r2
         srl   r2, 8
         c     r1, r2
-        jeq   __l_2790
-__l_2789:
+        jeq   __l_2836
+__l_2835:
         mov   @>0006(r9), r1            ; s
         a     @>fffc(r9), r1            ; i 
         movb  *r1, r1
@@ -24978,11 +25117,11 @@ __l_2789:
         s     r2, r1
         mov   @>0004(r9), r2            ; result
         mov   r1, *r2
-        jmp   __l_2785
-__l_2790:
+        jmp   __l_2831
+__l_2836:
         c     @>fffc(r9), @>fffe(r9)    ; i $i 
-        jne   __l_2782
-__l_2793:
+        jne   __l_2828
+__l_2839:
         mov   @>0006(r9), r1            ; s
         movb  *r1, r1
         srl   r1, 8
@@ -24992,7 +25131,7 @@ __l_2793:
         s     r2, r1
         mov   @>0004(r9), r2            ; result
         mov   r1, *r2
-__l_2785:
+__l_2831:
         mov   *r10+, r2
         mov   *r10, r1
         mov   r9, r10
@@ -25001,7 +25140,7 @@ __l_2785:
         ai    r10, >0006
         b     @__far_ret
 
-        bank 13, >68ee
+        bank 13, >6afa
 
 ; Subroutine: $system_init_93, level: 2
 

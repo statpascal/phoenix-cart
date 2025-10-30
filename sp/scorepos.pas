@@ -4,13 +4,13 @@ interface
 
 uses globals;
 
-function evaluate(cMoveFlag: integer; lastMove, tempMove: moverec): integer;
+function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; lastMove, tempMove: moverec): integer;
 
 implementation
 
 uses trimprocs;
 
-function evaluate(cMoveFlag: integer; lastMove, tempMove: moverec): integer;
+function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; lastMove, tempMove: moverec): integer;
     label 
         l_1;
     var 
@@ -27,6 +27,35 @@ function evaluate(cMoveFlag: integer; lastMove, tempMove: moverec): integer;
         endGame := 0;
         startPage := BASE;
         dataSize := 8;
+        
+        {capture bonus}
+        if (attackFlag = 1) and (turn = gameSide) then
+            begin
+                bonus := 0;
+                case attackId of
+                    0 : 
+                        if capId = 0 then
+                            bonus := 10
+                        else
+                            bonus := 50;
+                    8 : 
+                        if capId in [8, 32] then
+                            bonus := 50;
+                    16, 24 : 
+                        if capId in [8, 32] then
+                             bonus := 50
+                        else
+                            if capId in [16, 24] then
+                                bonus := 25;
+                    32 : 
+                        if capId = 32 then
+                            bonus := 50;
+                end;
+                if turn = 0 then
+                    wScore := wScore + bonus
+                else
+                    bScore := bScore + bonus;
+            end;
 
      {penalty for moving king if castling possible}
         if (tempMove.id = 40) and (cMoveFlag = 0) then

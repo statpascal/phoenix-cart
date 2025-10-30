@@ -7,7 +7,8 @@ procedure MoveGen(lastMove : moverec; var finalMove : moverec;
                   var score : integer; aVal, bVal, cMoveFlag : integer);
 
 implementation
-uses {$U chesslib.code} scorepos, {$U interface.code} trimprocs, pmove;
+uses {$U chesslib.code} scorepos,
+     {$U interface.code} trimprocs, pmove;
 
 procedure MoveGen;
 

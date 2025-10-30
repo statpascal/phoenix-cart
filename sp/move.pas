@@ -633,7 +633,11 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                         DataOps(2, startPage, dataSize, offset2, bit1);
                         BitAnd(bit1, bit3, bitRes);
                         if not(IsClear(bitRes)) then
-                            foundFlag := TRUE;
+                            begin
+                                foundFlag := TRUE;
+                                l := currentMove^.id;
+                                n := j
+                            end;
                         BitAnd(bit1, bit2, bit1);
                         DataOps(1, startPage, dataSize, offset2, bit1);
                         j := j + 8;
@@ -776,11 +780,11 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                         end;
 
         {evaluate position}
-                    evalScore := Evaluate(cMoveFlag, lastMove, tempMove);
+                    evalScore := Evaluate(cMoveFlag, attackFlag, l, n, lastMove, tempMove);
                     pruneFlag := 0;
                     if turn = 0 then
                         begin
-                            if evalScore > bestScore then
+                            if evalScore >= bestScore then
                                 begin
                                     bestScore := evalScore;
                                     bestMove.id := tempMove.id;
@@ -795,7 +799,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                         end
                     else
                         begin
-                            if evalScore < bestScore then
+                            if evalScore <= bestScore then
                                 begin
                                     bestScore := evalScore;
                                     bestMove.id := tempMove.id;
@@ -827,7 +831,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                     pruneFlag := 0;
                     if turn = 0 then
                         begin
-                            if score > bestScore then
+                            if score >= bestScore then
                                 begin
                                     bestScore := score;
                                     bestMove.id := tempMove.id;
@@ -842,7 +846,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                         end
                     else
                         begin
-                            if score < bestScore then
+                            if score <= bestScore then
                                 begin
                                     bestScore := score;
                                     bestMove.id := tempMove.id;

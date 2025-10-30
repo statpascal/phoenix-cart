@@ -44,7 +44,7 @@ procedure loadBoardData;
 begin
     initHeap ($3000, $1000);
     clrscr;
-    writeln('Phoenix Chess 1.6');
+    writeln('Phoenix Chess 1.7');
     n := SamsInit;
     if n = 0 then
         begin
