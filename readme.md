@@ -12,7 +12,7 @@ are a split of some procedures that exceeded the code size limit of 8 KB
 (the size of a single bank in cartridge address space) and different calling
 conventions for assembly modules.
 
-A build script, the resulting cartridge and the assembler output of the
-compiler (for xas99) are in the root directory.
+A build script, the resulting cartridge (phoenix.bin) and the assembler output
+(out.a99) of the compiler (for xas99) are stored in the root directory.
 
 To execute the cartridge, SAMS support is required.
