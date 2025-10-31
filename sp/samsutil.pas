@@ -114,6 +114,7 @@ var
     log: text;
 
 
+(*
 procedure dataOps (rwcode, startPage, dataSize, offset: integer; var data);
 
 const 
@@ -153,10 +154,9 @@ begin
     setCRUBit (SamsCRUAddr, false)
 end;
 
+*)
 
-
-(*
-procedure dataOps (rwcode: integer; var startPage, dataSize, offset: integer; var data); assembler;
+procedure dataOps (rwcode, startPage, dataSize, offset: integer; var data); assembler;
         lwpi    >8320
         mov     @>8314, r10     // copy stack pointer from Pascal runtime workspace
         
@@ -165,29 +165,28 @@ procedure dataOps (rwcode: integer; var startPage, dataSize, offset: integer; va
         mov     @dataSize,r2        //get pointer to number of bytes to transfer
         mov     @startpage,r1        //get pointer to starting page
 
-        mov     *r2,r7          //save byte number to transfer
         li      r6,>4004        //starting sams register (memory >2000)
         li      r12,>1e00       //cru address of sams card
         sbo     0               //turn card on
         li      r5,>2000        //base memory address
-        a       *r3,r5          //apply byte offset
-        mov     *r3,r0          //store offset in byte counter at start
-        mov     *r10,r3         //get r/w code
+        a       r3,r5          //apply byte offset
+        mov     r3,r0          //store offset in byte counter at start
+        mov     @rwcode,r3         //get r/w code
         sbo     1               //turn mapper on
-nxtpage swpb    *r1
-        mov     *r1,*r6         //assign page to sams register
-        swpb    *r1
+nxtpage swpb    r1
+        mov     r1,*r6         //assign page to sams register
+        swpb    r1
 rwops   ci      r3,1            //is it a write operation?
         jne     getops
 saveops mov     *r4+,*r5+       //save 2 bytes at a time (word)
         jmp     contops
 getops  mov     *r5+,*r4+       //get 2 bytes at a time
-contops dect    r7
+contops dect    r2
         jle     opsdone         //no more data
         inct    r0
         ci      r0,4096         //are we past 4k of data?
         jlt     rwops
-        inc     *r1             //next page number
+        inc     r1             //next page number
         clr     r0
         li      r5,>2000
         jmp     nxtpage         //continue data ops
@@ -198,6 +197,6 @@ opsdone li      r1,>0200        //restore sams register to original page
 
         lwpi    >8300
 end;
-*)
+
 
 end.
