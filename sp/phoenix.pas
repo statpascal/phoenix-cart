@@ -47,19 +47,17 @@ begin
     writeln('Phoenix Chess 1.7');
     n := SamsInit;
     if n = 0 then
-        begin
-            writeln('no SAMS card found! Exiting...');
-            exit;
-        end
+         writeln('no SAMS card found! Exiting...')
     else
         begin
             SamsSize(n, dataSize);
             writeln('SAMS card detected: ',dataSize,' pages');
+
+            writeln('loading data...');
+            loadBoardData;
+            writeln('starting Phoenix Chess...');
+
+            chainMain
         end;
-
-    writeln('loading data...');
-    loadBoardData;
-    writeln('starting Phoenix Chess...');
-
-    chainMain;
+    waitkey
 end.

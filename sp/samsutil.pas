@@ -63,11 +63,11 @@ var
     reg: integer;
 begin
     samsCardOn;
-    for reg := 0 to pred (SamsRegs) do
+    for reg := 0 to pred (SamsRegs) do 
         memW [$4000 div 2 + reg] := swap (reg);
 
-    if memW [$401e div 2] <> $0f00 then
-        samsInit := 0
+    if memB [$401e] <> $0f then begin
+        samsInit := 0 end
     else
         begin
             memW [$401e div 2] := $0102;
