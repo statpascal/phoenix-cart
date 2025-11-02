@@ -22,66 +22,67 @@ implementation
 
 var 
     iloc, disp, cumdisp, flag, oflag, subrtn, subrtn1, pcount: integer;
-    dbyte: uint8;
-
+    dbyte: integer;
 const 
     vflag: integer =   0;
     zero: integer =   0;
-    bittab: array [0..7] of uint8 =   (128,64,32,16,8,4,2,1);
+//    bittab: array [0..7] of uint8 =   (128,64,32,16,8,4,2,1);
+    bittab: array [0..7] of uint16 =   ($7fff,$bfff,$dfff,$efff,$f7ff,$fbff,$fdff,$feff);
+    //                                  not 128 shl 8 or ff, ..., not 1 shl 8 or ff
 
 procedure trimray_asm; assembler;
         // not called; provides assembler block
         clr     r0 // TODO: dummy op - avoid double lables
     //trim a ray to empty squares
     trimray 
-        mov     r11,@subrtn1
-    nxtsqr  
         a       @disp,@cumdisp
         mov     @cumdisp,r4
-        ci      r4,0            //check if location off bottom of board
-        jlt     done
         ci      r4,63           //check if location off top of board
-        jgt     done
-        bl      @bitchk         //check value of bit at new location
-        ci      r5,0            //is bit value 0?
-        jne     next
+        jh	done		// compare without sign
+        
+        mov     r4,r7		//check value of bit at new location
+        srl     r4,3            //calculate byte displacement (DIV 8)
+        andi    r7,>0007
+        mov 	r4,@dbyte
+        a       r3,r4           //point to byte in bitboard
+        movb    *r4,r5          //get displacement byte content
+        sla     r7,1
+        mov     @bittab(r7),r6
+        szc	r6,r5		//high byte of r5 has value of displacement bit
+        jne     next		//is bit value 0?
+        
         c       @flag,@zero     //check if zero flag already set
         jne     sidebit
         inc     @flag           //set zero flag
         c       @oflag,@zero    //check of opponent flag set
         jeq     sidebit
-        clr     r5              //set the displacement bit
-        movb    *r4,r5
         inv     r6
-        socb    r6,r5
-        movb    r5,*r4
+        socb    r6,*r4
         inv     r6
+        
     sidebit 
         c       @vflag,@zero
-        jne     nxtsqr
-        clr     r4
-        movb    @dbyte,r4       //get byte displacement
-        swpb    r4
+        jne     trimray
+        mov	@dbyte,r4
         a       r2,r4           //point to byte in side bitboard
-        clr     r5
         movb    *r4,r5
         szcb    r6,r5           //r5 now has value of sides bitboard bit
-        ci      r5,0
-        jeq     nxtsqr
+        jeq     trimray
         jmp     done
+        
     next    
         c       @flag,@zero
         jeq     sidebit
         inv     r6
-        clr     r5
-        movb    *r4,r5
-        szcb    r6,r5
-        movb    r5,*r4          //clear the displacement bit
+        szcb    r6,*r4		//clear the displacement bit
         inv     r6
         jmp     sidebit
-        done    mov     @subrtn1,r11
-        b       *r11
+        
+    done   
+         b       *r11
 end;
+
+(*
 
 procedure bitcheck_asm; assembler;
         // not called; provides assembler block
@@ -106,6 +107,7 @@ procedure bitcheck_asm; assembler;
         swpb    r4
         movb    r4,@dbyte       //store byte displacement
         swpb    r4
+//        mov     r4,@dbyte
         a       r3,r4           //point to byte in bitboard
         clr     r5
         movb    *r4,r5          //get displacement byte content
@@ -116,6 +118,26 @@ procedure bitcheck_asm; assembler;
         b       *r11
 end;
 
+procedure bitcheck_asm; assembler;
+        // not called; provides assembler block
+        clr     r0 // TODO: dummy op - avoid double lables
+
+        //return value of displacement bit in r5
+        //r3 bitboard pointer
+        //r4 has the bitboard position
+    bitchk  
+        mov     r4,r7
+        srl     r4,3            //calculate byte displacement (DIV 8)
+        andi    r7,>0007
+        mov 	r4,@dbyte
+        a       r3,r4           //point to byte in bitboard
+        movb    *r4,r5          //get displacement byte content
+        sla     r7,1
+        mov     @bittab(r7),r6
+        szc	r6,r5		//high byte of r5 has value of displacement bit
+        b       *r11
+end;
+*)
 
 procedure lredge_asm; assembler;
         // not called; provides assembler block
@@ -278,33 +300,66 @@ end;
 //starting at index 1 and board position 
 
 procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
+        mov    	@posarray, r13  
+        inct   	r13		// R13: data pointer
+        mov    	@b1, r14	// R14: pointer to bitboard
+        
+        clr	r0		// R0: piece positition (0-63)
+        li     	r15, 4		// R0: loop counter over bitboard words
+        
+    bitpos_1:
+        mov	*r14+, r8	// R8: content of bitboard block
+        li	r12, 16		// loop over 16 bits
+        
+    bitpos_2:
+        sla	r8, 1
+        jnc     bitpos_3
+        
+        mov	r0, *r13+
+        
+    bitpos_3:
+        inc	r0
+        dec 	r12		// bit bounter
+        jne	bitpos_2
+        
+        dec	r15		// word counter
+        jne	bitpos_1
+        
+        mov    	@posarray, r12  // r12: pointer to posarray
+        s	r12, r13
+        dect	r13
+        srl	r13, 1		// calculate number of pieces
+        mov	r13, *r12	// store number of pieces at begin of posarray
+end;
+
+(*
+procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
         lwpi    >8320
         mov     @>8314, r10 // copy stack pointer from Pascal runtime workspace
 
         mov     @posarray,r1        //get array pointer
         mov     @b1,r3        //get bitboard pointer
+        
         clr     r0              //initialize position marker
-        clr     r4              //initialize board position
-        clr     @pcount         //initialize piece counter
+        clr     r8              //initialize piece counter
         mov     r1,r2           //save array pointer
         inct    r1              //point to array index 1
     nextpos 
+        mov	r0, r4
         bl      @bitchk         //get value of bit in msb of r5
-        ci      r5,0
         jeq     nopiece
         mov     r0,*r1+         //store piece position in array
-        inc     @pcount         //update piece counter
+        inc     r8              //update piece counter
     nopiece 
         inc     r0
-        mov     r0,r4
-        ci      r4,63           //check if end of bitboard reached
-        jgt     donebrd
-        jmp     nextpos
+        ci      r0,64           //check if end of bitboard reached
+        jne     nextpos
     donebrd 
-        mov     @pcount,*r2     //store pieces number in array
+        mov     r8,*r2          //store pieces number in array
 
         lwpi    >8300
 end;
+*)
 
 //complements a bitboard
 //the complement of bitboard1 will be stored in bitboard2

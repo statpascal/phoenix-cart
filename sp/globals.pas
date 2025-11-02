@@ -128,7 +128,7 @@ var
     buffer: array[0..59] of integer;
 
 procedure ClearBitboard(var bit1: bitboard);
-function IsClear(var bit1: bitboard): boolean;
+function IsClear(var b: bitboard): boolean;
 procedure BitDisp(var bit1: bitboard);
 
 function GetKeyInt: integer;
@@ -149,6 +149,7 @@ procedure ClearBitboard(var bit1: bitboard);
             bit1[i] := 0;
     end; 
 
+(*
 function IsClear(var bit1: bitboard): boolean;
     var 
         i, flag: integer;
@@ -162,6 +163,13 @@ function IsClear(var bit1: bitboard): boolean;
         if flag <> 0 then
             IsClear := FALSE;
     end;
+*)    
+
+function IsClear(var b: bitboard): boolean;
+    begin
+        IsClear := b [0] or b [1] or b [2] or b [3] = 0
+    end;
+
 
 procedure BitDisp(var bit1: bitboard);
     var 
