@@ -82,6 +82,16 @@ function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; lastMove, tem
                     if (turn = 1) and (bCastleFlag = 0) then
                         bScore := bScore - 500;
             end;
+            
+            
+    {penalty if moving queen too early in game}
+        if (tempMove.id = 32) and (gameMove < 4) then
+            begin
+                if turn = 0 then
+                   wScore := wScore - 100
+                else
+                   bScore := bScore - 100;
+            end;
 
      {endgame determination}
         if turn = 0 then
