@@ -1,6 +1,6 @@
 program phoenix;
 
-uses globals, main;
+uses globals, main, vdp;
 
 var 
     n: integer;
@@ -44,6 +44,8 @@ procedure loadBoardData;
 begin
     initHeap ($3000, $1000);
     clrscr;
+//    setTextColor (lightyellow);
+    setBackColor (white);
     writeln('Phoenix Chess 1.7');
     n := SamsInit;
     if n = 0 then

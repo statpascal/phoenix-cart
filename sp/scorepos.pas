@@ -37,24 +37,30 @@ function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; lastMove, tem
                         if capId = 0 then
                             bonus := 10
                         else
-                            bonus := 50;
+                            bonus := 100;
                     8 : 
                         if capId in [8, 32] then
-                            bonus := 50;
+                            bonus := 100;
                     16, 24 : 
                         if capId in [8, 32] then
-                             bonus := 50
+                             bonus := 100
                         else
                             if capId in [16, 24] then
-                                bonus := 25;
+                                bonus := 50;
                     32 : 
                         if capId = 32 then
-                            bonus := 50;
+                            bonus := 75;
                 end;
                 if turn = 0 then
-                    wScore := wScore + bonus
+                    begin
+                        bScore := bScore - bonus;                    
+                        wScore := wScore + bonus
+                    end
                 else
-                    bScore := bScore + bonus;
+                    begin
+                        wScore := wScore - bonus;
+                        bScore := bScore + bonus
+                    end
             end;
 
      {penalty for moving king if castling possible}

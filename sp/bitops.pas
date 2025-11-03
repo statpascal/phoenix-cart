@@ -532,6 +532,5 @@ var p: pointer;
 
 begin
     p := addr (trimray_asm);
-    p := addr (bitcheck_asm);
     p := addr (lredge_asm)
 end.
