@@ -20,7 +20,7 @@ procedure LShift(var b1, br : bitboard; n : integer);
 implementation
 
 var 
-    iloc, disp, cumdisp, flag, oflag, subrtn, subrtn1, pcount: integer;
+    iloc, disp, cumdisp, flag, oflag: integer;
     dbyte: integer;
 const 
     vflag: integer =   0;
@@ -29,14 +29,23 @@ const
     bittab: array [0..7] of uint16 =   ($7fff,$bfff,$dfff,$efff,$f7ff,$fbff,$fdff,$feff);
     //                                  not 128 shl 8 or ff, ..., not 1 shl 8 or ff
 
-procedure trimray_asm; assembler;
-        // not called; provides assembler block
-        clr     r0 // TODO: dummy op - avoid double lables
-    //trim a ray to empty squares
+// trim sliding pieces movement rays
+// rays will be trimmed to first empty square
+// bitboard1 is untrimmed movement bitboard
+// bitboard2 is the sides bitboard (left and right sides set to 1)
+// intloc is starting position of sliding piece
+// inttype is piece type : r=8, b=24, q=32
+// flag = 1 when trimming for opponent pieces, otherwise 0 
+
+procedure BitTrim(var b1, b2: bitboard; var n, ptype: integer; flg: integer); assembler;
+        lwpi    >8320
+        mov     @>8314, r10 // copy stack pointer from Pascal runtime workspace
+        jmp     trim_start // jump around subroutine
+        
     trimray 
         a       @disp,@cumdisp
         mov     @cumdisp,r4
-        ci      r4,63           //check if location off top of board
+        ci      r4,63           //check if location off board
         jh	done		// compare without sign
         
         mov     r4,r7		//check value of bit at new location
@@ -79,140 +88,8 @@ procedure trimray_asm; assembler;
         
     done   
          b       *r11
-end;
-
-(*
-
-procedure bitcheck_asm; assembler;
-        // not called; provides assembler block
-        clr     r0 // TODO: dummy op - avoid double lables
-
-        //return value of displacement bit in r5
-        //r4 has the bitboard position
-    bitchk  
-        clr     r7              //clear index to bittab
-        mov     r4,r5           //point to displacement square
-        mov     r5,r6
-        srl     r5,3            //calculate byte displacement (DIV 8)
-        mov     r5,r4           //save byte displacement
-        sla     r5,3            //multiply by 8
-        jmp     trgchk
-    nxtbit  
-        inc     r5              //add a bit to the byte
-        inc     r7              //increment bit mask table index
-    trgchk  
-        c       r5,r6           //are we at the displacement bit?
-        jne     nxtbit
-        swpb    r4
-        movb    r4,@dbyte       //store byte displacement
-        swpb    r4
-//        mov     r4,@dbyte
-        a       r3,r4           //point to byte in bitboard
-        clr     r5
-        movb    *r4,r5          //get displacement byte content
-        clr     r6
-        movb    @bittab(r7),r6
-        inv     r6
-        szcb    r6,r5           //high byte of r5 has value of displacement bit
-        b       *r11
-end;
-
-procedure bitcheck_asm; assembler;
-        // not called; provides assembler block
-        clr     r0 // TODO: dummy op - avoid double lables
-
-        //return value of displacement bit in r5
-        //r3 bitboard pointer
-        //r4 has the bitboard position
-    bitchk  
-        mov     r4,r7
-        srl     r4,3            //calculate byte displacement (DIV 8)
-        andi    r7,>0007
-        mov 	r4,@dbyte
-        a       r3,r4           //point to byte in bitboard
-        movb    *r4,r5          //get displacement byte content
-        sla     r7,1
-        mov     @bittab(r7),r6
-        szc	r6,r5		//high byte of r5 has value of displacement bit
-        b       *r11
-end;
-*)
-
-(*
-procedure lredge_asm; assembler;
-        // not called; provides assembler block
-        clr     r0 // TODO: dummy op - avoid double lables
-
-        //check if at left edge of board
-    l_edge  
-        mov     r11,@subrtn1
-        clr     r5
-        mov     @iloc,r4
-        ci      r4,0
-        jeq     atedge
-        ci      r4,8
-        jeq     atedge
-        ci      r4,16
-        jeq     atedge
-        ci      r4,24
-        jeq     atedge
-        ci      r4,32
-        jeq     atedge
-        ci      r4,40
-        jeq     atedge
-        ci      r4,48
-        jeq     atedge
-        ci      r4,56
-        jeq     atedge
-        jmp     notedge
-    atedge  
-        inc     r5
-    notedge 
-        mov     @subrtn1,r11
-        b       *r11
-
-        //check if at right edge of board
-    r_edge  
-        mov     r11,@subrtn1
-        clr     r5
-        mov     @iloc,r4
-        ci      r4,7
-        jeq     atedge1
-        ci      r4,15
-        jeq     atedge1
-        ci      r4,23
-        jeq     atedge1
-        ci      r4,31
-        jeq     atedge1
-        ci      r4,39
-        jeq     atedge1
-        ci      r4,47
-        jeq     atedge1
-        ci      r4,55
-        jeq     atedge1
-        ci      r4,63
-        jeq     atedge1
-        jmp     noedge
-    atedge1 
-        inc     r5
-    noedge  
-        mov     @subrtn1,r11
-        b       *r11
-end;
-*)
-
-//trim sliding pieces movement rays
-//rays will be trimmed to first empty square
-//bitboard1 is untrimmed movement bitboard
-//bitboard2 is the sides bitboard (left and right sides set to 1)
-//intloc is starting position of sliding piece
-//inttype is piece type : r=8, b=24, q=32
-//flag = 1 when trimming for opponent pieces, otherwise 0 
-
-procedure BitTrim(var b1, b2: bitboard; var n, ptype: integer; flg: integer); assembler;
-        lwpi    >8320
-        mov     @>8314, r10 // copy stack pointer from Pascal runtime workspace
-
+        
+    trim_start
         mov     @flg,@oflag    //get opponent flag value
         mov     @ptype,r0       //get pointer to piece type
         mov     @n,r1           //get pointer to intloc
@@ -357,37 +234,8 @@ procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
         mov	r13, *r12	// store number of pieces at begin of posarray
 end;
 
-(*
-procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
-        lwpi    >8320
-        mov     @>8314, r10 // copy stack pointer from Pascal runtime workspace
-
-        mov     @posarray,r1        //get array pointer
-        mov     @b1,r3        //get bitboard pointer
-        
-        clr     r0              //initialize position marker
-        clr     r8              //initialize piece counter
-        mov     r1,r2           //save array pointer
-        inct    r1              //point to array index 1
-    nextpos 
-        mov	r0, r4
-        bl      @bitchk         //get value of bit in msb of r5
-        jeq     nopiece
-        mov     r0,*r1+         //store piece position in array
-        inc     r8              //update piece counter
-    nopiece 
-        inc     r0
-        ci      r0,64           //check if end of bitboard reached
-        jne     nextpos
-    donebrd 
-        mov     r8,*r2          //store pieces number in array
-
-        lwpi    >8300
-end;
-*)
-
-//complements a bitboard
-//the complement of bitboard1 will be stored in bitboard2
+// complements a bitboard
+// the complement of bitboard1 will be stored in bitboard2
 
 procedure BitNot(var b1, br : bitboard); assembler;
         lwpi    >8320
@@ -411,8 +259,8 @@ procedure BitNot(var b1, br : bitboard); assembler;
         lwpi    >8300
 end;
 
-//logically AND 2 bitboards
-//bitboard1 and bitboard2 are ANDed and the result placed in bitboard3
+// logically AND 2 bitboards
+// bitboard1 and bitboard2 are ANDed and the result placed in bitboard3
 
 procedure BitAnd(var b1, b2, br : bitboard); assembler;
         mov     @br, r15        //get pointer to bitboard3
@@ -570,11 +418,4 @@ procedure LShift(var b1, br : bitboard; n : integer); assembler;
         lwpi    >8300
 end;
 
-
-// TODO: force inclusion
-
-var p: pointer;
-
-begin
-    p := addr (trimray_asm)
 end.
