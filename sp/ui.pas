@@ -27,7 +27,7 @@ var
     rdir, iLocString, eLocString, gDate, pName : string;
 
 begin
-    rdir := 'PO=PRINTER:';
+    rdir := 'PIO';
     pcname[0] := 'P';
     pcname[8] := 'R';
     pcname[16] := 'N';
@@ -40,9 +40,9 @@ begin
     gotoxy(20, 11);
     readln(pName);
     gotoxy(20, 10);
-    write(chr(7), 'date:                  ');
+    write(chr(7), 'date:             ');
     gotoxy(20, 11);
-    write('                    ');
+    write('                  ');
     gotoxy(20, 11);
     readln(gDate);
     gotoxy(20, 12);
@@ -51,7 +51,12 @@ begin
     startPage := 22;
     dataSize := 8;
     pturn := 1;
-    // status := Redirect(rdir);	TODO
+    
+    close (output);
+    assign (output, rdir);
+    rewrite (output);
+    status := IOResult = 0;
+    
     if status = FALSE then
         begin
             //   Exception(TRUE);
@@ -96,6 +101,11 @@ begin
             until moveStore.Id = 99;
         end;
     //  Exception(TRUE);
+    
+    close (output);
+    assign (output, '');
+    rewrite (output);
+    
     gotoxy(20, 12);
     write('               ');
 end;

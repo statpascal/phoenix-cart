@@ -1,4 +1,3 @@
-
 unit bitops;
 
 interface
@@ -139,6 +138,7 @@ procedure bitcheck_asm; assembler;
 end;
 *)
 
+(*
 procedure lredge_asm; assembler;
         // not called; provides assembler block
         clr     r0 // TODO: dummy op - avoid double lables
@@ -199,6 +199,7 @@ procedure lredge_asm; assembler;
         mov     @subrtn1,r11
         b       *r11
 end;
+*)
 
 //trim sliding pieces movement rays
 //rays will be trimmed to first empty square
@@ -239,9 +240,14 @@ procedure BitTrim(var b1, b2: bitboard; var n, ptype: integer; flg: integer); as
         // left ray
         clr     @flag
         clr     @vflag
-        bl      @l_edge         // check if already at left edge
-        ci      r5,0
-        jne     rray
+
+        mov	r4,r5
+        andi    r5,>0007
+        jeq	rray
+        
+//        bl      @l_edge         // check if already at left edge
+//        ci      r5,0
+//        jne     rray
         mov     @iloc,@cumdisp
         li      r5,-1
         mov     r5,@disp
@@ -249,9 +255,16 @@ procedure BitTrim(var b1, b2: bitboard; var n, ptype: integer; flg: integer); as
         // right ray
     rray    
         clr     @flag
-        bl      @r_edge         // check if already at right edge
-        ci      r5,0
-        jne     isrook
+        
+        mov	r4,r5
+        inc	r5
+        andi	r5,>0007
+        jeq	isrook
+        
+//        bl      @r_edge         // check if already at right edge
+//        ci      r5,0
+//        jne     isrook
+
         mov     @iloc,@cumdisp
         li      r5,1
         mov     r5,@disp
@@ -262,9 +275,14 @@ procedure BitTrim(var b1, b2: bitboard; var n, ptype: integer; flg: integer); as
         jeq     finish		// left upper ray
     bishop  
         clr     @flag
-        bl      @l_edge         // check if already at left edge
-        ci      r5,0
-        jne     rcheck
+  
+        mov	r4,r5
+        andi	r5,>0007
+        jeq	rcheck      
+        
+//        bl      @l_edge         // check if already at left edge
+//        ci      r5,0
+//        jne     rcheck
         mov     @iloc,@cumdisp
         li      r5,7
         mov     r5,@disp
@@ -277,9 +295,16 @@ procedure BitTrim(var b1, b2: bitboard; var n, ptype: integer; flg: integer); as
         bl      @trimray
     rcheck  // right upper ray
         clr     @flag
-        bl      @r_edge         // check if already at right edge
-        ci      r5,0
-        jne     finish
+        
+        mov	r4,r5
+        inc	r5
+        andi	r5,>0007
+        jeq	finish
+        
+//        bl      @r_edge         // check if already at right edge
+//        ci      r5,0
+//        jne     finish
+
         mov     @iloc,@cumdisp
         li      r5,9
         mov     r5,@disp
@@ -390,34 +415,54 @@ end;
 //bitboard1 and bitboard2 are ANDed and the result placed in bitboard3
 
 procedure BitAnd(var b1, b2, br : bitboard); assembler;
-        lwpi    >8320
-        mov     @>8314, r10      // copy stack pointer from Pascal runtime workspace
+        mov     @br, r15        //get pointer to bitboard3
+        mov     @b2, r14        //get pointer to bitboard2
+        mov     @b1, r13        //get pointer to bitboard1
+        
+        mov 	*r13+, r0
+        mov	*r14+, r12
+        inv	r12
+        szc	r12, r0
+        mov	r0, *r15+
+        
+        mov 	*r13+, r0
+        mov	*r14+, r12
+        inv	r12
+        szc	r12, r0
+        mov	r0, *r15+
+        
+        mov 	*r13+, r0
+        mov	*r14+, r12
+        inv	r12
+        szc	r12, r0
+        mov	r0, *r15+
 
-        mov     @br,r7        //get pointer to bitboard3
-        mov     @b2,r6        //get pointer to bitboard2
-        mov     @b1,r5         //get pointer to bitboard1
-        mov     *r5+,r3         //protect contents of bitboard1 and bitboard2
-        mov     *r6+,r4
-        inv     r3              //AND bitboard1 with bitboard 2
-        szc     r3,r4           //inv then szc = and
-        mov     r4,*r7+         //save result in bitboard3
-        mov     *r5+,r3
-        mov     *r6+,r4
-        inv     r3
-        szc     r3,r4
-        mov     r4,*r7+
-        mov     *r5+,r3
-        mov     *r6+,r4
-        inv     r3
-        szc     r3,r4
-        mov     r4,*r7+
-        mov     *r5,r3
-        mov     *r6,r4
-        inv     r3
-        szc     r3,r4
-        mov     r4,*r7
-
-        lwpi    >8300
+        mov 	*r13, r0
+        mov	*r14, r12
+        inv	r12
+        szc	r12, r0
+        mov	r0, *r15
+(*        
+        mov 	*r13+, *r15
+        mov	*r14+, r12
+        inv	r12
+        szc	r12, *r15+
+        
+        mov 	*r13+, *r15
+        mov	*r14+, r12
+        inv	r12
+        szc	r12, *r15+
+        
+        mov 	*r13+, *r15
+        mov	*r14+, r12
+        inv	r12
+        szc	r12, *r15+
+        
+        mov 	*r13, *r15
+        mov	*r14, r12
+        inv	r12
+        szc	r12, *r15
+*)
 end;
 
 //logicaly OR two bitboards
@@ -531,6 +576,5 @@ end;
 var p: pointer;
 
 begin
-    p := addr (trimray_asm);
-    p := addr (lredge_asm)
+    p := addr (trimray_asm)
 end.
