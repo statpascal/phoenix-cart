@@ -12,6 +12,6 @@ are a split of some procedures that exceeded the code size limit of 8 KB
 (the size of a single bank in cartridge address space) and different calling
 conventions for assembly modules.
 
-A build script and the resulting cartridge (phoenix.bin) are stored in the root directory.
+A build script is stored in the root directory.
 
-To execute the cartridge, SAMS support is required.
+To execute the resulting cartridge, SAMS support is required.
