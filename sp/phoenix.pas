@@ -42,11 +42,11 @@ procedure loadBoardData;
     end;
 
 begin
-    initHeap ($3000, $1000);
+    initHeap ($a000, 16384);
     clrscr;
 //    setTextColor (lightyellow);
     setBackColor (white);
-    writeln('Phoenix Chess 1.8');
+    writeln('Phoenix Chess 1.8 - 2025-11-04 15-00');
     n := SamsInit;
     if n = 0 then
          writeln('no SAMS card found! Exiting...')

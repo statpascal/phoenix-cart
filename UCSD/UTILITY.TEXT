@@ -290,7 +290,7 @@ begin
         write(chr(7), 'ply: ');
         ans := GetKey;
         readln(gamePly);
-       until gamePly in[2..5];
+       until gamePly in[2..6];
        ply := gamePly;
        gotoxy(0, 1);
        write('ply : ', gamePly);

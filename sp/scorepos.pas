@@ -88,9 +88,9 @@ function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; lastMove, tem
         if (tempMove.id = 32) and (gameMove < 4) then
             begin
                 if turn = 0 then
-                   wScore := wScore - 100
+                   wScore := wScore - 300
                 else
-                   bScore := bScore - 100;
+                   bScore := bScore - 300;
             end;
 
      {endgame determination}

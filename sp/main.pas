@@ -481,10 +481,10 @@ procedure initGame;
         DataOps(1, sPage, dataSize, offset, moveStore);
         dataSize := 8;
 
-        write(chr(7), 'enter ply: [2-5] ');
+        write(chr(7), 'enter ply: [2-6] ');
         repeat
             ans := GetKeyInt;
-        until ans in[50..53];
+        until ans in[50..54];
         writeln(chr(ans));
         ply := ans - 48;
         gamePly := ply;

@@ -80,12 +80,12 @@ begin
   end;
   
  {penalty if moving queen too early in game}
- if (tempMove.id = 32) and (gameMove < 4) then
+ if (tempMove.id = 32) and (gameMove < 5) then
   begin
    if turn = 0 then
-    wScore := wScore - 100
+    wScore := wScore - 300
    else
-    bScore := bScore - 100;
+    bScore := bScore - 300;
   end;
   
  {endgame determination}
