@@ -572,6 +572,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 i := GetKeyInt;
                 readln;
                 Utility(switchFlag);
+                // TODO: jump control
                 exit;
             end;
 

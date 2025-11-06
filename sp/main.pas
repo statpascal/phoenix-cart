@@ -503,7 +503,7 @@ procedure initGame;
                 humanSide := 0;
                 writeln('***playing as white***');
             end;
-
+            
         cWarning := 0;
         write(chr(7), 'enter position? (y/n)');
         repeat
@@ -535,6 +535,15 @@ procedure initGame;
                 turn := 0;
                 gameSide := turn;
             end;
+
+        writeln;            
+        write(chr(7), 'save positions to file (y/n)');
+        repeat
+            ans := GetKeyInt;
+        until ans in[78, 89];
+        savePositions := ans = 89
+                    
+            
     end;
 
 

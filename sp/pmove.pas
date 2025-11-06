@@ -55,6 +55,94 @@ procedure ClearFields;
             end;
     end;
 
+
+procedure saveGame (gname: string; showMsg: boolean);
+    var
+        gamefile: file of integer;
+        ioCheck: integer;
+        i, startPage, offset, storePtr, storeBase: integer;
+        mBuffer: array[0..2048] of integer;
+        gBuffer: array[0..67] of integer;
+    
+    begin    
+        startPage := BASE2;
+        dataSize := 2;
+        offset := 4000;
+        DataOps(2, startPage, dataSize, offset, storePtr);
+        offset := 4002;
+        DataOps(2, startPage, dataSize, offset, storeBase);
+        assign (gamefile, gname);
+        rewrite (gamefile);
+        //        rewrite(gamefile, gname);
+        ioCheck := IORESULT;
+        if ioCheck = 0 then
+            begin
+                if showMsg then begin
+                    gotoxy(20, 11);
+                    write('saving...');
+                end;
+                startPage := BASE2;
+                dataSize := 4096;
+                offset := 0;
+                DataOps(2, startPage, dataSize, offset, mBuffer);
+                for i := 0 to 2047 do
+                    begin
+                        write (gamefile, mBuffer [i]);
+                        //            gamefile^ := mBuffer[i];
+                        //            put(gamefile);
+                    end;
+                startPage := BASE4;
+                dataSize := 136;
+                offset := 0;
+
+                write (gamefile, storePtr);
+                //          gamefile^ := storePtr;
+                //          put(gamefile);
+                write (gamefile, storeBase);
+                //          gamefile^ := storeBase;
+                //          put(gamefile);
+                write (gamefile, gamePly);
+                //          gamefile^ := gamePly;
+                //          put(gamefile);
+                write (gameFile, gameSide);
+                //          gamefile^ := gameSide;
+                //          put(gamefile);
+                write (gameFile, gamePointer);
+                //          gamefile^ := gamePointer;
+                //          put(gamefile);
+
+                repeat
+                    DataOps(2, startPage, dataSize, offset, gBuffer);
+                    for i := 0 to 67 do
+                        begin
+                            write (gamefile, gBuffer [i]);
+                            //             gamefile^ := gBuffer[i];
+                            //             put(gamefile);
+                        end;
+                    offset := offset + 136;
+                    if offset > 4079 then
+                        begin
+                            startPage := succ(startPage);
+                            offset := 0;
+                        end;
+                until (offset = storePtr) and (startPage = storeBase);
+                close(gamefile);
+            end
+        else
+            begin
+                gotoxy(20, 11);
+                write(chr(7), chr(7), 'file error #', ioCheck);
+                readln;
+            end;
+        if showMsg then begin
+            gotoxy(20, 10);
+            write('                  ');
+            gotoxy(20, 11);
+            write('           ')
+        end
+    end;
+
+
 procedure Utility(var switch: integer);
     label 
         l_1, l_2;
@@ -221,73 +309,7 @@ procedure Utility(var switch: integer);
                     ans := getKeyInt;
                     gotoxy(20, 10);
                     readln(gname);
-            {$I-}
-                    assign (gamefile, gname);
-                    rewrite (gamefile);
-                    //        rewrite(gamefile, gname);
-                    ioCheck := IORESULT;
-            {$I+}
-                    if ioCheck = 0 then
-                        begin
-                            gotoxy(20, 11);
-                            write('saving...');
-                            startPage := BASE2;
-                            dataSize := 4096;
-                            offset := 0;
-                            DataOps(2, startPage, dataSize, offset, mBuffer);
-                            for i := 0 to 2047 do
-                                begin
-                                    write (gamefile, mBuffer [i]);
-                                    //            gamefile^ := mBuffer[i];
-                                    //            put(gamefile);
-                                end;
-                            startPage := BASE4;
-                            dataSize := 136;
-                            offset := 0;
-
-                            write (gamefile, storePtr);
-                            //          gamefile^ := storePtr;
-                            //          put(gamefile);
-                            write (gamefile, storeBase);
-                            //          gamefile^ := storeBase;
-                            //          put(gamefile);
-                            write (gamefile, gamePly);
-                            //          gamefile^ := gamePly;
-                            //          put(gamefile);
-                            write (gameFile, gameSide);
-                            //          gamefile^ := gameSide;
-                            //          put(gamefile);
-                            write (gameFile, gamePointer);
-                            //          gamefile^ := gamePointer;
-                            //          put(gamefile);
-
-                            repeat
-                                DataOps(2, startPage, dataSize, offset, gBuffer);
-                                for i := 0 to 67 do
-                                    begin
-                                        write (gamefile, gBuffer [i]);
-                                        //             gamefile^ := gBuffer[i];
-                                        //             put(gamefile);
-                                    end;
-                                offset := offset + 136;
-                                if offset > 4079 then
-                                    begin
-                                        startPage := succ(startPage);
-                                        offset := 0;
-                                    end;
-                            until (offset = storePtr) and (startPage = storeBase);
-                            close(gamefile);
-                        end
-                    else
-                        begin
-                            gotoxy(20, 11);
-                            write(chr(7), chr(7), 'file error #', ioCheck);
-                            readln;
-                        end;
-                    gotoxy(20, 10);
-                    write('                  ');
-                    gotoxy(20, 11);
-                    write('           ');
+                    saveGame (gname, true)
                 end;
                 51: 
                 begin {backup}
@@ -420,6 +442,8 @@ procedure Utility(var switch: integer);
         until utilFlag;
     end;
 
+const
+    gameSaveChar: char = 'A';
 
 procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
     label 
@@ -428,6 +452,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
         i, j, k, iLoc, eLoc, initOffset, offset, offset1, ans: integer;
         sideOffset, offset2, offset3, offset4, switchState: integer;
         validSq, foundFlag: boolean;
+        fn: string [20];
     begin
         turn := pturn;
         startPage := BASE;
@@ -440,6 +465,19 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
                 DataOps(2, startPage, dataSize, offset, bit1);
                 offset := TWPO + (i * 8);
                 DataOps(1, startPage, dataSize, offset, bit1);
+            end;
+
+        if savePositions then 
+            begin            
+                fn := 'DSK0.GAME';
+                fn [10] := gameSaveChar;
+                inc (fn [0]);
+                gotoxy (0, 23);
+                write ('Saving position to: ', fn);
+                saveGame (fn, false);
+                inc (gameSaveChar);
+                if gameSaveChar = succ ('Z') then
+                    gameSaveChar := 'a'
             end;
 
         l_1: 

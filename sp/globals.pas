@@ -126,6 +126,8 @@ var
     moveNumHi, moveNumLo: integer;
     bit1, bit2, bit3, bit4, bit5, bit6, bit7, bitRes: bitboard;
     buffer: array[0..59] of integer;
+    
+    savePositions: boolean;
 
 procedure ClearBitboard(var bit1: bitboard);
 function IsClear(var b: bitboard): boolean;
