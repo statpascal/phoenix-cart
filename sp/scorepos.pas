@@ -107,10 +107,10 @@ function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; lastMove, tem
 
      {mobility advantage determination}
         if wMobility > bMobility then
-            wScore := wScore + 100
+            wScore := wScore + 20
         else
             if bMobility > wMobility then
-                bScore := bScore + 100;
+                bScore := bScore + 20;
 
      {determine base score for each side}
         for side := 0 to 1 do

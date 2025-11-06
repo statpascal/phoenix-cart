@@ -1,4 +1,4 @@
-(* version 11-3-25 v1.8 *)
+(* version 11-6-25 v1.8)
 (* MinMax, no iterative deepening, capture evaluation bonus *)
 (* fixed castling when rook has moved bug *)
 (* adjustments to scorepos
@@ -47,6 +47,7 @@
 (* 10-30-25: Added capture bonus in scorepos *)
 (* 11-2-25: added negative reinforcement to opposite captures *)
 (* 11-3-25: added penalty for moving queen too early *)
+(* 11-6-25: decreased mobility bonus *)
 
 Program Main;
 uses random,

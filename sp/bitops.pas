@@ -309,6 +309,7 @@ procedure BitTrim(var b1, b2: bitboard; var n, ptype: integer; flg: integer); as
         mov	@dbyte,r4
         a       r2,r4           //point to byte in side bitboard
         movb    *r4,r5
+//       li      r5,>8100	// side bitboard is alway >81?
         szcb    r6,r5           //r5 now has value of sides bitboard bit
         jeq     trimray
         jmp     done
