@@ -466,7 +466,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
                 offset := TWPO + (i * 8);
                 DataOps(1, startPage, dataSize, offset, bit1);
             end;
-
+(*
         if savePositions then 
             begin            
                 fn := 'DSK0.GAME';
@@ -479,7 +479,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
                 if gameSaveChar = succ ('Z') then
                     gameSaveChar := 'a'
             end;
-
+*)
         l_1: 
         gotoxy(20, 6);
         write(chr(7), 'enter move');

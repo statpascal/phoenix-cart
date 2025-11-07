@@ -21,188 +21,80 @@ implementation
 
 uses bitopsorig, globals;
 
-var 
-    iloc, disp, cumdisp, flag, oflag: integer;
-    dbyte: integer;
-    subrtn1: integer;
-const 
-    vflag: integer =   0;
-    zero: integer =   0;
-//    bittab: array [0..7] of uint8 =   (128,64,32,16,8,4,2,1);
-    bittab: array [0..7] of uint16 =   ($7fff,$bfff,$dfff,$efff,$f7ff,$fbff,$fdff,$feff);
-    //                                  not 128 shl 8 or ff, ..., not 1 shl 8 or ff
 
-// trim sliding pieces movement rays
-// rays will be trimmed to first empty square
-// bitboard1 is untrimmed movement bitboard
-// bitboard2 is the sides bitboard (left and right sides set to 1)
-// intloc is starting position of sliding piece
-// inttype is piece type : r=8, b=24, q=32
-// flag = 1 when trimming for opponent pieces, otherwise 0 
+procedure BitTrimPascal (var b1, b2: bitboard; var n, ptype: integer; flg: integer); 
 
-procedure BitTrimNew(var b1, b2: bitboard; var n, ptype: integer; flg: integer); assembler;
-        lwpi    >8320
-        mov     @>8314, r10 // copy stack pointer from Pascal runtime workspace
-        b     @trim_start // jump around subroutine
-  
-    trimray 
-        a       @disp,@cumdisp
-        mov     @cumdisp,r4
-        ci      r4,63           //check if location off board
-        jh	done		// compare without sign
+    type 
+        bitboard_byte = array [0..7] of uint8;
         
-        mov     r4,r7		//check value of bit at new location
-        srl     r4,3            //calculate byte displacement (DIV 8)
-        andi    r7,>0007
-        mov 	r4,@dbyte
-        a       r3,r4           //point to byte in bitboard
-        movb    *r4,r5          //get displacement byte content
-        sla     r7,1
-        mov     @bittab(r7),r6
-        szc	r6,r5		//high byte of r5 has value of displacement bit
-        jne     next		//is bit value 0?
+    procedure trimRay (var b: bitboard_byte; pos, dy, dx, oponent: integer);
+        var row, bitval: integer;
+            clearing: boolean;
+        begin
+            clearing := false;
+            row := pos shr 3;
+            bitval := 1 shl (7 - pos and 7);
+            
+            repeat
+                if clearing then
+                    b [row] := b [row] and not bitval
+                else if b [row] and bitval = 0 then
+                    begin
+                        clearing := true;
+                        if oponent = 1 then	// capture the piece
+                            b [row] := b [row] or bitval
+                    end;
+                    
+                inc (row, dy);
+                if dx = -1 then
+                    bitval := bitval shl 1
+                else if dx = 1 then
+                    bitval := bitval shr 1
+            until (row < 0) or (row >= 8) or (bitval > 128) or (bitval = 0) 
+        end;
+            
+    const
+        Bishop = 24;
+        Rook = 8;
+            
+    var
+        checkLeft, checkRight, checkUp, checkDown: boolean;
         
-        c       @flag,@zero     //check if zero flag already set
-        jne     sidebit
-        inc     @flag           //set zero flag
-        c       @oflag,@zero    //check of opponent flag set
-        jeq     sidebit
-        inv     r6
-        socb    r6,*r4
-        inv     r6
+    begin
+        checkLeft := n and 7 <> 0;
+        checkRight := succ (n) and 7 <> 0;
+        checkUp := n < 56;
+        checkDown := n > 7;
         
-    sidebit 
-        c       @vflag,@zero
-        jne     trimray
-        mov	@dbyte,r4
-        a       r2,r4           //point to byte in side bitboard
-        movb    *r4,r5
-//       li      r5,>8100	// side bitboard is alway >81?
-        szcb    r6,r5           //r5 now has value of sides bitboard bit
-        jeq     trimray
-        jmp     done
-        
-    next    
-        c       @flag,@zero
-        jeq     sidebit
-        inv     r6
-        szcb    r6,*r4		//clear the displacement bit
-        inv     r6
-        jmp     sidebit
-        
-    done   
-         b       *r11
-
-
-
-    trim_start
-        mov     @flg,@oflag    //get opponent flag value
-        mov     @ptype,r0       //get pointer to piece type
-        mov     @n,r1           //get pointer to intloc
-        mov     @b2,r2          //get pointer to bitboard2
-        mov     @b1,r3          //get pointer to bitboard1
-
-        mov     *r1,r4          // get piece location
-        mov     r4,@iloc        // save piece location
-        mov     r4,@cumdisp
-        mov     *r0,r5          // get value of piece type
-        ci      r5,24           // check if bishop
-        jeq     bishop
-        // up ray
-        clr     @flag
-        inc     @vflag
-        li      r5,8            // displacement value
-        mov     r5,@disp
-        bl      @trimray
-        // down ray
-        clr     @flag
-        mov     @iloc,@cumdisp
-        li      r5,-8
-        mov     r5,@disp
-        bl      @trimray
-        // left ray
-        clr     @flag
-        clr     @vflag
-
-        mov	@iloc,r5
-        andi    r5,>0007
-        jeq	rray
-        
-//        bl      @l_edge         // check if already at left edge
-//        ci      r5,0
-//        jne     rray
-        mov     @iloc,@cumdisp
-        li      r5,-1
-        mov     r5,@disp
-        bl      @trimray
-        // right ray
-    rray    
-        clr     @flag
-        
-        mov	@iloc,r5
-        inc	r5
-        andi	r5,>0007
-        jeq	isrook
-        
-//        bl      @r_edge         // check if already at right edge
-//        ci      r5,0
-//        jne     isrook
-
-        mov     @iloc,@cumdisp
-        li      r5,1
-        mov     r5,@disp
-        bl      @trimray
-    isrook  
-        mov     *r0,r5
-        ci      r5,8
-        jeq     finish		// left upper ray
-    bishop  
-        clr     @flag
-  
-        mov	@iloc,r5
-        andi	r5,>0007
-        jeq	rcheck      
-        
-//        bl      @l_edge         // check if already at left edge
-//        ci      r5,0
-//        jne     rcheck
-        mov     @iloc,@cumdisp
-        li      r5,7
-        mov     r5,@disp
-        bl      @trimray
-        // left lower ray
-        clr     @flag
-        mov     @iloc,@cumdisp
-        li      r5,-9
-        mov     r5,@disp
-        bl      @trimray
-    rcheck  // right upper ray
-        clr     @flag
-        
-        mov	@iloc,r5
-        inc	r5
-        andi	r5,>0007
-        jeq	finish
-        
-//        bl      @r_edge         // check if already at right edge
-//        ci      r5,0
-//        jne     finish
-
-        mov     @iloc,@cumdisp
-        li      r5,9
-        mov     r5,@disp
-        bl      @trimray
-        // right lower ray
-        clr     @flag
-        mov     @iloc,@cumdisp
-        li      r5,-7
-        mov     r5,@disp
-        bl      @trimray
-
-    finish
-        lwpi    >8300
-end;
-
+        if ptype <> Bishop then 
+            begin
+                if checkUp then
+                    trimRay (bitboard_byte (b1), n + 8, 1, 0, flg);		// up
+                if checkDown then
+                    trimRay (bitboard_byte (b1), n - 8, -1, 0, flg);		// down
+                if checkLeft then
+                    trimRay (bitboard_byte (b1), n - 1, 0, -1, flg);		// left
+                if checkRight then
+                    trimRay (bitboard_byte (b1), n + 1, 0, 1, flg)		// right
+            end;
+        if ptype <> Rook then
+            begin
+                if checkLeft then
+                    begin
+                        if checkUp then
+                            trimRay (bitboard_byte (b1), n + 7, 1, -1, flg);	// left up
+                        if checkDown then
+                            trimRay (bitboard_byte (b1), n - 9, -1, -1, flg)	// left down
+                    end;
+                if checkRight then
+                    begin
+                        if checkUp then
+                            trimRay (bitboard_byte (b1), n + 9, 1, 1, flg);	// right up
+                        if checkDown then
+                            trimRay (bitboard_byte (b1), n - 7, -1, 1, flg)	// right down
+                    end
+            end
+    end;
 
 //extract the board positions of each piece on the board
 //intarray will have number of pieces at index 0
@@ -429,26 +321,48 @@ end;
 
 var
     f: text;
+    
+
+procedure dumpBoard (var b: bitboard);
+    var
+        i, j, k: integer;
+        help, val: integer;
+    begin
+        for i := 3 downto 0 do
+            begin
+                help := b [i];
+                for j := 1 to 2 do
+                    begin
+                        val := help and $ff;
+                        for k := 0 to 7 do
+                            write (f, ord (val and (1 shl (7 - k)) <> 0));
+                        writeln (f);
+                        help := help shr 8;
+                    end
+            end
+    end;
+
 
 procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer);
     var
         i: integer;
-        bcopy: bitboard;
+        bin, bcopy: bitboard;
     begin
-    
+
         if savePositions then
             begin
-                
+             
+                bin := b1;   
                 bcopy := b1;
                 
-                BittrimNew (b1, b2, n, ptype, flg);
+                BittrimPascal (b1, b2, n, ptype, flg);
                 BittrimOrig (bcopy, b2, n, ptype, flg);
                 
                 if not compareWord (b1, bcopy, 4) then begin
                     writeln (f, 'Regrssion:');
                     write (f, 'IN:  ');
                     for i := 0 to 3 do
-                        write (f, hexstr (b1 [i]):5);
+                        write (f, hexstr (bin [i]):5);
                     for i := 0 to 3 do
                         write (f, hexstr (b2 [i]):5);
                     writeln (f, n:3, ptype:3,flg:3);
@@ -470,11 +384,10 @@ procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer);
                 end
             end
         else
-            BittrimNew (b1, b2, n, ptype, flg)
+            BittrimPascal (b1, b2, n, ptype, flg)
     end;
     
 begin
     assign (f, 'DSK0.trimlog.txt');
     rewrite (f)
-    
 end.
