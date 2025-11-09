@@ -21,13 +21,63 @@ implementation
 
 uses bitopsorig, globals;
 
+var
+    f: text;
 
-procedure BitTrimPascal (var b1, b2: bitboard; var n, ptype: integer; flg: integer); 
+procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer); 
 
     type 
         bitboard_byte = array [0..7] of uint8;
         
-    procedure trimRay (var b: bitboard_byte; pos, dy, dx, oponent: integer);
+    procedure trimRay (var b: bitboard_byte; pos, dy, dxOp, oponent: integer); assembler;
+            mov  @pos, r0
+            li   r8, >8000
+            andi r0, 7
+            jeq  trimrayasm_0
+            srl  r8, 0		// r8: bitval in high byte
+            
+        trimrayasm_0
+            mov  @pos, r0
+            srl  r0, 3		// r0: row
+            clr	 r12		// clearing = false
+            
+        trimrayasm_1:
+            mov  @b, r13
+            a    r0, r13	// r13 points to b [row]
+            
+            mov  r12, r12
+            jeq  trimrayasm_2	// jump if clearing = false
+            
+            szcb r8, *r13	// clear bit
+            jmp  trimrayasm_3	// next row
+            
+        trimrayasm_2:
+            movb *r13, r14
+            coc  r8, r14	// test b [row] and bitval 
+            jeq  trimrayasm_3	// bit is set, next row
+        
+            inc  r12		// clearing = true
+            mov  @oponent, r14
+            jeq  trimrayasm_3	// next row if opoenent = false
+            
+            socb r8, *r13	// capture the piece
+            
+        trimrayasm_3:
+            a    @dy, r0
+            ci   r0, 7
+            jh   trimrayasm_4	// next row and exit when off board
+            
+            mov  @dxOp, r14
+            jeq  trimrayasm_1	// dx is 0, continue with next row
+            
+            x    r14		// execute left or right shift of R8
+            movb r8, r8		// check if high byte is zero
+            jne  trimrayasm_1   // continue with next row if bitval is in board
+            
+        trimrayasm_4:
+    end;
+
+    procedure trimRayPascal (var b: bitboard_byte; pos, dy, dx, oponent: integer);
         var row, bitval: integer;
             clearing: boolean;
         begin
@@ -56,6 +106,11 @@ procedure BitTrimPascal (var b1, b2: bitboard; var n, ptype: integer; flg: integ
     const
         Bishop = 24;
         Rook = 8;
+        
+        LeftVal = $0A18;	// sla r8, 1
+        RightVal = $0918;	// srl r9, 1
+//        LeftVal = -1;
+//        RightVal = 1;
             
     var
         checkLeft, checkRight, checkUp, checkDown: boolean;
@@ -73,25 +128,25 @@ procedure BitTrimPascal (var b1, b2: bitboard; var n, ptype: integer; flg: integ
                 if checkDown then
                     trimRay (bitboard_byte (b1), n - 8, -1, 0, flg);		// down
                 if checkLeft then
-                    trimRay (bitboard_byte (b1), n - 1, 0, -1, flg);		// left
+                    trimRay (bitboard_byte (b1), n - 1, 0, LeftVal, flg);	// left
                 if checkRight then
-                    trimRay (bitboard_byte (b1), n + 1, 0, 1, flg)		// right
+                    trimRay (bitboard_byte (b1), n + 1, 0, RightVal, flg)	// right
             end;
         if ptype <> Rook then
             begin
                 if checkLeft then
                     begin
                         if checkUp then
-                            trimRay (bitboard_byte (b1), n + 7, 1, -1, flg);	// left up
+                            trimRay (bitboard_byte (b1), n + 7, 1, LeftVal, flg);	// left up
                         if checkDown then
-                            trimRay (bitboard_byte (b1), n - 9, -1, -1, flg)	// left down
+                            trimRay (bitboard_byte (b1), n - 9, -1, LeftVal, flg)	// left down
                     end;
                 if checkRight then
                     begin
                         if checkUp then
-                            trimRay (bitboard_byte (b1), n + 9, 1, 1, flg);	// right up
+                            trimRay (bitboard_byte (b1), n + 9, 1, RightVal, flg);	// right up
                         if checkDown then
-                            trimRay (bitboard_byte (b1), n - 7, -1, 1, flg)	// right down
+                            trimRay (bitboard_byte (b1), n - 7, -1, RightVal, flg)	// right down
                     end
             end
     end;
@@ -111,6 +166,7 @@ procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
         
     bitpos_1:
         mov	*r14+, r8	// R8: content of bitboard block
+        jeq	bitpos_4	// skip if 0
         li	r12, 16		// loop over 16 bits
         
     bitpos_2:
@@ -123,7 +179,12 @@ procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
         inc	r0
         dec 	r12		// bit bounter
         jne	bitpos_2
+        jmp	bitpos_5
         
+    bitpos_4:
+        ai	r0, 16
+
+    bitpos_5:
         dec	r15		// word counter
         jne	bitpos_1
         
@@ -319,9 +380,6 @@ procedure LShift(var b1, br : bitboard; n : integer); assembler;
 end;
 
 
-var
-    f: text;
-    
 
 procedure dumpBoard (var b: bitboard);
     var
@@ -341,7 +399,8 @@ procedure dumpBoard (var b: bitboard);
                     end
             end
     end;
-
+    
+(*
 
 procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer);
     var
@@ -359,14 +418,14 @@ procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer);
                 BittrimOrig (bcopy, b2, n, ptype, flg);
                 
                 if not compareWord (b1, bcopy, 4) then begin
-                    writeln (f, 'Regrssion:');
+                    writeln (f, 'Regression:');
+                    
                     write (f, 'IN:  ');
                     for i := 0 to 3 do
                         write (f, hexstr (bin [i]):5);
                     for i := 0 to 3 do
                         write (f, hexstr (b2 [i]):5);
                     writeln (f, n:3, ptype:3,flg:3);
-                    
                     
                     write (f, 'OUT orig: ');
                     for i := 0 to 3 do
@@ -390,4 +449,7 @@ procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer);
 begin
     assign (f, 'DSK0.trimlog.txt');
     rewrite (f)
+    
+*)    
+    
 end.

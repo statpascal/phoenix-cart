@@ -723,7 +723,8 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 end;
 
       {check if own king in check after current move}
-            if (cWarning = 1) and (ply = gamePly) then
+//            if (cWarning = 1) and (ply = gamePly) then
+            if ply = gamePly then
                 begin
                     pruneFlag := 0;
         {save the main boards}

@@ -472,6 +472,9 @@ begin
     readln(gameMove);
 end; {EnterPos}
 
+var
+    rs232: text;
+
 procedure MoveCoord(score, iLoc, eLoc : integer; flag : boolean);
 
 var 
@@ -504,7 +507,11 @@ begin
             else
                 writeln (moveNumLo);
             write('position score: ', score);
+            writeln (rs232, iLocString, eLocString)
         end;
 end; {MoveCoord}
 
+begin
+    assign (rs232, 'RS232');
+    rewrite (rs232)
 end.

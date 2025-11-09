@@ -92,7 +92,7 @@
      DataOps(1, startPage, dataSize, offset2, bit1);
      j := j + 8;
     until (foundFlag) or (j > 40);
-
+   
     {en passant capture handling}
     if (foundFlag = FALSE) and (currentMove^.id = 0) then
      begin
@@ -172,7 +172,7 @@
    end;
 
   {check if own king in check after current move}
-  if (cWarning = 1) and (ply = gamePly) then
+  if ply = gamePly then
    begin
     pruneFlag := 0;
     {save the main boards}

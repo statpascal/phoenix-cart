@@ -536,13 +536,14 @@ procedure initGame;
                 gameSide := turn;
             end;
 
+(*
         writeln;            
         write(chr(7), 'save positions to file (y/n)');
         repeat
             ans := GetKeyInt;
         until ans in[78, 89];
         savePositions := ans = 89
-                    
+*)
             
     end;
 
