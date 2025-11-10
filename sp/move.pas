@@ -477,6 +477,32 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
             j := j + 8;
         until j > 40;
     end;
+    
+procedure indent (ply: integer);
+    begin
+        write (logFile, ' ' : 4 * (gameply - ply))
+    end;        
+
+procedure printMove (var move: moverec);
+
+    const
+        pieceName: string = 'PRNBQK';
+    
+    procedure writeCoord (sq: integer);
+        begin
+            write (logFile, chr (65 + sq mod 8));
+            write (logFile, chr (49 + sq div 8))
+        end;
+    
+    begin
+        if move.id <> 99 then
+            begin
+                write (logFile, pieceName [succ (move.id shr 3)]);
+                writeCoord (move.startSq);
+                write (logFile, '-');
+                writecoord (move.endSq)
+            end
+    end;
 
 procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer; aVal, bVal, cMoveFlag: integer);
     label 
@@ -497,6 +523,10 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
     begin
         mark (heap);
 
+
+        if doLogging then begin
+            indent (ply); printMove (lastmove); writeln (logFile, ': alpha = ', aVal, ' beta = ', bVal)
+        end;
 
         alpha := aVal;
         beta := bVal;
@@ -783,6 +813,11 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
         {evaluate position}
                     evalScore := Evaluate(cMoveFlag, attackFlag, l, n, lastMove, tempMove);
+                 
+                    if doLogging then begin   
+                        indent (ply - 1); printMove (tempMove); writeln (logFile, ': ', evalScore: 6);
+                    end;
+                    
                     pruneFlag := 0;
                     if turn = 0 then
                         begin
@@ -882,6 +917,10 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
         finalMove := bestMove;
         score := bestScore;
+        
+        if doLogging then begin
+            indent (pred (ply)); write (logFile, 'Best: '); printMove (finalMove); writeln (logfile, ': ', score:6)
+        end;
 
      {up 1 ply}
         ply := succ(ply);

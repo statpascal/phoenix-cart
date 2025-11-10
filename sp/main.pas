@@ -436,7 +436,7 @@ procedure SaveMove;
 
 procedure initGame;
     begin
-        clrscr;
+//        clrscr;
         // Randomize;	// TODO
         turn := 0;
         gameSide := turn;
@@ -466,7 +466,7 @@ procedure initGame;
         offset := 4000;
         offset1 := 0;
         DataOps(1, startPage, dataSize, offset, offset1);
-        writeln ('STARTING');
+//        writeln ('STARTING');
 
              {storeBase}
         offset := 4002;
@@ -536,14 +536,17 @@ procedure initGame;
                 gameSide := turn;
             end;
 
-(*
         writeln;            
-        write(chr(7), 'save positions to file (y/n)');
+        write(chr(7), 'debug log to DSK0.phoenix.log (y/n)');
         repeat
             ans := GetKeyInt;
         until ans in[78, 89];
-        savePositions := ans = 89
-*)
+        if ans = 89 then
+            begin
+                doLogging := true;
+                assign (logFile, 'DSK0.phoenix.log');
+                rewrite (logFile)
+            end;
             
     end;
 

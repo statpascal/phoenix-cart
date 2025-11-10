@@ -383,19 +383,17 @@ end;
 
 procedure dumpBoard (var b: bitboard);
     var
-        i, j, k: integer;
-        help, val: integer;
+        i, j, k, val: integer;
     begin
         for i := 3 downto 0 do
             begin
-                help := b [i];
+                val := b [i];
                 for j := 1 to 2 do
                     begin
-                        val := help and $ff;
                         for k := 0 to 7 do
                             write (f, ord (val and (1 shl (7 - k)) <> 0));
                         writeln (f);
-                        help := help shr 8;
+                        val := val shr 8;
                     end
             end
     end;
