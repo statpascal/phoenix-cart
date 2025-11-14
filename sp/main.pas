@@ -486,8 +486,8 @@ procedure initGame;
             ans := GetKeyInt;
         until ans in[50..54];
         writeln(chr(ans));
-        ply := ans - 48;
-        gamePly := ply;
+        gamePly := ans - 48;
+//        gamePly := ply;
 
         writeln(chr(7), 'select side to play: [w]hite/[b]lack');
         repeat
@@ -804,7 +804,7 @@ procedure chainMain;
                         begin
                             gotoxy(20, 7);
                             write('thinking...');
-                            MoveGen(lastMove, playMove, moveScore, aVal, bVal, cFlag);
+                            MoveGen(lastMove, playMove, moveScore, aVal, bVal, cFlag, gamePly);
                         end;
                 end;
 
@@ -1123,7 +1123,7 @@ procedure chainMain;
 
             MoveCoord(moveScore, playMove.startSq, playMove.endSq, humanFlag);
             ans := GetKeyInt;
-            ply := gamePly;
+//            ply := gamePly;
             l_2: 
         until FALSE;
     end;

@@ -395,7 +395,7 @@ procedure Utility(var switch: integer);
                         ans := getKeyInt;
                         readln(gamePly);
                     until gamePly in[2..5];
-                    ply := gamePly;
+//                    ply := gamePly;
                     gotoxy(0, 1);
                     write('ply : ', gamePly);
                     ClearFields;

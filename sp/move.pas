@@ -5,7 +5,7 @@ interface
 uses globals;
 
 procedure MoveGen(lastMove: moverec; var finalMove: moverec;
-                  var score: integer; aVal, bVal, cMoveFlag: integer);
+                  var score: integer; alpha, beta: integer; cMoveFlag, ply: integer);
 
 implementation
 
@@ -233,7 +233,7 @@ procedure checkOwnBackRowAttack (var lastMove: moveRec);
     end;
 
 procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec; attackIndex,
-                         tailIndex: listPointer);
+                         tailIndex: listPointer; ply: integer);
     label 
         l_3;
     var 
@@ -304,9 +304,9 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                                 k := 8;
                                 case turn of 
                                     0: if (pLoc > 7) and (pLoc <16) then
-                                            BitTrim(bit2, bit4, pLoc, k, 0);
+                                            BitTrim(bit2, pLoc, k, 0);
                                     1: if (pLoc > 47) and (pLoc < 56) then
-                                            BitTrim(bit2, bit4, pLoc, k, 0);
+                                            BitTrim(bit2, pLoc, k, 0);
                                 end;
 
                {check for en passant capture}
@@ -371,13 +371,13 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                                 DataOps(2, startPage, dataSize, offset4, bit3);
                                 BitNot(bit3, bit3);
                                 BitAnd(bit2, bit3, bit5);
-                                BitTrim(bit5, bit4, pLoc, j, 1);
+                                BitTrim(bit5, pLoc, j, 1);
 
                {trim to own pieces}
                                 DataOps(2, startPage, dataSize, sideOffset, bit3);
                                 BitNot(bit3, bit3);
                                 BitAnd(bit2, bit3, bit2);
-                                BitTrim(bit2, bit4, pLoc, j, 0);
+                                BitTrim(bit2, pLoc, j, 0);
 
                {merge all trimmed boards}
                                 BitAnd(bit2, bit5, bit2);
@@ -478,6 +478,33 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
         until j > 40;
     end;
     
+function isKingChecked (lastMove: moverec): boolean;
+    begin
+        {save the main boards}
+        DataOps(2, BASE, 120, WPO, buffer);
+        DataOps(1, BASE2, 120, SWPO, buffer);
+        
+        {replace main boards with temp boards for current move}
+        DataOps(2, BASE, 120, TWPO, buffer);
+        DataOps(1, BASE, 120, WPO, buffer);
+        {generate combined trim boards}
+        CombineTrim(bit3, bit5, lastMove);
+        {restore main boards}
+        DataOps(2, BASE2, 120, SWPO, buffer);
+        DataOps(1, BASE, 120, WPO, buffer);
+        {check if own king attacked by opposite trim board}
+        if turn = 0 then
+            DataOps(2, BASE, 8, TWKO, bit1)
+        else
+            DataOps(2, BASE, 8, TBKO, bit1);
+        
+        if turn = 0 then
+            BitAnd(bit1, bit5, bit1)
+        else
+            BitAnd(bit1, bit3, bit1);
+        isKingChecked := not isClear (bit1)
+    end;
+    
 procedure indent (ply: integer);
     begin
         write (logFile, ' ' : 4 * (gameply - ply))
@@ -504,7 +531,7 @@ procedure printMove (var move: moverec);
             end
     end;
 
-procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer; aVal, bVal, cMoveFlag: integer);
+procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; cMoveFlag, ply: integer);
     label 
         l_1, l_3, l_5;
     var 
@@ -512,8 +539,8 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         sideOffset, offset1, offset2, offset3, offset4: integer;
         wCheckFlag, bCheckFlag, offset7, switchFlag: integer;
         offset5, offset6, attackFlag, evalScore: integer;
-        pruneFlag, sPage2, mateFlag, alpha, beta: integer;
-        foundFlag: boolean;
+        sPage2, mateFlag: integer;
+        foundFlag, pruneFlag, ignoreMove: boolean;
         bestMove, tempMove: moverec;
         moveList, attackList, tailIndex, attackIndex, currentMove: listPointer;
         bit8, bit9: bitboard;
@@ -523,13 +550,12 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
     begin
         mark (heap);
 
-
         if doLogging then begin
-            indent (ply); printMove (lastmove); writeln (logFile, ': alpha = ', aVal, ' beta = ', bVal)
+            indent (ply); printMove (lastmove); writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
         end;
 
-        alpha := aVal;
-        beta := bVal;
+        pruneFlag := false;
+        ignoreMove := false;
 
         if ply <= 2 then
             begin
@@ -564,19 +590,12 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         tailIndex := moveList;
         attackIndex := attackList;
 
-        loopAllPieces (initOffset, sideOffset, lastMove, attackIndex, tailIndex);
+        loopAllPieces (initOffset, sideOffset, lastMove, attackIndex, tailIndex, ply);
 
         checkBackRowInterposing;
         checkOwnBackRowAttack (lastMove);
-
-
-     {check if either rook is missing from home square}
         checkRookMissing;
-
-
-     {add castling moves to head of list if possible}
         checkCastling (moveList);
-
 
     (* move1 *)
         if turn = 0 then
@@ -754,71 +773,35 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
       {check if own king in check after current move}
 //            if (cWarning = 1) and (ply = gamePly) then
-            if ply = gamePly then
+            ignoreMove := (ply = gamePly) and isKingChecked (lastMove);
+
+            if not ignoreMove then 
                 begin
-                    pruneFlag := 0;
-        {save the main boards}
-                    offset := WPO;
-                    startPage := BASE;
-                    dataSize := 120;
-                    DataOps(2, startPage, dataSize, offset, buffer);
-                    offset := SWPO;
-                    startPage := BASE2;
-                    DataOps(1, startPage, dataSize, offset, buffer);
-        {replace main boards with temp boards for current move}
-                    offset := WPO;
-                    offset1 := TWPO;
-                    startPage := BASE;
-                    DataOps(2, startPage, dataSize, offset1, buffer);
-                    DataOps(1, startPage, dataSize, offset, buffer);
-        {generate combined trim boards}
-                    dataSize := 8;
-                    CombineTrim(bit3, bit5, lastMove);
-        {restore main boards}
-                    startPage := BASE2;
-                    dataSize := 120;
-                    offset := SWPO;
-                    DataOps(2, startPage, dataSize, offset, buffer);
-                    startPage := BASE;
-                    offset := WPO;
-                    DataOps(1, startPage, dataSize, offset, buffer);
-                    dataSize := 8;
-        {check if own king attacked by opposite trim board}
-                    if turn = 0 then
-                        offset := TWKO
+                    if ply = 1 then
+                        {terminal node check}
+                        begin
+                            {update number of positions evaluated}
+                            inc (moveNumLo);
+                            if (moveNumLo = 1000) then
+                                begin
+                                    moveNumLo := 0;
+                                    inc (moveNumHi)
+                                end;
+                            evalScore := Evaluate (cMoveFlag, attackFlag, l, n, lastMove, tempMove);
+                            if doLogging then begin   
+                                indent (ply - 1); printMove (tempMove); writeln (logFile, ': ', evalScore: 6)
+                            end
+                        end
                     else
-                        offset := TBKO;
-                    DataOps(2, startPage, dataSize, offset, bit1);
-                    if not(IsClear(bit1)) then
                         begin
-                            if turn = 0 then
-                                BitAnd(bit1, bit5, bit1)
-                            else
-                                BitAnd(bit1, bit3, bit1);
-                            if not(IsClear(bit1)) then
-                                goto l_5; {ignore move if own king still in check}
-                        end;
-                end;
-
-      {terminal node check}
-            if ply = 1 then
-                begin
-        {update number of positions evaluated}
-                    inc (moveNumLo);
-                    if (moveNumLo = 1000) then
-                        begin
-                            moveNumLo := 0;
-                            inc (moveNumHi)
+                            turn := 1 - turn;
+                            MoveGen (tempMove, finalMove, evalScore, alpha, beta, cMoveFlag, pred (ply));
+                            if ply = gamePly then
+                                cMoveFlag := 0
                         end;
 
-        {evaluate position}
-                    evalScore := Evaluate(cMoveFlag, attackFlag, l, n, lastMove, tempMove);
-                 
-                    if doLogging then begin   
-                        indent (ply - 1); printMove (tempMove); writeln (logFile, ': ', evalScore: 6);
-                    end;
-                    
-                    pruneFlag := 0;
+                   {alpha/beta selection}
+                    pruneFlag := false;
                     if turn = 0 then
                         begin
                             if evalScore >= bestScore then
@@ -829,10 +812,10 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                     bestMove.endSq := tempMove.endSq;
                                 end;
                             if bestScore > beta then
-                                pruneFlag := 1;
-//                            else
-                            if bestScore > alpha then
-                                alpha := bestScore;
+                                pruneFlag := true
+                            else
+                                if bestScore > alpha then
+                                    alpha := bestScore;
                         end
                     else
                         begin
@@ -844,61 +827,13 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                     bestMove.endSq := tempMove.endSq;
                                 end;
                             if bestScore < alpha then
-                                pruneFlag := 1;
-//                            else
-                            if bestScore < beta then
-                                beta := bestScore;
-                        end;
-                end
-            else
-                begin
-        {next ply}
-                    ply := pred(ply);
-                    if turn = 0 then
-                        turn := 1
-                    else
-                        turn := 0;
-
-                    MoveGen(tempMove, finalMove, score, alpha, beta, cMoveFlag);
-
-                    if ply = gamePly then
-                        cMoveFlag := 0;
-
-        {alpha/beta selection}
-                    pruneFlag := 0;
-                    if turn = 0 then
-                        begin
-                            if score >= bestScore then
-                                begin
-                                    bestScore := score;
-                                    bestMove.id := tempMove.id;
-                                    bestMove.startSq := tempMove.startSq;
-                                    bestMove.endSq := tempMove.endSq;
-                                end;
-                            if bestScore > beta then
-                                pruneFlag := 1;
-//                            else
-                            if bestScore > alpha then
-                                alpha := bestScore;
+                                pruneFlag := true
+                            else
+                                if bestScore < beta then
+                                    beta := bestScore;
                         end
-                    else
-                        begin
-                            if score <= bestScore then
-                                begin
-                                    bestScore := score;
-                                    bestMove.id := tempMove.id;
-                                    bestMove.startSq := tempMove.startSq;
-                                    bestMove.endSq := tempMove.endSq;
-                                end;
-                            if bestScore < alpha then
-                                pruneFlag := 1;
-//                            else
-                            if bestScore < beta then
-                                beta := bestScore;
-                        end;
                 end;
 
-            l_5: 
       {restore the previous ply base bitboard}
             offset := PLYBOARDS + (pred(ply) * 120);
             dataSize := 120;
@@ -913,7 +848,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                     attackFlag := 0;
                     currentMove := moveList;
                 end;
-        until (currentMove^.link = nil) or (pruneFlag = 1);
+        until (currentMove^.link = nil) or pruneFlag;
 
         finalMove := bestMove;
         score := bestScore;
@@ -923,11 +858,12 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         end;
 
      {up 1 ply}
-        ply := succ(ply);
-        if turn = 0 then
-            turn := 1
-        else
-            turn := 0;
+//        ply := succ(ply);
+        turn := 1 - turn;
+//        if turn = 0 then
+//            turn := 1
+//        else
+//            turn := 0;
             
         release (heap);
     end;

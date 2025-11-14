@@ -229,6 +229,11 @@
     pruneFlag := 0;
     if turn = 0 then
      begin
+      if bestScore > beta then
+       pruneFlag := 1
+      else
+       if bestScore > alpha then
+        alpha := bestScore;
       if evalScore >= bestScore then
        begin
         bestScore := evalScore;
@@ -236,13 +241,21 @@
         bestMove.startSq := tempMove.startSq;
         bestMove.endSq := tempMove.endSq;
        end;
+<<<<<<< HEAD
       if bestScore > beta then
        pruneFlag := 1;
       if bestScore > alpha then
        alpha := bestScore;
+=======
+>>>>>>> 276e8e8 (alpha/beta reference parameters)
      end
     else
      begin
+      if bestScore < alpha then
+       pruneFlag := 1
+      else
+       if bestScore < beta then
+        beta := bestScore;
       if evalScore <= bestScore then
        begin
         bestScore := evalScore;
@@ -250,10 +263,13 @@
         bestMove.startSq := tempMove.startSq;
         bestMove.endSq := tempMove.endSq;
        end;
+<<<<<<< HEAD
       if bestScore < alpha then
        pruneFlag := 1;
       if bestScore < beta then
        beta := bestScore;
+=======
+>>>>>>> 276e8e8 (alpha/beta reference parameters)
      end;
    end
   else
@@ -274,6 +290,11 @@
     pruneFlag := 0;
     if turn = 0 then
      begin
+      if bestScore > beta then
+       pruneFlag := 1
+      else
+       if bestScore > alpha then
+        alpha := bestScore;
       if score >= bestScore then
        begin
         bestScore := score;
@@ -281,13 +302,21 @@
         bestMove.startSq := tempMove.startSq;
         bestMove.endSq := tempMove.endSq;
        end;
+<<<<<<< HEAD
       if bestScore > beta then
        pruneFlag := 1;
       if bestScore > alpha then
        alpha := bestScore;
+=======
+>>>>>>> 276e8e8 (alpha/beta reference parameters)
      end
     else
      begin
+      if bestScore < alpha then
+       pruneFlag := 1
+      else
+       if bestScore < beta then
+        beta := bestScore;
       if score <= bestScore then
        begin
         bestScore := score;
@@ -295,10 +324,13 @@
         bestMove.startSq := tempMove.startSq;
         bestMove.endSq := tempMove.endSq;
        end;
+<<<<<<< HEAD
       if bestScore < alpha then
        pruneFlag := 1;
       if bestScore < beta then
        beta := bestScore;
+=======
+>>>>>>> 276e8e8 (alpha/beta reference parameters)
      end;
    end;
 

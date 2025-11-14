@@ -13,7 +13,6 @@ uses trimprocs;
 function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; lastMove, tempMove: moverec): integer;
     label 
         l_1;
-
 var
  sPage1, dSize, initOffset, offset, offset1, offset2, i, j, k, l : integer;
  sPage2, side, wScore, bScore, evalScore, pawnCount, bonus : integer;
