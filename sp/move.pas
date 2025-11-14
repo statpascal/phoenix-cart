@@ -829,10 +829,10 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                     bestMove.endSq := tempMove.endSq;
                                 end;
                             if bestScore > beta then
-                                pruneFlag := 1
-                            else
-                                if bestScore > alpha then
-                                    alpha := bestScore;
+                                pruneFlag := 1;
+//                            else
+                            if bestScore > alpha then
+                                alpha := bestScore;
                         end
                     else
                         begin
@@ -844,10 +844,10 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                     bestMove.endSq := tempMove.endSq;
                                 end;
                             if bestScore < alpha then
-                                pruneFlag := 1
-                            else
-                                if bestScore < beta then
-                                    beta := bestScore;
+                                pruneFlag := 1;
+//                            else
+                            if bestScore < beta then
+                                beta := bestScore;
                         end;
                 end
             else
@@ -876,10 +876,10 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                     bestMove.endSq := tempMove.endSq;
                                 end;
                             if bestScore > beta then
-                                pruneFlag := 1
-                            else
-                                if bestScore > alpha then
-                                    alpha := bestScore;
+                                pruneFlag := 1;
+//                            else
+                            if bestScore > alpha then
+                                alpha := bestScore;
                         end
                     else
                         begin
@@ -891,10 +891,10 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                     bestMove.endSq := tempMove.endSq;
                                 end;
                             if bestScore < alpha then
-                                pruneFlag := 1
-                            else
-                                if bestScore < beta then
-                                    beta := bestScore;
+                                pruneFlag := 1;
+//                            else
+                            if bestScore < beta then
+                                beta := bestScore;
                         end;
                 end;
 
