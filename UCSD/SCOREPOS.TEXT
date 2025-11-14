@@ -180,7 +180,7 @@ begin
                        DataOps(2, startPage, dataSize, initOffset, bit5);
                        BitAnd(bit5, bit4, bit4);
                        if not(IsClear(bit4)) then
-                        evalScore := evalScore + 25;
+                        evalScore := evalScore + 15;
                       end;
                     end;
                   end;
@@ -222,7 +222,7 @@ begin
                        DataOps(2, startPage, dataSize, initOffset, bit5);
                        BitAnd(bit5, bit4, bit4);
                        if not(IsClear(bit4)) then
-                        evalScore := evalScore + 25;
+                        evalScore := evalScore + 15;
                       end;
                     end;
                   end;

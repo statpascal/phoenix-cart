@@ -46,7 +46,7 @@ begin
     clrscr;
 //    setTextColor (lightyellow);
     setBackColor (white);
-    writeln('Phoenix Chess 1.8 - 2925-11-13');
+    writeln('Phoenix Chess 1.8 - 2925-11-14 15-00');
     n := SamsInit;
     if n = 0 then
          writeln('no SAMS card found! Exiting...')
