@@ -29,7 +29,7 @@ begin
  dataSize := 8;
 
  {capture bonus}
- if (attackFlag = 1) and (turn = gameSide) then
+ if attackFlag = 1 then
   begin
    bonus := 0;
    case attackId of
@@ -48,15 +48,9 @@ begin
           bonus := 75;
    end;
    if turn = 0 then
-    begin
-     bScore := bScore - bonus;
-     wScore := wScore + bonus;
-    end
+    wScore := wScore + bonus
    else
-    begin
-     wScore := wScore - bonus;
-     bScore := bScore + bonus;
-    end;
+    bScore := bScore + bonus;
   end;
 
  {penalty for moving king if castling possible}
@@ -99,14 +93,14 @@ begin
   endGame := 1;
  if locArray[0] <= 3 then
   endGame := 2;
-
+(*
  {mobility advantage determination}
  if wMobility > bMobility then
   wScore := wScore + 20
  else
   if bMobility > wMobility then
    bScore := bScore + 20;
-
+*)
  {determine base score for each side}
  for side := 0 to 1 do
   begin
@@ -158,7 +152,7 @@ begin
          DataOps(2, startPage, dataSize, offset2, bit2);
          case j of
           0 : begin
-               evalScore := evalScore + 100;
+               evalScore := evalScore + 150;
                if side = 0 then
                 begin
                  offset1 := WPAWN + (pLoc * 2);
@@ -186,7 +180,7 @@ begin
                        DataOps(2, startPage, dataSize, initOffset, bit5);
                        BitAnd(bit5, bit4, bit4);
                        if not(IsClear(bit4)) then
-                        evalScore := evalScore + 15;
+                        evalScore := evalScore + 25;
                       end;
                     end;
                   end;
@@ -228,7 +222,7 @@ begin
                        DataOps(2, startPage, dataSize, initOffset, bit5);
                        BitAnd(bit5, bit4, bit4);
                        if not(IsClear(bit4)) then
-                        evalScore := evalScore + 15;
+                        evalScore := evalScore + 25;
                       end;
                     end;
                   end;

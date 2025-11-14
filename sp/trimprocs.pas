@@ -71,9 +71,9 @@ procedure Trim(j, iLoc, sideOffset: integer; lastMove: moverec; var bit2: bitboa
                 k := 8;
                 case turn of 
                     0: if (iLoc > 7) and (iLoc <16) then
-                            BitTrim(bit2, bit4, iLoc, k, 0);
+                            BitTrim(bit2, iLoc, k, 0);
                     1: if (iLoc > 47) and (iLoc < 56) then
-                            BitTrim(bit2, bit4, iLoc, k, 0);
+                            BitTrim(bit2, iLoc, k, 0);
                 end;
 
        {check for en passant capture}
@@ -134,13 +134,13 @@ procedure Trim(j, iLoc, sideOffset: integer; lastMove: moverec; var bit2: bitboa
                 DataOps(2, startPage, dataSize, offset3, bit3);
                 BitNot(bit3, bit3);
                 BitAnd(bit2, bit3, bit5);
-                BitTrim(bit5, bit4, iLoc, j, 1);
+                BitTrim(bit5, iLoc, j, 1);
 
        {trim to own pieces}
                 DataOps(2, startPage, dataSize, sideOffset, bit3);
                 BitNot(bit3, bit3);
                 BitAnd(bit2, bit3, bit2);
-                BitTrim(bit2, bit4, iLoc, j, 0);
+                BitTrim(bit2, iLoc, j, 0);
 
        {merge all trimmed boards}
                 BitAnd(bit2, bit5, bit2);

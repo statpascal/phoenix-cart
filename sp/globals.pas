@@ -119,7 +119,7 @@ type
 
 var 
     startPage, sPage, dataSize, turn, gameSide, gamePointer: integer;
-    pieceCount, wCastleFlag, bCastleFlag, ply, cWarning: integer;
+    pieceCount, wCastleFlag, bCastleFlag, cWarning: integer;
     gamePly, wMobility, bMobility, gameMove, humanSide: integer;
     wRAFlag, wLAFlag, bRAFlag, bLAFlag: integer;
     wRookLFlag, wRookRFlag, bRookLFlag, bRookRFlag: integer;

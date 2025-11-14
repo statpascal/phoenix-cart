@@ -4,7 +4,7 @@ interface
 uses {$U chesslib.code} globals;
 
 procedure MoveGen(lastMove : moverec; var finalMove : moverec;
-                  var score : integer; aVal, bVal, cMoveFlag : integer);
+                  var score, alpha, beta : integer; cMoveFlag : integer);
 
 implementation
 uses {$U chesslib.code} scorepos,
@@ -20,7 +20,7 @@ var
  pLoc, sideOffset, offset1, offset2, offset3, offset4 : integer;
  wCheckFlag, bCheckFlag, offset7, epCapFlag, switchFlag : integer;
  offset5, offset6, attackFlag, evalScore : integer;
- pruneFlag, sPage2, mateFlag, alpha, beta : integer;
+ pruneFlag, sPage2, mateFlag : integer;
  foundFlag : boolean;
  bestMove, tempMove : moverec;
  posArray, moveArray : bitarray;
@@ -29,9 +29,6 @@ var
  buffer : array[0..59] of integer;
 
 begin
- alpha := aVal;
- beta := bVal;
-
  if ply <= 2 then
   begin
    if turn = 0 then

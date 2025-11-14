@@ -3,12 +3,12 @@ unit bitops;
 interface
 
 type 
-    bitboard =   array[0..3] of integer;
-    bitarray =   array[0..64] of integer;
+    bitboard = array [0..3] of integer;
+    bitarray = array [0..64] of integer;
 
 
-procedure BitTrim(var b1, b2 : bitboard; var n, ptype : integer; flg : integer);
-procedure BitPos(var b1 : bitboard; var posarray : bitarray);
+procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
+procedure BitPos (var b1: bitboard; var posarray: bitarray);
 
 procedure BitNot(var b1, br : bitboard);
 procedure BitAnd(var b1, b2, br : bitboard);
@@ -24,7 +24,7 @@ uses bitopsorig, globals;
 var
     f: text;
 
-procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer); 
+procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
 
     type 
         bitboard_byte = array [0..7] of uint8;
@@ -116,37 +116,37 @@ procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer);
         checkLeft, checkRight, checkUp, checkDown: boolean;
         
     begin
-        checkLeft := n and 7 <> 0;
-        checkRight := succ (n) and 7 <> 0;
-        checkUp := n < 56;
-        checkDown := n > 7;
+        checkLeft := pos and 7 <> 0;
+        checkRight := succ (pos) and 7 <> 0;
+        checkUp := pos < 56;
+        checkDown := pos > 7;
         
         if ptype <> Bishop then 
             begin
                 if checkUp then
-                    trimRay (bitboard_byte (b1), n + 8, 1, 0, flg);		// up
+                    trimRay (bitboard_byte (b1), pos + 8, 1, 0, opponent);		// up
                 if checkDown then
-                    trimRay (bitboard_byte (b1), n - 8, -1, 0, flg);		// down
+                    trimRay (bitboard_byte (b1), pos - 8, -1, 0, opponent);		// down
                 if checkLeft then
-                    trimRay (bitboard_byte (b1), n - 1, 0, LeftVal, flg);	// left
+                    trimRay (bitboard_byte (b1), pos - 1, 0, LeftVal, opponent);	// left
                 if checkRight then
-                    trimRay (bitboard_byte (b1), n + 1, 0, RightVal, flg)	// right
+                    trimRay (bitboard_byte (b1), pos + 1, 0, RightVal, opponent)	// right
             end;
         if ptype <> Rook then
             begin
                 if checkLeft then
                     begin
                         if checkUp then
-                            trimRay (bitboard_byte (b1), n + 7, 1, LeftVal, flg);	// left up
+                            trimRay (bitboard_byte (b1), pos + 7, 1, LeftVal, opponent);	// left up
                         if checkDown then
-                            trimRay (bitboard_byte (b1), n - 9, -1, LeftVal, flg)	// left down
+                            trimRay (bitboard_byte (b1), pos - 9, -1, LeftVal, opponent)	// left down
                     end;
                 if checkRight then
                     begin
                         if checkUp then
-                            trimRay (bitboard_byte (b1), n + 9, 1, RightVal, flg);	// right up
+                            trimRay (bitboard_byte (b1), pos + 9, 1, RightVal, opponent);	// right up
                         if checkDown then
-                            trimRay (bitboard_byte (b1), n - 7, -1, RightVal, flg)	// right down
+                            trimRay (bitboard_byte (b1), pos - 7, -1, RightVal, opponent)	// right down
                     end
             end
     end;

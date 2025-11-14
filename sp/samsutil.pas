@@ -33,7 +33,7 @@ procedure dataOps (rwcode, startPage, dataSize, offset: integer; var data);
 
 implementation
 
-uses vdp;
+uses vdp, globals;
 // provides setCRUBit
 
 const 
@@ -113,8 +113,8 @@ end;
 var 
     log: text;
 
-
 (*
+
 procedure dataOps (rwcode, startPage, dataSize, offset: integer; var data);
 
 const 
@@ -125,12 +125,9 @@ type
 
 var 
     bytes, done: integer;
-    //        p, q: ^integer;
+    
 begin
-    //        p := addr (rwcode) + (-1);
-    //        q := p + 6;
-
-//        writeln (log, rwcode, ' P: ', startPage, ' O: ', offset:4, ' S: ', dataSize:4, ' C: ', (q^ - $6000) div 2, ':', hexstr (p^));
+    writeln (log, rwcode, ' P: ', startPage, ' O: ', offset:4, ' S: ', dataSize:4);
     samsCardOn;
     setCRUBit (SamsCRUAddr + 2, true);
     // turn mapping on
@@ -199,4 +196,7 @@ opsdone li      r1,>0200        //restore sams register to original page
 end;
 
 
+begin
+//    assign (log, 'DSK0.dataps.log');
+//    rewrite (log)
 end.

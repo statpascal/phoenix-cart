@@ -229,6 +229,11 @@
     pruneFlag := 0;
     if turn = 0 then
      begin
+      if bestScore > beta then
+       pruneFlag := 1
+      else
+       if bestScore > alpha then
+        alpha := bestScore;
       if evalScore >= bestScore then
        begin
         bestScore := evalScore;
@@ -236,14 +241,14 @@
         bestMove.startSq := tempMove.startSq;
         bestMove.endSq := tempMove.endSq;
        end;
-      if bestScore > beta then
-       pruneFlag := 1
-      else
-       if bestScore > alpha then
-        alpha := bestScore;
      end
     else
      begin
+      if bestScore < alpha then
+       pruneFlag := 1
+      else
+       if bestScore < beta then
+        beta := bestScore;
       if evalScore <= bestScore then
        begin
         bestScore := evalScore;
@@ -251,11 +256,6 @@
         bestMove.startSq := tempMove.startSq;
         bestMove.endSq := tempMove.endSq;
        end;
-      if bestScore < alpha then
-       pruneFlag := 1
-      else
-       if bestScore < beta then
-        beta := bestScore;
      end;
    end
   else
@@ -276,6 +276,11 @@
     pruneFlag := 0;
     if turn = 0 then
      begin
+      if bestScore > beta then
+       pruneFlag := 1
+      else
+       if bestScore > alpha then
+        alpha := bestScore;
       if score >= bestScore then
        begin
         bestScore := score;
@@ -283,14 +288,14 @@
         bestMove.startSq := tempMove.startSq;
         bestMove.endSq := tempMove.endSq;
        end;
-      if bestScore > beta then
-       pruneFlag := 1
-      else
-       if bestScore > alpha then
-        alpha := bestScore;
      end
     else
      begin
+      if bestScore < alpha then
+       pruneFlag := 1
+      else
+       if bestScore < beta then
+        beta := bestScore;
       if score <= bestScore then
        begin
         bestScore := score;
@@ -298,11 +303,6 @@
         bestMove.startSq := tempMove.startSq;
         bestMove.endSq := tempMove.endSq;
        end;
-      if bestScore < alpha then
-       pruneFlag := 1
-      else
-       if bestScore < beta then
-        beta := bestScore;
      end;
    end;
 
