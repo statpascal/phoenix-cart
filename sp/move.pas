@@ -665,6 +665,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         dataSize := 8;
 
         repeat
+            foundFlag := false;
             tempMove.id := 99;
             l_1: 
       {update base bitboards with current move}
@@ -703,7 +704,6 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
       {remove attacked piece from opponent's bitboards}
             if attackFlag = 1 then
                 begin
-                    foundFlag := FALSE;
                     DataOps(2, startPage, dataSize, offset3, bit2);
                     bit3 := bit2;
                     BitNot(bit2, bit2);
@@ -851,7 +851,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 end;
 
       {terminal node check}
-            if ply = 1 then
+            if not foundFlag and (ply = 1) or (ply = -1) then
                 begin
         {update number of positions evaluated}
                     inc (moveNumLo);

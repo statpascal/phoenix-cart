@@ -1,4 +1,4 @@
-(* version 11-8-25 v1.8)
+(* version 11-14-25 v1.8)
 (* MinMax, no iterative deepening, capture evaluation bonus *)
 (* fixed castling when rook has moved bug *)
 (* adjustments to scorepos
@@ -49,6 +49,9 @@
 (* 11-3-25: added penalty for moving queen too early *)
 (* 11-6-25: decreased mobility bonus *)
 (* 11-8-25: fixed king to king check bug *)
+(* 11-13-25 : capture bonus now applies to both sides *)
+(* 11-14-25: eliminated mobility bonus *)
+(* 11-14-25: implemented quiescence search *)
 
 Program Main;
 uses random,
