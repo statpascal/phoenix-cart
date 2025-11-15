@@ -510,6 +510,45 @@ procedure indent (ply: integer);
         write (logFile, ' ' : 4 * (gameply - ply))
     end;        
 
+procedure printBoard;
+    const 
+        baseaddr: array [0..1] of integer = (WPO, BPO);
+        figure: array [0..1, 0..5] of char = (('^', 'R', 'N', 'B', 'Q', 'K'),
+                                              ('v', 'r', 'n', 'b', 'q', 'k'));
+    var
+        s: array [0..7] of string [8];
+        side, piece, i, j: integer;
+        bit: bitboard;
+        pos: bitarray;
+    begin
+        for i := 0 to 7 do
+            if odd (i) then
+                s [i] := ' = = = ='
+            else
+                s [i] := '= = = = ';
+        for side := 0 to 1 do
+            for piece := 0 to 5 do
+                begin
+                    DataOps (2, BASE, 8, baseaddr [side] + 8 * piece, bit);
+                    BitPos (bit, pos);
+                    for i := 1 to pos [0] do
+                        s [pos [i] shr 3][succ (pos [i] and 7)] := figure [side, piece]
+                end;
+                
+        writeln (logFile);
+        writeln (logFile, '========================================');
+        writeln (logFile, 'Move: ', gameMove);
+        writeln (logFile);
+        for i := 7 downto 0 do
+            begin
+                write (logFile, '|');
+                for j := 1 to 8 do
+                    write (logFile, s [i][j], '|');
+                writeln (logFile);
+            end;
+        writeln (logFile)
+    end;
+                    
 procedure printMove (var move: moverec);
 
     const
@@ -551,7 +590,19 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         mark (heap);
 
         if doLogging then begin
-            indent (ply); printMove (lastmove); writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
+            if ply = gamePly then
+                begin
+                    printBoard;
+                    write (logFile, 'Last move: ');
+                    printMove (lastMove);
+                    writeln (logFile)
+                end
+            else
+                begin                    
+                    indent (ply); 
+                    printMove (lastmove); 
+                    writeln (logFile, ': alpha = ', aVal, ' beta = ', bVal)
+                end
         end;
 
         pruneFlag := false;
@@ -634,6 +685,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         dataSize := 8;
 
         repeat
+            foundFlag := false;
             tempMove.id := 99;
             l_1: 
       {update base bitboards with current move}
@@ -672,7 +724,6 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
       {remove attacked piece from opponent's bitboards}
             if attackFlag = 1 then
                 begin
-                    foundFlag := FALSE;
                     DataOps(2, startPage, dataSize, offset3, bit2);
                     bit3 := bit2;
                     BitNot(bit2, bit2);
@@ -777,7 +828,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
             if not ignoreMove then 
                 begin
-                    if ply = 1 then
+                    if not foundFlag and (ply = 1) or (ply = -1) then
                         {terminal node check}
                         begin
                             {update number of positions evaluated}

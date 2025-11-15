@@ -34,6 +34,7 @@
  dataSize := 8;
 
  repeat
+  foundFlag := FALSE;
   tempMove.id := 99;
   1:
   {update base bitboards with current move}
@@ -72,7 +73,6 @@
   {remove attacked piece from opponent's bitboards}
   if attackFlag = 1 then
    begin
-    foundFlag := FALSE;
     DataOps(2, startPage, dataSize, offset3, bit2);
     bit3 := bit2;
     BitNot(bit2, bit2);
@@ -219,7 +219,7 @@
    end;
 
   {terminal node check}
-  if ply = 1 then
+  if ((not(foundFlag)) and (ply = 1)) or (ply = -1) then
    begin
     {update number of positions evaluated}
     moveNum := moveNum + 1;
