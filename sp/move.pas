@@ -583,7 +583,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         bestMove, tempMove: moverec;
         moveList, attackList, tailIndex, attackIndex, currentMove: listPointer;
         bit8, bit9: bitboard;
-        buffer: array[0..59] of integer;
+        savedBoard: array[0..59] of integer;
         heap: pointer;
 
     begin
@@ -630,10 +630,6 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 sideOffset := TBPIECES;
             end;
 
-     {get the sides bitboard for movement trimming}
-        offset1 := SIDES;
-        DataOps(2, startPage, dataSize, offset1, bit4);
-
         new(moveList);
         new(attackList);
         moveList^.link := nil;
@@ -676,12 +672,8 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 exit;
             end;
 
-     {save ply base bitboards}
-        offset := TWPO;
-        dataSize := 120;
-        DataOps(2, startPage, dataSize, offset, buffer);
-        offset := PLYBOARDS + (pred(ply) * 120);
-        DataOps(1, sPage, dataSize, offset, buffer);
+        {save bitboards}
+        DataOps (2, BASE, 120, TWPO, savedBoard);
         dataSize := 8;
 
         repeat
@@ -840,7 +832,9 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                 end;
                             evalScore := Evaluate (cMoveFlag, attackFlag, l, n, lastMove, tempMove);
                             if doLogging then begin   
-                                indent (ply - 1); printMove (tempMove); writeln (logFile, ': ', evalScore: 6)
+                                indent (ply - 1); 
+                                printMove (tempMove); 
+                                writeln (logFile, ': ', evalScore: 6)
                             end
                         end
                     else
@@ -885,12 +879,8 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                         end
                 end;
 
-      {restore the previous ply base bitboard}
-            offset := PLYBOARDS + (pred(ply) * 120);
-            dataSize := 120;
-            DataOps(2, sPage, dataSize, offset, buffer);
-            offset := TWPO;
-            DataOps(1, startPage, dataSize, offset, buffer);
+            {restore the previous ply base bitboard}
+            DataOps (1, BASE, 120, TWPO, savedBoard);
             dataSize := 8;
 
             currentMove := currentMove^.link;
@@ -905,17 +895,14 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         score := bestScore;
         
         if doLogging then begin
-            indent (pred (ply)); write (logFile, 'Best: '); printMove (finalMove); writeln (logfile, ': ', score:6)
+            indent (pred (ply)); 
+            write (logFile, 'Best: '); 
+            printMove (finalMove); 
+            writeln (logfile, ': ', score:6)
         end;
 
-     {up 1 ply}
-//        ply := succ(ply);
+        {up 1 ply}
         turn := 1 - turn;
-//        if turn = 0 then
-//            turn := 1
-//        else
-//            turn := 0;
-            
         release (heap);
     end;
 
