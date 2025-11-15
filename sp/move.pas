@@ -601,7 +601,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 begin                    
                     indent (ply); 
                     printMove (lastmove); 
-                    writeln (logFile, ': alpha = ', aVal, ' beta = ', bVal)
+                    writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
                 end
         end;
 
