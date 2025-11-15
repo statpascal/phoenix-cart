@@ -501,7 +501,12 @@ begin
                 begin
                     write (moveNumHi);
                     write ('000');
-                    gotoxy (wherex - 3, wherey);
+                    if moveNumLo >= 100 then
+                        gotoxy (wherex - 3, wherey)
+                    else if moveNumLo >= 10 then
+                        gotoxy (wherex - 2, wherey)
+                    else
+                        gotoxy (wherex - 1, wherey);
                     writeln (moveNumLo)
                 end
             else

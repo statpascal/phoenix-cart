@@ -660,7 +660,8 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         offset := TWPO;
         dataSize := 120;
         DataOps(2, startPage, dataSize, offset, buffer);
-        offset := PLYBOARDS + (pred(ply) * 120);
+        offset := PLYBOARDS + ((ply + 3 ) * 120);
+        
         DataOps(1, sPage, dataSize, offset, buffer);
         dataSize := 8;
 
@@ -950,8 +951,9 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
             l_5: 
       {restore the previous ply base bitboard}
-            offset := PLYBOARDS + (pred(ply) * 120);
+            offset := PLYBOARDS + ((ply + 3) * 120);
             dataSize := 120;
+            
             DataOps(2, sPage, dataSize, offset, buffer);
             offset := TWPO;
             DataOps(1, startPage, dataSize, offset, buffer);
