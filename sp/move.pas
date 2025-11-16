@@ -186,7 +186,21 @@ procedure checkOwnBackRowAttack (var lastMove: moveRec);
            ((turn = 1) and (bCastleFlag = 0)) then
             begin
            {generate combined opposite movement trim board}
+           
+                {save the main boards}
+                DataOps(2, BASE, 120, WPO, buffer);
+                DataOps(1, BASE2, 120, SWPO, buffer);
+                
+                {replace main boards with temp boards for current move}
+                DataOps(2, BASE, 120, TWPO, buffer);
+                DataOps(1, BASE, 120, WPO, buffer);
+                   
                 CombineTrim(bit3, bit5, lastMove);
+                
+                {restore main boards}
+                DataOps(2, BASE2, 120, SWPO, buffer);
+                DataOps(1, BASE, 120, WPO, buffer);
+ 
 
            {check right and left back rows}
                 if turn = 0 then
@@ -391,7 +405,22 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                             begin
              {get the combined trim boards}
                                 bit8 := bit2;
+                                
+                                
+                               {save the main boards}
+                                DataOps(2, BASE, 120, WPO, buffer);
+                                DataOps(1, BASE2, 120, SWPO, buffer);
+                                
+                                {replace main boards with temp boards for current move}
+                                DataOps(2, BASE, 120, TWPO, buffer);
+                                DataOps(1, BASE, 120, WPO, buffer);
+                                                        
                                 CombineTrim(bit3, bit5, lastMove);
+                                
+                                {restore main boards}
+                                DataOps(2, BASE2, 120, SWPO, buffer);
+                                DataOps(1, BASE, 120, WPO, buffer);
+                                
                                 bit1 := bit9;
                                 bit2 := bit8;
 

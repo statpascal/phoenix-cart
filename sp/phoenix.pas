@@ -46,7 +46,7 @@ begin
     clrscr;
 //    setTextColor (lightyellow);
     setBackColor (white);
-    writeln('Phoenix Chess 1.9 classic beta 1');
+    writeln('Phoenix Chess 1.9 classic beta 2');
     n := SamsInit;
     if n = 0 then
          writeln('no SAMS card found! Exiting...')
