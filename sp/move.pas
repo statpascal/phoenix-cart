@@ -11,6 +11,91 @@ implementation
 
 uses scorepos, trimprocs, pmove;
 
+procedure indent (ply: integer);
+    begin
+        write (logFile, ' ' : 4 * (gameply - ply))
+    end;        
+
+procedure dumpBitBoard (var b: bitboard);
+    var
+        i, j, k, val: integer;
+    begin
+        for i := 3 downto 0 do
+            begin
+                val := b [i];
+                for j := 1 to 2 do
+                    begin
+                        for k := 0 to 7 do
+                            write (logFile, ord (val and (1 shl (7 - k)) <> 0));
+                        writeln (logFile);
+                        val := val shr 8;
+                    end
+            end
+    end;
+
+
+procedure printBoard;
+    const 
+        baseaddr: array [0..1] of integer = (WPO, BPO);
+        figure: array [0..1, 0..5] of char = (('^', 'R', 'N', 'B', 'Q', 'K'),
+                                              ('v', 'r', 'n', 'b', 'q', 'k'));
+    var
+        s: array [0..7] of string [8];
+        side, piece, i, j: integer;
+        bit: bitboard;
+        pos: bitarray;
+    begin
+        for i := 0 to 7 do
+            if odd (i) then
+                s [i] := ' = = = ='
+            else
+                s [i] := '= = = = ';
+        for side := 0 to 1 do
+            for piece := 0 to 5 do
+                begin
+                    DataOps (2, BASE, 8, baseaddr [side] + 8 * piece, bit);
+                    BitPos (bit, pos);
+                    for i := 1 to pos [0] do
+                        s [pos [i] shr 3][succ (pos [i] and 7)] := figure [side, piece]
+                end;
+                
+        writeln (logFile);
+        writeln (logFile, '========================================');
+        writeln (logFile, 'Move: ', gameMove);
+        writeln (logFile);
+        for i := 7 downto 0 do
+            begin
+                write (logFile, '|');
+                for j := 1 to 8 do
+                    write (logFile, s [i][j], '|');
+                writeln (logFile);
+            end;
+        writeln (logFile)
+    end;
+                    
+procedure printMove (var move: moverec);
+
+    const
+        pieceName: string = 'PRNBQK';
+    
+    procedure writeCoord (sq: integer);
+        begin
+            write (logFile, chr (65 + sq mod 8));
+            write (logFile, chr (49 + sq div 8))
+        end;
+    
+    begin
+        if move.id <> 99 then
+            begin
+                write (logFile, pieceName [succ (move.id shr 3)]);
+                writeCoord (move.startSq);
+                write (logFile, '-');
+                writecoord (move.endSq)
+            end
+    end;
+
+
+
 procedure checkBackRowInterposing;
     var 
         offset, offset1, offset2: integer;
@@ -186,7 +271,22 @@ procedure checkOwnBackRowAttack (var lastMove: moveRec);
            ((turn = 1) and (bCastleFlag = 0)) then
             begin
            {generate combined opposite movement trim board}
+           
+        {save the main boards}
+        DataOps(2, BASE, 120, WPO, buffer);
+        DataOps(1, BASE2, 120, SWPO, buffer);
+        
+        {replace main boards with temp boards for current move}
+        DataOps(2, BASE, 120, TWPO, buffer);
+        DataOps(1, BASE, 120, WPO, buffer);
+           
+           
                 CombineTrim(bit3, bit5, lastMove);
+                
+        {restore main boards}
+        DataOps(2, BASE2, 120, SWPO, buffer);
+        DataOps(1, BASE, 120, WPO, buffer);
+                
 
            {check right and left back rows}
                 if turn = 0 then
@@ -391,15 +491,48 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                             begin
              {get the combined trim boards}
                                 bit8 := bit2;
+                                
+        {save the main boards}
+        DataOps(2, BASE, 120, WPO, buffer);
+        DataOps(1, BASE2, 120, SWPO, buffer);
+        
+        {replace main boards with temp boards for current move}
+        DataOps(2, BASE, 120, TWPO, buffer);
+        DataOps(1, BASE, 120, WPO, buffer);
+                                
+                                
                                 CombineTrim(bit3, bit5, lastMove);
+                                
+        {restore main boards}
+        DataOps(2, BASE2, 120, SWPO, buffer);
+        DataOps(1, BASE, 120, WPO, buffer);
+                                
+                                
                                 bit1 := bit9;
                                 bit2 := bit8;
+                                
+//                                writeln ('Current position');
+//                                printBoard;
+                                
+//                                writeln (logFile, 'King bitboard');
+//                                dumpBitBoard (bit2);
 
              {check if king movement overlaps opposite pieces combined movement}
-                                if turn = 0 then
+             
+//                                 writeln (logFile, 'Opposite bitboard');
+             
+                                if turn = 0 then begin
+//                                    dumpBitBoard (bit5);
                                     BitAnd(bit2, bit5, bit8)
-                                else
+                                end
+                                else begin
+//                                    dumpBitboard (bit3);
                                     BitAnd(bit2, bit3, bit8);
+                                end;
+                                    
+//                                writeln (logFile, 'King bitboard combined oppositve moves');
+//                                dumpBitBoard (bit8);
+                                    
                                 BitPos(bit8, moveArray);
                                 n := moveArray[0];
                                 BitPos(bit2, moveArray);
@@ -505,71 +638,6 @@ function isKingChecked (lastMove: moverec): boolean;
         isKingChecked := not isClear (bit1)
     end;
     
-procedure indent (ply: integer);
-    begin
-        write (logFile, ' ' : 4 * (gameply - ply))
-    end;        
-
-procedure printBoard;
-    const 
-        baseaddr: array [0..1] of integer = (WPO, BPO);
-        figure: array [0..1, 0..5] of char = (('^', 'R', 'N', 'B', 'Q', 'K'),
-                                              ('v', 'r', 'n', 'b', 'q', 'k'));
-    var
-        s: array [0..7] of string [8];
-        side, piece, i, j: integer;
-        bit: bitboard;
-        pos: bitarray;
-    begin
-        for i := 0 to 7 do
-            if odd (i) then
-                s [i] := ' = = = ='
-            else
-                s [i] := '= = = = ';
-        for side := 0 to 1 do
-            for piece := 0 to 5 do
-                begin
-                    DataOps (2, BASE, 8, baseaddr [side] + 8 * piece, bit);
-                    BitPos (bit, pos);
-                    for i := 1 to pos [0] do
-                        s [pos [i] shr 3][succ (pos [i] and 7)] := figure [side, piece]
-                end;
-                
-        writeln (logFile);
-        writeln (logFile, '========================================');
-        writeln (logFile, 'Move: ', gameMove);
-        writeln (logFile);
-        for i := 7 downto 0 do
-            begin
-                write (logFile, '|');
-                for j := 1 to 8 do
-                    write (logFile, s [i][j], '|');
-                writeln (logFile);
-            end;
-        writeln (logFile)
-    end;
-                    
-procedure printMove (var move: moverec);
-
-    const
-        pieceName: string = 'PRNBQK';
-    
-    procedure writeCoord (sq: integer);
-        begin
-            write (logFile, chr (65 + sq mod 8));
-            write (logFile, chr (49 + sq div 8))
-        end;
-    
-    begin
-        if move.id <> 99 then
-            begin
-                write (logFile, pieceName [succ (move.id shr 3)]);
-                writeCoord (move.startSq);
-                write (logFile, '-');
-                writecoord (move.endSq)
-            end
-    end;
-
 procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; cMoveFlag, ply: integer);
     label 
         l_1, l_3, l_5;
