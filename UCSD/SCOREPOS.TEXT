@@ -93,14 +93,7 @@ begin
   endGame := 1;
  if locArray[0] <= 3 then
   endGame := 2;
-(*
- {mobility advantage determination}
- if wMobility > bMobility then
-  wScore := wScore + 20
- else
-  if bMobility > wMobility then
-   bScore := bScore + 20;
-*)
+ 
  {determine base score for each side}
  for side := 0 to 1 do
   begin

@@ -206,7 +206,7 @@ begin
 
    {skip king move if no valid move on first ply}
    {allows for stalemate detection}
-   if j = 40 then
+   if (j = 40) and (ply = gamePly) then
     begin
      {get the combined trim boards}
      bit8 := bit2;
@@ -224,16 +224,6 @@ begin
      BitPos(bit2, moveArray);
      if n = moveArray[0] then
       goto 3; 
-    end;
-
-   {add up mobility score for side}
-   if ply <= 2 then
-    begin
-     BitPos(bit2, moveArray);
-     if turn = 0 then
-      wMobility := wMobility + moveArray[0]
-     else
-      bMobility := bMobility + moveArray[0];
     end;
 
    {update move list}

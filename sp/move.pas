@@ -401,25 +401,25 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
 
            {skip king move if no valid move on first ply}
            {allows for stalemate detection}
-                        if j = 40 then
+                        if (j = 40) and (ply = gamePly) then
                             begin
              {get the combined trim boards}
                                 bit8 := bit2;
                                 
                                 
                                {save the main boards}
-                                DataOps(2, BASE, 120, WPO, buffer);
-                                DataOps(1, BASE2, 120, SWPO, buffer);
+//                                DataOps(2, BASE, 120, WPO, buffer);
+//                                DataOps(1, BASE2, 120, SWPO, buffer);
                                 
                                 {replace main boards with temp boards for current move}
-                                DataOps(2, BASE, 120, TWPO, buffer);
-                                DataOps(1, BASE, 120, WPO, buffer);
+//                                DataOps(2, BASE, 120, TWPO, buffer);
+//                                DataOps(1, BASE, 120, WPO, buffer);
                                                         
                                 CombineTrim(bit3, bit5, lastMove);
                                 
                                 {restore main boards}
-                                DataOps(2, BASE2, 120, SWPO, buffer);
-                                DataOps(1, BASE, 120, WPO, buffer);
+//                                DataOps(2, BASE2, 120, SWPO, buffer);
+//                                DataOps(1, BASE, 120, WPO, buffer);
                                 
                                 bit1 := bit9;
                                 bit2 := bit8;
@@ -437,6 +437,7 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                             end;
 
            {add up mobility score for side}
+(*           
                         if ply <= 2 then
                             begin
                                 BitPos(bit2, moveArray);
@@ -445,6 +446,7 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                                 else
                                     bMobility := bMobility + moveArray[0];
                             end;
+*)                            
 
            {update move list}
            {find potential captures and add to attack list}

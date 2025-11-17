@@ -92,7 +92,7 @@
      DataOps(1, startPage, dataSize, offset2, bit1);
      j := j + 8;
     until (foundFlag) or (j > 40);
-   
+    
     {en passant capture handling}
     if (foundFlag = FALSE) and (currentMove^.id = 0) then
      begin
@@ -172,54 +172,51 @@
    end;
 
   {check if own king in check after current move}
-  if ply = gamePly then
+  pruneFlag := 0;
+  {save the main boards}
+  offset := WPO;
+  startPage := BASE;
+  dataSize := 120;
+  DataOps(2, startPage, dataSize, offset, buffer);
+  offset := SWPO;
+  startPage := BASE2;
+  DataOps(1, startPage, dataSize, offset, buffer);
+  {replace main boards with temp boards for current move}
+  offset := WPO;
+  offset1 := TWPO;
+  startPage := BASE;
+  DataOps(2, startPage, dataSize, offset1, buffer);
+  DataOps(1, startPage, dataSize, offset, buffer);
+  {generate combined trim boards}
+  dataSize := 8;
+  CombineTrim(bit3, bit5, lastMove);
+  {restore main boards}
+  startPage := BASE2;
+  dataSize := 120;
+  offset := SWPO;
+  DataOps(2, startPage, dataSize, offset, buffer);
+  startPage := BASE;
+  offset := WPO;
+  DataOps(1, startPage, dataSize, offset, buffer);
+  dataSize := 8;
+  {check if own king attacked by opposite trim board}
+  if turn = 0 then
+   offset := TWKO
+  else
+   offset := TBKO;
+  DataOps(2, startPage, dataSize, offset, bit1);
+  if not(IsClear(bit1)) then
    begin
-    pruneFlag := 0;
-    {save the main boards}
-    offset := WPO;
-    startPage := BASE;
-    dataSize := 120;
-    DataOps(2, startPage, dataSize, offset, buffer);
-    offset := SWPO;
-    startPage := BASE2;
-    DataOps(1, startPage, dataSize, offset, buffer);
-    {replace main boards with temp boards for current move}
-    offset := WPO;
-    offset1 := TWPO;
-    startPage := BASE;
-    DataOps(2, startPage, dataSize, offset1, buffer);
-    DataOps(1, startPage, dataSize, offset, buffer);
-    {generate combined trim boards}
-    dataSize := 8;
-    CombineTrim(bit3, bit5, lastMove);
-    {restore main boards}
-    startPage := BASE2;
-    dataSize := 120;
-    offset := SWPO;
-    DataOps(2, startPage, dataSize, offset, buffer);
-    startPage := BASE;
-    offset := WPO;
-    DataOps(1, startPage, dataSize, offset, buffer);
-    dataSize := 8;
-    {check if own king attacked by opposite trim board}
     if turn = 0 then
-     offset := TWKO
+     BitAnd(bit1, bit5, bit1)
     else
-     offset := TBKO;
-    DataOps(2, startPage, dataSize, offset, bit1);
+     BitAnd(bit1, bit3, bit1);
     if not(IsClear(bit1)) then
-     begin
-      if turn = 0 then
-       BitAnd(bit1, bit5, bit1)
-      else
-       BitAnd(bit1, bit3, bit1);
-      if not(IsClear(bit1)) then
-       goto 5; {ignore move if own king still in check}
-     end;
+     goto 5; {ignore move if own king still in check}
    end;
 
   {terminal node check}
-  if ((not(foundFlag)) and (ply = 1)) or (ply = -1) then
+  if ((not(foundFlag)) and (ply <= 1)) or (ply = -1) then
    begin
     {update number of positions evaluated}
     moveNum := moveNum + 1;
