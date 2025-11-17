@@ -836,8 +836,8 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
       {check if own king in check after current move}
 //            if (cWarning = 1) and (ply = gamePly) then
-            if ply = gamePly then
-                begin
+//            if ply = gamePly then
+//                begin
                     pruneFlag := 0;
         {save the main boards}
                     offset := WPO;
@@ -880,10 +880,10 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                             if not(IsClear(bit1)) then
                                 goto l_5; {ignore move if own king still in check}
                         end;
-                end;
+//                end;
 
       {terminal node check}
-            if not foundFlag and (ply = 1) or (ply = -1) then
+            if not foundFlag and (ply <= 1) or (ply = -1) then
                 begin
         {update number of positions evaluated}
                     inc (moveNumLo);
