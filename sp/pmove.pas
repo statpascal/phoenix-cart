@@ -453,6 +453,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
         sideOffset, offset2, offset3, offset4, switchState: integer;
         validSq, foundFlag: boolean;
         fn: string [20];
+        epCapDummy: integer;
     begin
         turn := pturn;
         startPage := BASE;
@@ -717,7 +718,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
                     else
                         begin
           {trim movement to blocks}
-                            Trim(playMove.id, iLoc, sideOffset, lastMove, bit2);
+                            Trim(playMove.id, iLoc, lastMove, bit2, WPIECES, BPIECES, APIECES, epCapDummy);
 
                             offset := PIECELOC + (eLoc * 8);
                             DataOps(2, startPage, dataSize, offset, bit3);
