@@ -883,7 +883,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 end;
 
       {terminal node check}
-            if not foundFlag and (ply = 1) or (ply = -1) then
+            if not foundFlag and (ply <= 1) or (ply = -1) then
                 begin
         {update number of positions evaluated}
                     inc (moveNumLo);
