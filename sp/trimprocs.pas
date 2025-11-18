@@ -10,6 +10,9 @@ procedure CombineTrim(var bit3, bit5: bitboard; lastMove: moverec);
 
 implementation
 
+uses movement;
+
+
 procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePieces, blackPieces, allPieces: integer; var epCapFlag: integer);
     var 
         k, offset, offset1, offset2, offset3, sPage, sideOffset: integer;
@@ -28,7 +31,7 @@ procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePie
      {get the SIDES bitboard for pawn movement trimming}
 //        offset1 := SIDES;
 //        DataOps(2, startPage, dataSize, offset1, bit4);
-
+(*
         case j of 
             0 : if turn = 0 then
                      offset1 := offset + WPMOVE - 64
@@ -40,11 +43,21 @@ procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePie
             32: offset1 := offset + QMOVE;
             40: offset1 := offset + KMOVE;
         end;
-
+*)        
+(*
         if j = 24 then
             DataOps(2, sPage, dataSize, offset1, bit2)
         else
             DataOps(2, startPage, dataSize, offset1, bit2);
+*)            
+            
+        if j = 0 then
+            if turn = 0 then
+                bit2 := getMovementBitboard (WhitePawnMove, iLoc)
+            else
+                bit2 := getMovementBitboard (BlackPawnMove, iLoc)
+        else
+            bit2 := getMovementBitboard (TBitboardType ((j - 8) shr 3), iLoc);
 
      {eliminate blocking squares from movement}
      {pawns special handling}
@@ -65,15 +78,17 @@ procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePie
 //                        offset1 := BPIECES;
                         offset1 := blackPieces;
                         offset2 := WPDIAG + offset - 64;
+                        bit6 := getMovementBitboard (WhitePawnCapture, iLoc)
                     end
                 else
                     begin
 //                        offset1 := WPIECES;
                         offset1 := whitePieces;
                         offset2 := BPDIAG + offset;
+                        bit6 := getMovementBitboard (BlackPawnCapture, iLoc)
                     end;
                 DataOps(2, startPage, dataSize, offset1, bit3);
-                DataOps(2, sPage, dataSize, offset2, bit6);
+//                DataOps(2, sPage, dataSize, offset2, bit6);
                 BitAnd(bit6, bit3, bit6);
                 BitOr(bit2, bit6, bit2);
                 k := 8;
@@ -86,8 +101,8 @@ procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePie
 
        {check for en passant capture}
        {check if pawn in position for en passant capture}
-                if ((turn = 0) and (offset >= 256) and (offset <= 312)) or
-                   ((turn = 1) and (offset >= 192) and (offset <= 248)) then
+                if ((turn = 0) and (iLoc >= 32) and (iLoc <= 39)) or
+                   ((turn = 1) and (iLoc >= 24) and (iLoc <= 31)) then
                     begin
          {check if last move was a pawn}
                         if lastMove.id = 0 then
