@@ -481,10 +481,10 @@ procedure initGame;
         DataOps(1, sPage, dataSize, offset, moveStore);
         dataSize := 8;
 
-        write(chr(7), 'enter ply: [2-6] ');
+        write(chr(7), 'enter ply: [1-6] ');
         repeat
             ans := GetKeyInt;
-        until ans in[50..54];
+        until ans in[49..54];
         writeln(chr(ans));
         ply := ans - 48;
         gamePly := ply;
@@ -559,7 +559,7 @@ procedure check3Rep;
                 repFlag := TRUE;
                 sPage := BASE2;
                 tempPointer := gamePointer;
-                for i := 1 to 4 do
+                for i := 1 to 3 do
                     begin
                         tempPointer := tempPointer - 8;
                         offset := PLAYLIST + tempPointer;

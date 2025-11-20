@@ -251,9 +251,9 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
     label 
         l_3;
     var 
-        j, k, l, n, offset, offset1, offset2, offset4, pLoc, epCapFlag: integer;
+        j, k, l, n, offset, offset1, offset2, offset_help, offset4, pLoc, epCapFlag: integer;
         posArray, moveArray: bitArray;
-        bit8, bit9: bitboard;
+        bit8, bit9, bitHelp: bitboard;
         currentMove: listPointer;
     begin
         j := 0;
@@ -350,7 +350,9 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                                                             end;
                      {check if pawn on an EP square}
                                                         DataOps(2, sPage, dataSize, offset1, bit3);
-                                                        BitAnd(bit1, bit3, bit3);
+                                                        offset_help := PIECELOC + (pLoc * 8);
+                                                        DataOps(2, startPage, dataSize, offset_help, bithelp);
+                                                        BitAnd(bithelp, bit3, bit3);
                                                         if not(IsClear(bit3)) then
                                                             begin
                        {add capture square to move bitboard}
@@ -611,14 +613,6 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
         alpha := aVal;
         beta := bVal;
-
-        if ply <= 2 then
-            begin
-                if turn = 0 then
-                    wMobility := 0
-                else
-                    bMobility := 0;
-            end;
 
         startPage := BASE;
         sPage := BASE1;
