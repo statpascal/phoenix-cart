@@ -154,6 +154,39 @@ end;
 *)
 
 procedure dataOps (rwcode, startPage, dataSize, offset: integer; var data); assembler;
+        mov  @startpage, r13
+        a    @offset, r13
+        mov  @data, r14
+        mov  @datasize, r15
+        
+        mov  @rwcode, r12
+        ci   r12, 2
+        jeq  dataops_read
+        
+    dataops_write
+        mov  *r14+, *r13+
+        dect r15
+        jgt  dataops_write
+        jmp  dataops_done
+        
+    dataops_read
+        mov  *r13+, *r14+
+        dect r15
+        jgt  dataops_read
+        
+    dataops_done
+end;    
+(*    
+    begin
+        if rwcode = dataOpsWrite then
+            moveWord (data, memB [startPage + offset], datasize shr 1)
+        else
+            moveWord (memB [startPage + offset], data, datasize shr 1)
+    end;
+*)    
+
+(*
+procedure dataOps (rwcode, startPage, dataSize, offset: integer; var data); assembler;
         lwpi    >8320
         mov     @>8314, r10     // copy stack pointer from Pascal runtime workspace
         
@@ -194,7 +227,7 @@ opsdone li      r1,>0200        //restore sams register to original page
 
         lwpi    >8300
 end;
-
+*)
 
 begin
 //    assign (log, 'DSK0.dataps.log');

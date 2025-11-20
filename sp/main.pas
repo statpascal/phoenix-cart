@@ -57,7 +57,7 @@ implementation
 // uses random,
 
 uses 
-    globals, move, trimprocs, ui, pmove;
+    globals, move, trimprocs, ui, pmove, utility;
 
 var 
     i, j, moveScore, offset, found, aVal, bVal, ans: integer;
@@ -481,10 +481,10 @@ procedure initGame;
         DataOps(1, sPage, dataSize, offset, moveStore);
         dataSize := 8;
 
-        write(chr(7), 'enter ply: [2-6] ');
+        write(chr(7), 'enter ply: [1-6] ');
         repeat
             ans := GetKeyInt;
-        until ans in[50..54];
+        until ans in[49..54];
         writeln(chr(ans));
         gamePly := ans - 48;
 //        gamePly := ply;
@@ -559,7 +559,7 @@ procedure check3Rep;
                 repFlag := TRUE;
                 sPage := BASE2;
                 tempPointer := gamePointer;
-                for i := 1 to 4 do
+                for i := 1 to 3 do
                     begin
                         tempPointer := tempPointer - 8;
                         offset := PLAYLIST + tempPointer;
@@ -645,7 +645,7 @@ procedure chainMain;
                     humanFlag := TRUE;
 
         {save current game state}
-                    SaveMove;
+// TODO: move to VDP                    SaveMove;
 
                     playerMove(playMove, lastMove, gameSide);
                     if humanSide <> gameSide then

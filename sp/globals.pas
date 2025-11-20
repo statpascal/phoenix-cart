@@ -5,9 +5,14 @@ interface
 uses samsutil, vdp, bitops;
 
 const 
-    BASE = 20;
-    BASE1 = 21;
-    BASE2 = 22;
+//    BASE = 20;
+//    BASE1 = 21;
+//    BASE2 = 22;
+
+    BASE = $2000;
+    BASE1 = $3000;
+    BASE2 = $A000;
+
  {BASE3 = 23;}
     BASE4 = 24;
     WPO = 0; {BASE}

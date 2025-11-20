@@ -42,24 +42,24 @@ procedure loadBoardData;
     end;
 
 begin
-    initHeap ($a000, 16384);
+    initHeap ($b000, 16384);
     clrscr;
 //    setTextColor (lightyellow);
     setBackColor (white);
-    writeln('Phoenix Chess 1.8Q - 2025-11-15 17-00');
-    n := SamsInit;
-    if n = 0 then
-         writeln('no SAMS card found! Exiting...')
-    else
-        begin
-            SamsSize(n, dataSize);
-            writeln('SAMS card detected: ',dataSize,' pages');
+    writeln('Phoenix Chess SP - 2025-11-20 19-00');
+//    n := SamsInit;
+//    if n = 0 then
+//         writeln('no SAMS card found! Exiting...')
+//    else
+//        begin
+//            SamsSize(n, dataSize);
+//            writeln('SAMS card detected: ',dataSize,' pages');
 
             writeln('loading data...');
             loadBoardData;
             writeln('starting Phoenix Chess...');
 
-            chainMain
-        end;
+            chainMain;
+//        end;
     waitkey
 end.

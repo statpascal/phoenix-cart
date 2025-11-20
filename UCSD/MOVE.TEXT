@@ -32,14 +32,6 @@ begin
  alpha := aVal;
  beta := bVal;
 
- if ply <= 2 then
-  begin
-   if turn = 0 then
-    wMobility := 0
-   else
-    bMobility := 0;
-  end;
-
  startPage := BASE;
  sPage := BASE1;
 
@@ -156,7 +148,9 @@ begin
               end;
              {check if pawn on an EP square}
              DataOps(2, sPage, dataSize, offset1, bit3);
-             BitAnd(bit1, bit3, bit3);
+             offset3 := PIECELOC + (pLoc * 8);
+             DataOps(2, startPage, dataSize, offset3, bit2);
+             BitAnd(bit2, bit3, bit3);
              if not(IsClear(bit3)) then
               begin
                {add capture square to move bitboard}
@@ -206,7 +200,7 @@ begin
 
    {skip king move if no valid move on first ply}
    {allows for stalemate detection}
-   if j = 40 then
+   if (j = 40) and (ply = gamePly) then
     begin
      {get the combined trim boards}
      bit8 := bit2;
@@ -224,16 +218,6 @@ begin
      BitPos(bit2, moveArray);
      if n = moveArray[0] then
       goto 3; 
-    end;
-
-   {add up mobility score for side}
-   if ply <= 2 then
-    begin
-     BitPos(bit2, moveArray);
-     if turn = 0 then
-      wMobility := wMobility + moveArray[0]
-     else
-      bMobility := bMobility + moveArray[0];
     end;
 
    {update move list}
