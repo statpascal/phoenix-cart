@@ -5,38 +5,44 @@ interface
 uses {$U chesslib.code} globals;
 
 //procedure Trim(j, iLoc, sideOffset: integer; lastMove: moverec; var bit2: bitboard);
-procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePieces, blackPieces, allPieces: integer; var epCapFlag: integer);
-procedure CombineTrim(var bit3, bit5: bitboard; lastMove: moverec);
+
+function Trim (turn, piece, iLoc: integer; lastMove: moverec; whitePieces, blackPieces, allPieces: integer; var epCapFlag: integer): bitboard;
+procedure CombineTrim (var whiteTrim, blackTrim: bitboard; lastMove: moverec);
 
 implementation
 
 uses resources;
 
 
-procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePieces, blackPieces, allPieces: integer; var epCapFlag: integer);
+function Trim(turn, piece, iLoc: integer; lastMove: moverec; whitePieces, blackPieces, allPieces: integer; var epCapFlag: integer): bitboard;
     var 
-        k, offset, offset1, offset2, offset3, sPage, sideOffset: integer;
+        ownPieces, opponentPieces: integer;
         row, bitmask, epCapSquare: integer;
+        bit2, bit3, bit5, bit6: bitboard;
     begin
-        startPage := BASE;
-        sPage := BASE1;
         dataSize := 8;
         if turn = 0 then 
-            sideOffset := whitePieces
+            begin
+                ownPieces := whitePieces;
+                opponentPieces := blackPieces
+            end
         else
-            sideOffset := blackPieces;
+            begin
+                ownPieces := blackPieces;
+                opponentPieces := whitePieces
+            end;
 
         {trim piece movement to obstructions}
-        if j = 0 then
+        if piece = 0 then
             if turn = 0 then
                 bit2 := getMovementBitboard (WhitePawnMove, iLoc)
             else
                 bit2 := getMovementBitboard (BlackPawnMove, iLoc)
         else
-            bit2 := getMovementBitboard (TBitboardType ((j - 8) shr 3), iLoc);
+            bit2 := getMovementBitboard (TBitboardType ((piece - 8) shr 3), iLoc);
 
         {eliminate blocking squares from movement}
-        if j = 0 then
+        if piece = 0 then
             begin
                 {trim forward movement to any piece}
                 DataOps(2, BASE, 8, allPieces, bit3);
@@ -55,16 +61,10 @@ procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePie
                     
                 {trim diagonal movement if no opposite piece to capture}
                 if turn = 0 then
-                    begin
-                        offset1 := blackPieces;
-                        bit6 := getMovementBitboard (WhitePawnCapture, iLoc)
-                    end
+                    bit6 := getMovementBitboard (WhitePawnCapture, iLoc)
                 else
-                    begin
-                        offset1 := whitePieces;
-                        bit6 := getMovementBitboard (BlackPawnCapture, iLoc)
-                    end;
-                DataOps(2, startPage, 8, offset1, bit3);
+                    bit6 := getMovementBitboard (BlackPawnCapture, iLoc);
+                DataOps(2, BASE, 8, opponentPieces, bit3);
                 BitAnd(bit6, bit3, bit6);
                 
                 BitOr(bit2, bit6, bit2);
@@ -95,9 +95,9 @@ procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePie
                             end
                     end
                 end
-        else if (j = 16) or (j = 40) then	// knight, king
+        else if (piece = 16) or (piece = 40) then	// knight, king
             begin
-                DataOps(2, startPage, 8, sideOffset, bit3);
+                DataOps(2, BASE, 8, ownPieces, bit3);
                 BitNot(bit3, bit3);
                 BitAnd(bit2, bit3, bit2);
             end
@@ -105,24 +105,21 @@ procedure Trim(j, iLoc: integer; lastMove: moverec; var bit2: bitboard; whitePie
             {trim sliding pieces movement rays past blocking pieces}
             begin
                 {trim to opponent pieces}
-                if turn = 0 then
-                    offset3 := blackPieces
-                else
-                    offset3 := whitePieces;
-                DataOps(2, startPage, 8, offset3, bit3);
+                DataOps(2, BASE, 8, opponentPieces, bit3);
                 BitNot(bit3, bit3);
                 BitAnd(bit2, bit3, bit5);
-                BitTrim(bit5, iLoc, j, 1);
+                BitTrim(bit5, iLoc, piece, 1);
 
                 {trim to own pieces}
-                DataOps(2, startPage, 8, sideOffset, bit3);
+                DataOps(2, BASE, 8, ownPieces, bit3);
                 BitNot(bit3, bit3);
                 BitAnd(bit2, bit3, bit2);
-                BitTrim(bit2, iLoc, j, 0);
+                BitTrim(bit2, iLoc, piece, 0);
 
                 {merge all trimmed boards}
                 BitAnd(bit2, bit5, bit2)
-            end
+            end;
+        Trim := bit2
     end;
 
 (*
@@ -268,60 +265,36 @@ procedure Trim(j, iLoc, sideOffset: integer; lastMove: moverec; var bit2: bitboa
     
 *)    
 
-procedure CombineTrim(var bit3, bit5: bitboard; lastMove: moverec);
+procedure CombineTrim (var whiteTrim, blackTrim: bitboard; lastMove: moverec);
     var 
-        i, j, offset, sideOffset, iTurn: integer;
+        i, j: integer;
         posArray: bitarray;
         epCapDummy: integer;
+        bit1, bit2: bitboard;
     begin
-        startPage := BASE;
-        dataSize := 8;
-        iTurn := turn;
-
-        ClearBitboard(bitRes);
-        sideOffset := WPIECES;
-        turn := 0;
-
+        ClearBitboard (whiteTrim);
         for i := 0 to 5 do
             begin
-                offset := WPO + (i * 8);
-                DataOps(2, startPage, dataSize, offset, bit1);
-                if not(IsClear(bit1)) then
+                DataOps(2, BASE, 8, WPO + (i * 8), bit1);
+                BitPos(bit1, posArray);
+                for j := 1 to posArray [0] do
                     begin
-                        BitPos(bit1, posArray);
-                        for j := 1 to posArray[0] do
-                            begin
-                                Trim(i * 8, posArray[j], lastMove, bit2, WPIECES, BPIECES, APIECES, epCapDummy);
-                                BitOr(bit2, bitRes, bitRes);
-                            end;
-                    end;
+                        bit2 := Trim(0, i * 8, posArray[j], lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
+                        BitOr(bit2, whiteTrim, whiteTrim)
+                    end
             end;
-        bit7 := BitRes;
 
-        sideOffset := BPIECES;
-        ClearBitboard(bitRes);
-        turn := 1;
-
+        ClearBitboard (blackTrim);
         for i := 0 to 5 do
             begin
-                offset := BPO + (i * 8);
-                DataOps(2, startPage, dataSize, offset, bit1);
-                if not(IsClear(bit1)) then
+                DataOps(2, BASE, 8, BPO + (i * 8), bit1);
+                BitPos(bit1, posArray);
+                for j := 1 to posArray [0] do
                     begin
-                        BitPos(bit1, posArray);
-                        for j := 1 to posArray[0] do
-                            begin
-                                Trim(i * 8, posArray[j], lastMove, bit2, WPIECES, BPIECES, APIECES, epCapDummy);
-                                BitOr(bit2, bitRes, bitRes);
-                            end;
-                    end;
-            end;
-        bit5 := bitRes;
-        bit3 := bit7;
-
-     {bit3 has white combined trim board}
-     {bit5 has black combined trim board}
-        turn := iTurn;
-    end; {CombineTrim}
+                        bit2 := Trim(1, i * 8, posArray[j], lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
+                        BitOr(bit2, blackTrim, blackTrim)
+                    end
+            end
+    end;
 
 end.

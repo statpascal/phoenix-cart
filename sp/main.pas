@@ -665,7 +665,7 @@ procedure chainMain;
                                 offset := WPIECES
                             else
                                 offset := BPIECES;
-                            Trim(playMove.id, playMove.endSq, lastMove, bit2, WPIECES, BPIECES, APIECES, epCapDummy);
+                            bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
 
        {combine piece location with trimmed move list}
                             BitOr(bit1, bit2, bit3);
@@ -909,7 +909,7 @@ procedure chainMain;
                     BitPos(bit1, moveArray);
 
         {obtain list of all possible opposite king movement}
-                    Trim(40, moveArray[1], lastMove, bit2, WPIECES, BPIECES, APIECES, epCapDummy);
+                    bit2 := Trim(turn, 40, moveArray[1], lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
 
                     if not(IsCLear(bit2)) then
                         begin
@@ -1032,7 +1032,7 @@ procedure chainMain;
                             sideOffset := BPIECES;
                             turn := 1;
                         end;
-                    Trim(playMove.id, playMove.endSq, lastMove, bit2, WPIECES, BPIECES, APIECES, epCapDummy);
+                    bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
 
         {check if any opposite piece movement blocks it}
                     BitAnd(bit2, bit8, bit1);
@@ -1061,7 +1061,7 @@ procedure chainMain;
                             sideOffset := BPIECES;
                             offset := WKO;
                         end;
-                    Trim(playMove.id, playMove.endSq, lastMove, bit2, WPIECES, BPIECES, APIECES, epCapDummy);
+                    bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
 
         {check if overalp with opposite king}
                     GetBoards;

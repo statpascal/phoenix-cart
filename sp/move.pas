@@ -282,6 +282,7 @@ procedure checkOwnBackRowAttack (var lastMove: moveRec);
            
            
                 CombineTrim(bit3, bit5, lastMove);
+                dataSize := 8;
                 
         {restore main boards}
         DataOps(2, BASE2, 120, SWPO, buffer);
@@ -358,7 +359,7 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                         
                         
     epCapFlag := 0;
-    Trim (j, pLoc, lastMove, bit2, TWPIECES, TBPIECES, TAPIECES, epCapFlag);
+    bit2 := Trim (turn, j, pLoc, lastMove, TWPIECES, TBPIECES, TAPIECES, epCapFlag);
     
 (*                        
              {get corresponding movement bitboard for current piece and square}
@@ -510,6 +511,7 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                                 
                                 
                                 CombineTrim(bit3, bit5, lastMove);
+                                dataSize := 8;
                                 
         {restore main boards}
         DataOps(2, BASE2, 120, SWPO, buffer);
@@ -783,6 +785,7 @@ procedure loopAllPieces (initOffset, sideOffset: integer; var lastMove: moverec;
                                 
                                 
                                 CombineTrim(bit3, bit5, lastMove);
+                                dataSize := 8;
                                 
         {restore main boards}
         DataOps(2, BASE2, 120, SWPO, buffer);
@@ -897,6 +900,7 @@ function isKingChecked (lastMove: moverec): boolean;
         DataOps(1, BASE, 120, WPO, buffer);
         {generate combined trim boards}
         CombineTrim(bit3, bit5, lastMove);
+        datasize := 8;
         {restore main boards}
         DataOps(2, BASE2, 120, SWPO, buffer);
         DataOps(1, BASE, 120, WPO, buffer);
