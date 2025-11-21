@@ -121,6 +121,20 @@ type
         link: listPointer;
     end;
 
+    TSideRecord = record
+        case boolean of
+            false: (pawnBitboard, rookBitboard, knightBitboard, bishipBitboard, queenBitboard, kingBitboard: bitboard);
+            true:  (bitboards: array [0..5] of bitboard)
+        end;
+    
+    TBoardRecord = record
+        white, black: TSideRecord;
+        allPieces, whitePieces, blackPieces: bitboard
+    end;
+    
+var
+    mainBoard: TBoardRecord absolute $2000;
+    tempBoard: TBoardRecord absolute $2f6e;
 
 var 
     startPage, sPage, dataSize, turn, gameSide, gamePointer: integer;

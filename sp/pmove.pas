@@ -222,7 +222,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
                                ((turn = 1) and (bCastleFlag = 0)) then
                                 begin
       {generate combined opposite movement trim board}
-                                    CombineTrim(bit3, bit5, lastMove);
+                                    CombineTrim(bit3, bit5, lastMove, mainBoard);
 
       {check right and left back rows}
                                     if turn = 0 then
@@ -287,7 +287,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
                     else
                         begin
           {trim movement to blocks}
-                            bit2 := Trim(turn, playMove.id, iLoc, lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
+                            bit2 := Trim(turn, playMove.id, iLoc, lastMove, mainBoard, epCapDummy);
 
                             offset := PIECELOC + (eLoc * 8);
                             DataOps(2, startPage, dataSize, offset, bit3);
@@ -358,7 +358,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
         until i > 40;
 
      {generate combined trimmed movement bitboards}
-        CombineTrim(bit3, bit5, lastMove);
+        CombineTrim(bit3, bit5, lastMove, mainBoard);
 
      {verify if king in check}
         if turn = 0 then

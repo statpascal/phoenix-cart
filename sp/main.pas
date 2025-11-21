@@ -517,7 +517,7 @@ procedure initGame;
                 lastMove.id := 0;
                 lastMove.startSq := 0;
                 lastMove.endSq := 0;
-                CombineTrim(bit3, bit5, lastMove);
+                CombineTrim(bit3, bit5, lastMove, mainBoard);
                 if gameSide = 0 then
                     offset := WKO
                 else
@@ -665,7 +665,7 @@ procedure chainMain;
                                 offset := WPIECES
                             else
                                 offset := BPIECES;
-                            bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
+                            bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, mainBoard, epCapDummy);
 
        {combine piece location with trimmed move list}
                             BitOr(bit1, bit2, bit3);
@@ -862,7 +862,7 @@ procedure chainMain;
 
       {convert move to coordinates}
             BoardDisplay;
-            CombineTrim(bit3, bit5, lastMove);
+            CombineTrim(bit3, bit5, lastMove, mainBoard);
 
       {look for check condition}
             checkFlag := FALSE;
@@ -909,7 +909,7 @@ procedure chainMain;
                     BitPos(bit1, moveArray);
 
         {obtain list of all possible opposite king movement}
-                    bit2 := Trim(turn, 40, moveArray[1], lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
+                    bit2 := Trim(turn, 40, moveArray[1], lastMove, mainBoard, epCapDummy);
 
                     if not(IsCLear(bit2)) then
                         begin
@@ -973,7 +973,7 @@ procedure chainMain;
             {check if opposite king attacked by own side}
                                     bit8 := bit2;
 
-                                    CombineTrim(bit3, bit5, lastMove);
+                                    CombineTrim(bit3, bit5, lastMove, mainBoard);
 
                                     if gameSide = 0 then
                                         BitAnd(bit8, bit3, bit2)
@@ -1007,7 +1007,7 @@ procedure chainMain;
                     BitAnd(bit2, bit1, bit1);
                     DataOps(1, startPage, dataSize, offset, bit1);
 
-                    CombineTrim(bit3, bit5, lastMove);
+                    CombineTrim(bit3, bit5, lastMove, mainBoard);
 
                     if gameSide = 0 then
                         bit8 := bit5
@@ -1032,7 +1032,7 @@ procedure chainMain;
                             sideOffset := BPIECES;
                             turn := 1;
                         end;
-                    bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
+                    bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, mainBoard, epCapDummy);
 
         {check if any opposite piece movement blocks it}
                     BitAnd(bit2, bit8, bit1);
@@ -1061,7 +1061,7 @@ procedure chainMain;
                             sideOffset := BPIECES;
                             offset := WKO;
                         end;
-                    bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, WPIECES, BPIECES, APIECES, epCapDummy);
+                    bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, mainBoard, epCapDummy);
 
         {check if overalp with opposite king}
                     GetBoards;

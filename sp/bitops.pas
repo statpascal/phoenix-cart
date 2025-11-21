@@ -10,19 +10,17 @@ type
 procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
 procedure BitPos (var b1: bitboard; var posarray: bitarray);
 
-procedure BitNot(var b1, br : bitboard);
-procedure BitAnd(var b1, b2, br : bitboard);
-procedure BitOr(var b1, b2, br : bitboard);
-procedure RShift(var b1, br : bitboard; n : integer);
-procedure LShift(var b1, br : bitboard; n : integer);
+procedure BitNot (var b1, br: bitboard);
+procedure BitAnd (var b1, b2, br: bitboard);
+procedure BitAndNot (var b1, b2, br: bitboard); assembler;
+procedure BitOr (var b1, b2, br: bitboard);
+procedure RShift (var b1, br: bitboard; n: integer);
+procedure LShift (var b1, br: bitboard; n: integer);
 
 
 implementation
 
 uses bitopsorig, globals;
-
-var
-    f: text;
 
 procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
 
@@ -220,8 +218,7 @@ procedure BitNot(var b1, br : bitboard); assembler;
         lwpi    >8300
 end;
 
-// logically AND 2 bitboards
-// bitboard1 and bitboard2 are ANDed and the result placed in bitboard3
+// br := b1 and b2
 
 procedure BitAnd(var b1, b2, br : bitboard); assembler;
         mov     @br, r15        //get pointer to bitboard3
@@ -272,6 +269,30 @@ procedure BitAnd(var b1, b2, br : bitboard); assembler;
         inv	r12
         szc	r12, *r15
 *)
+end;
+
+// br := b1 and not b2
+
+procedure BitAndNot (var b1, b2, br : bitboard); assembler;
+        mov     @br, r15        //get pointer to bitboard3
+        mov     @b2, r14        //get pointer to bitboard2
+        mov     @b1, r13        //get pointer to bitboard1
+        
+        mov 	*r13+, r0
+        szc	*r14+, r0
+        mov	r0, *r15+
+        
+        mov 	*r13+, r0
+        szc	*r14+, r0
+        mov	r0, *r15+
+        
+        mov 	*r13+, r0
+        szc	*r14+, r0
+        mov	r0, *r15+
+
+        mov 	*r13, r0
+        szc	*r14, r0
+        mov	r0, *r15
 end;
 
 //logicaly OR two bitboards
@@ -379,7 +400,7 @@ procedure LShift(var b1, br : bitboard; n : integer); assembler;
         lwpi    >8300
 end;
 
-
+(*
 
 procedure dumpBoard (var b: bitboard);
     var
@@ -398,7 +419,8 @@ procedure dumpBoard (var b: bitboard);
             end
     end;
     
-(*
+var
+    f: text;
 
 procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer);
     var
