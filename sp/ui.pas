@@ -47,7 +47,7 @@ begin
     gotoxy(20, 12);
     write('printing...');
     offset := PLAYLIST;
-    startPage := 22;
+    startPage := BASE2;
     dataSize := 8;
     pturn := 1;
     

@@ -187,10 +187,25 @@ function IsClear(var bit1: bitboard): boolean;
     end;
 *)    
 
-function IsClear(var b: bitboard): boolean;
+function IsClear(var b: bitboard): boolean; assembler;
+        clr  r14
+        mov  @b, r12
+        mov  *r12+, r13
+        soc  *r12+, r13
+        soc  *r12+, r13
+        soc  *r12, r13
+        jne  isclear_done
+        li   r14, >0100
+    isclear_done:
+        mov  *r10, r12
+        movb r14, *r12
+end;        
+
+(*
     begin
         IsClear := b [0] or b [1] or b [2] or b [3] = 0
     end;
+*)    
 
 
 procedure BitDisp(var bit1: bitboard);

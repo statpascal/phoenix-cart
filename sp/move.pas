@@ -280,7 +280,8 @@ procedure checkOwnBackRowAttack (var lastMove: moveRec);
 //                DataOps(2, BASE, 120, TWPO, buffer);
 //                DataOps(1, BASE, 120, WPO, buffer);
                    
-                CombineTrim(bit3, bit5, lastMove, tempBoard);
+//                CombineTrim(bit3, bit5, lastMove, tempBoard);
+             
                         
                 {restore main boards}
 //                DataOps(2, BASE2, 120, SWPO, buffer);
@@ -290,6 +291,9 @@ procedure checkOwnBackRowAttack (var lastMove: moveRec);
                 {check right and left back rows}
                 if turn = 0 then
                     begin
+                    
+                        bit5 := combineTrimSide (true, lastmove, tempBoard);
+                    
                         offset1 := WRBRMASK;
                         offset2 := WLBRMASK;
                         if (wRAFlag = 0) and (wRookRFlag = 0) then
@@ -310,6 +314,9 @@ procedure checkOwnBackRowAttack (var lastMove: moveRec);
                     end
                 else
                     begin
+                    
+                        bit3 := combineTrimSide (false, lastmove, tempBoard);
+                    
                         offset1 := BRBRMASK;
                         offset2 := BLBRMASK;
                         if (bRAFlag = 0) and (bRookRFlag = 0) then
