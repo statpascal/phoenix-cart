@@ -9,6 +9,7 @@ type
 
 function getMovementBitboard (bitboardType: TBitboardType; loc: integer): bitboard;
 function getPieceLocationBitboard (loc: integer): bitboard;
+function getEnPassantBitboard (isBlack: boolean; col: integer): bitboard;
 
 
 implementation
@@ -33,6 +34,17 @@ function getPieceLocationBitboard (loc: integer): bitboard;
     
     begin
         result := TBitboardData (addr (data_loc)) [loc]
+    end;
+
+function getEnPassantBitboard (isBlack: boolean; col: integer): bitboard;
+
+    type
+        TBitboardData = array [boolean, 0..8] of bitboard;
+        
+    procedure data_ep; external '../resources/enpassant.dat';
+    
+    begin
+        result := TBitboardData (addr (data_ep)) [isBlack, col]
     end;
     
 end.

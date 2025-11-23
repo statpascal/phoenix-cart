@@ -1,5 +1,8 @@
 #include <iostream>
 #include <gtkmm.h>
+#include <fstream>
+
+/*
 
 class TTestDialog: public Gtk::Window {
 typedef Gtk::Window inherited;
@@ -54,17 +57,20 @@ void TTestDialog::buttonClicked (bool isOk) {
     set_visible (false);
 }
 
+*/
+
 //
 
 class TMainWindow: public Gtk::ApplicationWindow {
 public:
-    TMainWindow ();
+    TMainWindow (const std::string &fn);
     virtual ~TMainWindow ();
     
 private:
     void onTreeviewRowActivated (const Gtk::TreeModel::Path &, Gtk::TreeViewColumn *);
     
-    void buildTreeModel ();
+    void buildTreeModel (const std::string &fn);
+    int getLevel (const std::string &s);
     
     Gtk::Box windowLayout;
     
@@ -76,35 +82,9 @@ private:
 
     Gtk::ScrolledWindow scroll;
     Gtk::Statusbar statusBar;
-    
-    
 };
 
-void TMainWindow::buildTreeModel () {
-    columnRecord.add (nameColumn);
-    columnRecord.add (windowNameColumn);
-    treeDataModel = Gtk::TreeStore::create (columnRecord);
-    treeview.set_model (treeDataModel);
-
-    for (int i = 0; i < 200; i++) {
-        Gtk::TreeModel::iterator row1 = treeDataModel->append ();
-        (*row1) [nameColumn] = std::to_string (i);
-        for (int j = 0; j < 200; j++) {
-            Gtk::TreeModel::iterator row2 = treeDataModel->append (row1->children ());
-            (*row2) [nameColumn] = std::to_string (i) + ":" + std::to_string (j);
-            for (int k = 0; k < 200; k++) {
-                Gtk::TreeModel::iterator row3 = treeDataModel->append (row2->children ());
-                (*row3) [nameColumn] = std::to_string (i) + ":" + std::to_string (j) + ":" + std::to_string (k);
-            }
-        }
-    }
-    
-    treeview.append_column ("Name", nameColumn);
-    treeview.signal_row_activated ().connect (sigc::mem_fun (*this, &TMainWindow::onTreeviewRowActivated));
-    treeview.set_activate_on_single_click ();
-}
-
-TMainWindow::TMainWindow ():
+TMainWindow::TMainWindow (const std::string &fn):
   windowLayout (Gtk::Orientation::VERTICAL) {
     set_title ("TMainWindow");
     set_default_size (1024, 768);
@@ -116,13 +96,44 @@ TMainWindow::TMainWindow ():
     windowLayout.append (scroll);
     windowLayout.append (statusBar);
     
-    buildTreeModel ();
-    
+    buildTreeModel (fn);
     treeview.set_vexpand ();
-
     
     statusBar.push ("Ready");
 //    set_can_focus ();
+}
+
+int TMainWindow::getLevel (const std::string &s) {
+    if (s.substr (0, 4) == "Last")
+        return 0;
+    int count = 0;
+    while  (count < s.length () && s [count] == ' ')
+        ++count;
+    return count / 4;
+}
+
+void TMainWindow::buildTreeModel (const std::string &fn) {
+    columnRecord.add (nameColumn);
+    columnRecord.add (windowNameColumn);
+    treeDataModel = Gtk::TreeStore::create (columnRecord);
+    treeview.set_model (treeDataModel);
+    
+    std::ifstream f (fn);
+    std::string s;    
+    std::array<Gtk::TreeModel::iterator, 20> levels;
+    
+    while (getline (f, s)) {
+        int level = getLevel (s);
+        if (level)
+            levels [level] = treeDataModel->append (levels [level - 1]->children ());
+        else
+            levels [level] = treeDataModel->append ();
+        (*levels [level]) [nameColumn] = s;
+    }
+    
+    treeview.append_column ("", nameColumn);
+    treeview.signal_row_activated ().connect (sigc::mem_fun (*this, &TMainWindow::onTreeviewRowActivated));
+    treeview.set_activate_on_single_click ();
 }
 
 void TMainWindow::onTreeviewRowActivated (const Gtk::TreeModel::Path &path, Gtk::TreeViewColumn *) {
@@ -140,7 +151,7 @@ TMainWindow::~TMainWindow () {
 class TApplication: public Gtk::Application {
 using inherited = Gtk::Application;
 public:
-    TApplication ();
+    TApplication (int argc, char **argv);
 
 protected:
     virtual void on_startup () override;
@@ -156,16 +167,19 @@ private:
     
     Glib::RefPtr<Gtk::Builder> builder;
     TMainWindow *mainWindow;
-    TTestDialog testDialog;
+    int argc;
+    char **argv;
+//    TTestDialog testDialog;
 };
 
-TApplication::TApplication ():
-  inherited ("name") {
+TApplication::TApplication (int argc, char **argv):
+  inherited ("name"), argc (argc), argv (argv) {
     Glib::set_application_name ("GTKMM Test Application");
+    run (1, argv);
 }
 
 void TApplication::on_activate () {
-    mainWindow = new TMainWindow;
+    mainWindow = new TMainWindow (argc == 2 ? argv [1] : "phoenix.log");
     add_window (*mainWindow);
     mainWindow->set_show_menubar ();
     mainWindow->set_visible (true);
@@ -193,7 +207,7 @@ void TApplication::on_startup () {
 }
 
 void TApplication::onMenuItem1 () {
-    testDialog.handleDialog (*mainWindow);
+//    testDialog.handleDialog (*mainWindow);
 }
 
 void TApplication::onMenuItem2 () {
@@ -205,6 +219,5 @@ void TApplication::onMenuQuit () {
 
 
 int main (int argc, char **argv) {
-    TApplication app;
-    app.run (argc, argv);
+    TApplication app (argc, argv);
 }

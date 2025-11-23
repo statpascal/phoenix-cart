@@ -4,16 +4,15 @@ interface
 
 uses globals;
 
-
 function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBoardRecord; var epCapFlag: integer): bitboard;
 function combineTrimSide (isBlack: boolean; var lastMove: moverec; var board: TBoardRecord): bitboard;
 
 procedure CombineTrim (var whiteTrim, blackTrim: bitboard; var lastMove: moverec; var board: TBoardRecord);
 
+
 implementation
 
 uses resources;
-
 
 function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBoardRecord; var epCapFlag: integer): bitboard;
     var 
@@ -60,12 +59,12 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                     begin
                         if turn = 0 then
                             begin
-                                DataOps (2, BASE1, 8, BEP + (lastMove.startSq * 8) - 384, bit2);
+                                bit2 := getEnpassantBitboard (true, lastMove.startSq and 7);
                                 epCapSquare := lastMove.startSq - 8
                             end
                         else
                             begin
-                                DataOps (2, BASE1, 8, WEP + (lastMove.startSq * 8) - 64, bit2);
+                                bit2 := getEnpassantBitboard (false, lastMove.startSq and 7);
                                 epCapSquare := lastMove.startSq + 8
                             end;
                         {check if pawn on an EP square}
@@ -138,35 +137,5 @@ procedure CombineTrim (var whiteTrim, blackTrim: bitboard; var lastMove: moverec
         whiteTrim := combineTrimSide (false, lastmove, board);
         blackTrim := combineTrimSide (true, lastmove, board)
     end;
-(*
-    var 
-        i, j: integer;
-        posArray: bitarray;
-        epCapDummy: integer;
-        bit: bitboard;
-    begin
-        ClearBitboard (whiteTrim);
-        for i := 0 to 5 do
-            begin
-                BitPos (board.white.bitboards [i], posArray);
-                for j := 1 to posArray [0] do
-                    begin
-                        bit := Trim (0, i * 8, posArray[j], lastMove, board, epCapDummy);
-                        BitOr (bit, whiteTrim, whiteTrim)
-                    end
-            end;
-
-        ClearBitboard (blackTrim);
-        for i := 0 to 5 do
-            begin
-                BitPos (board.black.bitboards [i], posArray);
-                for j := 1 to posArray [0] do
-                    begin
-                        bit := Trim (1, i * 8, posArray[j], lastMove, board, epCapDummy);
-                        BitOr(bit, blackTrim, blackTrim)
-                    end
-            end
-    end;
-*)    
 
 end.

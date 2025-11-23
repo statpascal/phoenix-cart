@@ -30,11 +30,11 @@ const
     APIECES = 96;
     WPIECES = 104;
     BPIECES = 112;
-    EMPTYSQUARES = 120;
-    FILEMASK = 128;
+//    EMPTYSQUARES = 120;
+//    FILEMASK = 128;
     FILEBLANK = 192;
-    RANKMASK = 256;
-    RANKBLANK = 320;
+//    RANKMASK = 256;
+//    RANKBLANK = 320;
     PIECELOC = 384;
     WPMOVE = 896;
     BPMOVE = 1344;
@@ -42,11 +42,11 @@ const
     NMOVE = 2304;
     QMOVE = 2816;
     RMOVE = 3328;
-    SIDES = 3840;
-    WPDOUBLE = 3848;
-    BPDOUBLE = 3856;
-    WEPFLAG = 3864;
-    BEPFLAG = 3872;
+//    SIDES = 3840;
+//    WPDOUBLE = 3848;
+//    BPDOUBLE = 3856;
+//    WEPFLAG = 3864;
+//    BEPFLAG = 3872;
     WLBRMASK = 3886;
     WRBRMASK = 3894;
     BLBRMASK = 3902;
@@ -70,6 +70,8 @@ const
     TAPIECES = 4046;
     TWPIECES = 4054;
     TBPIECES = 4062;
+    
+    
     BMOVE = 0; {BASE 1}
     WPDIAG = 512;
     BPDIAG = 960;
