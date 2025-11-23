@@ -13,15 +13,20 @@ uses trimprocs;
 function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; lastMove, tempMove: moverec): integer;
     label 
         l_1;
+
 var
  sPage1, dSize, initOffset, offset, offset1, offset2, i, j, k, l : integer;
  sPage2, side, wScore, bScore, evalScore, pawnCount, bonus : integer;
- endGame, pLoc : integer;
- locArray : bitarray;
+ endGame, pLoc, dummy : integer;
+ cRFlag : boolean;
+ locArray, moveArray : bitarray;
+ bit8, bit9 : bitboard;
 
 begin
  sPage1 := BASE1;
+ sPage2 := BASE2;
  dSize := 2;
+ cRFlag := FALSE;
  wScore := 0;
  bScore := 0;
  endGame := 0;
@@ -93,14 +98,7 @@ begin
   endGame := 1;
  if locArray[0] <= 3 then
   endGame := 2;
-(*
- {mobility advantage determination}
- if wMobility > bMobility then
-  wScore := wScore + 20
- else
-  if bMobility > wMobility then
-   bScore := bScore + 20;
-*)
+ 
  {determine base score for each side}
  for side := 0 to 1 do
   begin
@@ -243,6 +241,65 @@ begin
                evalScore := evalScore + l;
               end;
           8 : begin
+               {bonus if rooks are connected}
+               if not(cRFlag) then
+                begin
+                 if side = 0 then
+                  offset2 := TWRO
+                 else
+                  offset2 := TBRO;
+                 DataOps(2, startPage, dataSize, offset2, bit4);
+                 BitPos(bit4, moveArray);
+                 if moveArray[0] = 2 then
+                  begin
+                   {save primary boards}
+                   offset1 := WPO;
+                   dataSize := 120;
+                   DataOps(2, startPage, dataSize, offset1, buffer);
+                   offset1 := SWPO;
+                   DataOps(1, sPage2, dataSize, offset1, buffer);
+                   {replace with current boards}
+                   offset1 := TWPO;
+                   DataOps(2, startPage, dataSize, offset1, buffer);
+                   offset1 := WPO;
+                   DataOps(1, startPage, dataSize, offset1, buffer);
+                   dataSize := 8;
+                   {trim movement of each rook}
+                   bit7 := bit1;
+                   bit8 := Trim(side, 8, moveArray[1], LastMove, mainBoard, dummy);
+                   bit9 := Trim(side, 8, moveArray[2], LastMove, mainBoard, dummy);
+                   {check if there is overlap}
+                   BitAnd(bit8, bit9, bitRes);
+                   if not(IsClear(bitRes)) then
+                    begin
+                     {check if on same column}
+                     if Abs(moveArray[1] - moveArray[2]) Mod 8 = 0 then
+                      evalScore := evalScore + 100
+                     else
+                      begin
+                       {check if on same row}
+                       offset1 := FILEBLANK + ((moveArray[1] Mod 8) * 8);
+                       DataOps(2, startPage, dataSize, offset1, bitRes);
+                       BitAnd(bit8, bitRes, bit8);
+                       offset1 := FILEBLANK + ((moveArray[2] Mod 8) * 8);
+                       DataOps(2, startPage, dataSize, offset1, bitRes);
+                       BitAnd(bit9, bitRes, bit9);
+                       BitAnd(bit8, bit9, bitRes);
+                       if not(IsClear(bitRes)) then
+                        evalScore := evalScore + 100;
+                      end;
+                    end;
+                   {restore primary boards}
+                   offset1 := SWPO;
+                   dataSize := 120;
+                   DataOps(2, sPage2, dataSize, offset1, buffer);
+                   offset1 := WPO;
+                   DataOps(1, startPage, dataSize, offset1, buffer);
+                   dataSize := 8;
+                   bit1 := bit7;
+                  end;
+                 cRFlag := TRUE;
+                end;
                evalScore := evalScore + 525;
               end;
           16: begin

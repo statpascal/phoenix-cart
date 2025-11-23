@@ -148,9 +148,9 @@ begin
               end;
              {check if pawn on an EP square}
              DataOps(2, sPage, dataSize, offset1, bit3);
-             offset3 := PIECELOC + (pLoc * 8);
-             DataOps(2, startPage, dataSize, offset3, bit2);
-             BitAnd(bit2, bit3, bit3);
+             offset1 := PIECELOC + (pLoc * 8);
+             DataOps(2, startPage, dataSize, offset1, bit9);
+             BitAnd(bit9, bit3, bit3);
              if not(IsClear(bit3)) then
               begin
                {add capture square to move bitboard}

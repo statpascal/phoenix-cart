@@ -93,7 +93,13 @@ procedure printMove (var move: moverec);
                 writecoord (move.endSq)
             end
     end;
-
+(*
+procedure checkBackRowInterposing;
+    begin
+        if (turn = 0) and (wCastleFlag = 0) then
+            begin
+                if (wRookRFlag = 0) 
+*)
 
 
 procedure checkBackRowInterposing;
@@ -103,12 +109,12 @@ procedure checkBackRowInterposing;
         if ((turn = 0) and (wCastleFlag = 0)) or
            ((turn = 1) and (bCastleFlag = 0)) then
             begin
-                offset := APIECES;
+                offset := TAPIECES;
                 DataOps(2, startPage, dataSize, offset, bit1);
                 if turn = 0 then
                     begin
                {white}
-                        offset1 := WRCMASK;
+                        offset1 := WRCMASK;	
                         offset2 := WLCMASK;
                {right side}
                         if (wRAFlag = 0) and (wRookRFlag = 0) then
