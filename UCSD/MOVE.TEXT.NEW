@@ -1,0 +1,520 @@
+unit Move;
+
+interface
+uses {$U chesslib.code} globals;
+
+procedure MoveGen(lastMove : moverec; var finalMove : moverec;
+                  var score : integer; aVal, bVal, cMoveFlag : integer);
+
+implementation
+uses {$U chesslib.code} scorepos,
+     {$U interface.code} trimprocs, pmove;
+
+procedure MoveGen;
+
+label
+ 1, 3, 5;
+
+var
+ i, j, k, l, n, offset, initOffset, bestScore : integer;
+ pLoc, sideOffset, offset1, offset2, offset3, offset4 : integer;
+ wCheckFlag, bCheckFlag, offset7, epCapFlag, switchFlag : integer;
+ offset5, offset6, attackFlag, evalScore : integer;
+ pruneFlag, sPage2, mateFlag, alpha, beta : integer;
+ twRookRFlag, twRookLFlag, tbRookRFlag, tbRookLFlag : integer;
+ twLAFlag, twRAFlag, tbLAFlag, tbRAFlag : integer;
+ foundFlag : boolean;
+ bestMove, tempMove : moverec;
+ posArray, moveArray : bitarray;
+ moveList, attackList, tailIndex, attackIndex, currentMove : listPointer;
+ bit8, bit9 : bitboard;
+ buffer : array[0..59] of integer;
+
+begin
+ alpha := aVal;
+ beta := bVal;
+ twRookRFlag := wRookRFlag;
+ twRookLFlag := wRookLFlag;
+ tbRookRFlag := bRookRFlag;
+ tbRookLFlag := bRookLFlag;
+ twLAFlag := wLAFlag;
+ twRAFlag := wRAFlag;
+ tbLAFlag := bLAFlag;
+ tbRAFlag := bRAFlag;
+ startPage := BASE;
+ sPage := BASE1;
+ sPage2 := BASE2;
+
+ if turn = 0 then
+  begin
+   initOffset := TWPO;
+   sideOffset := TWPIECES;
+  end
+ else
+  begin
+   initOffset := TBPO;
+   sideOffset := TBPIECES;
+  end;
+
+ {get the sides bitboard for movement trimming}
+ offset1 := SIDES;
+ DataOps(2, startPage, dataSize, offset1, bit4);
+
+ new(moveList);
+ new(attackList);
+ moveList^.link := NIL;
+ attackList^.link := NIL;
+ tailIndex := moveList;
+ attackIndex := attackList;
+
+ j := 0;
+
+ repeat
+  {loop through all pieces bitboards}
+  offset := initOffset + j;
+  DataOps(2, startPage, dataSize, offset, bit1);
+  {check if current piece type exists on current square}
+  if not(IsClear(bit1)) then
+   begin
+    BitPos(bit1, posArray);
+    l := 1;
+    {loop through all existing pieces of current type}
+    repeat
+     pLoc := posArray[l];
+     {get corresponding movement bitboard for current piece and square}
+     offset := posArray[l] * 8;
+     case j of
+      0  : if turn = 0 then
+            offset1 := offset + WPMOVE - 64
+           else
+            offset1 := offset + BPMOVE;
+      8  : offset1 := offset + RMOVE;
+      16 : offset1 := offset + NMOVE;
+      24 : offset1 := offset + BMOVE;
+      32 : offset1 := offset + QMOVE;
+      40 : offset1 := offset + KMOVE;
+     end;
+
+     if j = 24 then
+      DataOps(2, sPage, dataSize, offset1, bit2)
+     else
+      DataOps(2, startPage, dataSize, offset1, bit2);
+
+     {eliminate blocking squares from movement}
+     {pawns special handling}
+
+     if j = 0 then
+      begin
+       epCapFlag := 0;
+       {trim forward movement to any piece}
+       offset1 := TAPIECES;
+       DataOps(2, startPage, dataSize, offset1, bit3);
+       BitNot(bit3, bit3);
+       BitAnd(bit2, bit3, bit2);
+       {add diagonal movement if opposite piece capture possible}
+       dataSize := 8;
+       if turn = 0 then
+        begin
+         offset1 := TBPIECES;
+         offset2 := WPDIAG + offset - 64;
+        end
+       else
+        begin
+         offset1 := TWPIECES;
+         offset2 := BPDIAG + offset;
+        end;
+       DataOps(2, startPage, dataSize, offset1, bit3);
+       DataOps(2, sPage, dataSize, offset2, bit6);
+       BitAnd(bit6, bit3, bit6);
+       BitOr(bit2, bit6, bit2);
+       k := 8;
+       case turn of
+        0 : if (pLoc > 7) and (pLoc <16) then
+             BitTrim(bit2, bit4, pLoc, k, 0);
+        1 : if (pLoc > 47) and (pLoc < 56) then
+             BitTrim(bit2, bit4, pLoc, k, 0);
+       end;
+
+       {check for en passant capture}
+       {check if pawn in position for en passant capture}
+       if ((turn = 0) and (offset in[256..312])) or
+          ((turn = 1) and (offset in[192..248])) then
+        begin
+         {check if last move was a pawn}
+         if lastMove.id = 0 then
+          begin
+           {check if last move was a double move}
+           if abs(lastMove.endSq - lastMove.startSq) = 16 then
+            begin
+             if turn = 0 then
+              begin
+               offset1 := BEP + (lastMove.startSq * 8) - 384;
+               offset2 := PIECELOC + ((lastMove.startSq - 8) * 8);
+              end
+             else
+              begin
+               offset1 := WEP + (lastMove.startSq * 8) - 64;
+               offset2 := PIECELOC + ((lastMove.startSq + 8) * 8);
+              end;
+             {check if pawn on an EP square}
+             DataOps(2, sPage, dataSize, offset1, bit3);
+             offset1 := PIECELOC + (pLoc * 8);
+             DataOps(2, startPage, dataSize, offset1, bit9);
+             BitAnd(bit9, bit3, bit3);
+             if not(IsClear(bit3)) then
+              begin
+               {add capture square to move bitboard}
+               epCapFlag := 1;
+               DataOps(2, startPage, dataSize, offset2, bit6);
+               BitOr(bit2, bit6, bit2);
+              end;
+            end;
+          end;
+        end;
+      end
+     else
+      begin
+       if j in[16, 40] then
+        begin
+         DataOps(2, startPage, dataSize, sideOffset, bit3);
+         BitNot(bit3, bit3);
+         BitAnd(bit2, bit3, bit2);
+        end;
+      end;
+
+     bit9 := bit1;
+     {trim sliding pieces movement rays past blocking pieces}
+     if j in[8, 24, 32] then
+      begin
+       {trim to opponent pieces}
+       if turn = 0 then
+        offset4 := TBPIECES
+       else
+        offset4 := TWPIECES;
+       DataOps(2, startPage, dataSize, offset4, bit3);
+       BitNot(bit3, bit3);
+       BitAnd(bit2, bit3, bit5);
+       BitTrim(bit5, bit4, pLoc, j, 1);
+
+       {trim to own pieces}
+       DataOps(2, startPage, dataSize, sideOffset, bit3);
+       BitNot(bit3, bit3);
+       BitAnd(bit2, bit3, bit2);
+       BitTrim(bit2, bit4, pLoc, j, 0);
+
+       {merge all trimmed boards}
+       BitAnd(bit2, bit5, bit2);
+      end;
+
+   {bit2 now has the trimmed move list for the current piece}
+
+   {skip king move if no valid move on first ply}
+   {allows for stalemate detection}
+   if (j = 40) and (ply = gamePly) then
+    begin
+     {get the combined trim boards}
+     bit8 := bit2;
+     CombineTrim(bit3, bit5, lastMove);
+     bit1 := bit9;
+     bit2 := bit8;
+
+     {check if king movement overlaps opposite pieces combined movement}
+     if turn = 0 then
+      BitAnd(bit2, bit5, bit8)
+     else
+      BitAnd(bit2, bit3, bit8);
+     BitPos(bit8, moveArray);
+     n := moveArray[0];
+     BitPos(bit2, moveArray);
+     if n = moveArray[0] then
+      goto 3; 
+    end;
+
+   {update move list}
+   {find potential captures and add to attack list}
+   if turn = 0 then
+    offset1 := TBPIECES
+   else
+    offset1 := TWPIECES;
+   DataOps(2, startPage, dataSize, offset1, bit3);
+   BitAnd(bit2, bit3, bit3);
+
+   {re-add any en passant capture squares}
+   if epCapFlag = 1 then
+    begin
+     if turn = 0 then
+      offset2 := WPDIAG + (pLoc * 8)
+     else
+      offset2 := BPDIAG + (pLoc * 8);
+     DataOps(2, sPage, dataSize, offset2, bit5);
+     BitAnd(bit2, bit5, bit5);
+     BitOr(bit3, bit5, bit3);
+    end;
+
+   if not(IsClear(bit3)) then
+    begin
+     BitPos(bit3, moveArray);
+     for k := 1 to moveArray[0] do
+      begin
+       new(currentMove);
+       attackIndex^.id := j;
+       attackIndex^.startSq := pLoc;
+       attackIndex^.endSq := moveArray[k];
+       attackIndex^.link := currentMove;
+       attackIndex := currentMove;
+       attackIndex^.link := NIL;
+      end;
+     end;
+
+    {find non-capture moves and add to move list}
+    if not(IsClear(bit2)) then
+     begin
+      BitNot(bit3, bit3);
+      BitAnd(bit2, bit3, bit3);
+      BitPos(bit3, moveArray);
+      for k := 1 to moveArray[0] do
+       begin
+        new(currentMove);
+        tailIndex^.id := j;
+        tailIndex^.startSq := pLoc;
+        tailIndex^.endSq := moveArray[k];
+        tailIndex^.link := currentMove;
+        tailIndex := currentMove;
+        tailIndex^.link := NIL;
+       end;
+      end;
+     l := succ(l);
+    until l > posArray[0];
+   end;
+  3:
+  j := j + 8;
+ until j > 40;
+
+ {check for back row interposing pieces}
+ if ((turn = 0) and (wCastleFlag = 0)) or
+    ((turn = 1) and (bCastleFlag = 0)) then
+  begin
+   offset := TAPIECES;
+   DataOps(2, startPage, dataSize, offset, bit1);
+   if turn = 0 then
+    begin
+     {white}
+     offset1 := WRCMASK;
+     offset2 := WLCMASK;
+     {right side}
+     if (twRAFlag = 0) and (twRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit2);
+       BitAnd(bit1, bit2, bit2);
+       if not(IsClear(bit2)) then
+        twRAFlag := 1;
+      end;
+     {left side}
+     if (twLAFlag = 0) and (twRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset2, bit2);
+       BitAnd(bit1, bit2, bit2);
+       if not(IsClear(bit2)) then
+        twLAFlag := 1;
+      end;
+    end
+   else
+    begin
+     {black}
+     offset1 := BRCMASK;
+     offset2 := BLCMASK;
+     {right side}
+     if (tbRAFlag = 0) and(tbRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit2);
+       BitAnd(bit1, bit2, bit2);
+       if not(IsClear(bit2)) then
+        tbRAFlag := 1;
+      end;
+     {left side}
+     if (tbLAFlag = 0) and (tbRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset2, bit2);
+       BitAnd(bit1, bit2, bit2);
+       if not(IsClear(bit2)) then
+        tbLAFlag := 1;
+      end;
+   end;
+  end;
+
+ {check if own back row attacked}
+ if ((turn = 0) and (wCastleFlag = 0)) or
+    ((turn = 1) and (bCastleFlag = 0)) then
+  begin
+   {save main boards and replace with temp boards}
+   offset1 := WPO;
+   dataSize := 120;
+   DataOps(2, startPage, dataSize, offset1, buffer);
+   offset1 := SWPO;
+   DataOps(1, sPage2, dataSize, offset1, buffer);
+   offset1 := TWPO;
+   DataOps(2, startPage, dataSize, offset1, buffer);
+   offset1 := WPO;
+   DataOps(1, startPage, dataSize, offset1, buffer);
+   dataSize := 8;
+   {generate combined opposite movement trim board}
+   CombineTrim(bit3, bit5, lastMove);
+   {restore main boards}
+   offset1 := SWPO;
+   DataOps(2, sPage2, dataSize, offset1, buffer);
+   offset1 := WPO;
+   DataOps(1, startPage, dataSize, offset1, buffer);
+   dataSize := 8;
+   {check right and left back rows}
+   if turn = 0 then
+    begin
+     offset1 := WRBRMASK;
+     offset2 := WLBRMASK;
+     if (twRAFlag = 0) and (twRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit6);
+       BitAnd(bit5, bit6, bit6);
+       if not(IsClear(bit6)) then
+        twRAFlag := 1;
+      end;
+
+     if (twLAFlag = 0) and (twRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset2, bit6);
+       BitAnd(bit5, bit6, bit6);
+       If not(IsClear(bit6)) then
+        twLAFlag := 1;
+      end;
+    end
+   else
+    begin
+     offset1 := BRBRMASK;
+     offset2 := BLBRMASK;
+     if (tbRAFlag = 0) and (tbRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit6);
+       BitAnd(bit3, bit6, bit6);
+       If not(IsClear(bit6)) then
+        tbRAFlag := 1;
+      end;
+
+     if (tbLAFlag = 0) and (tbRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset2, bit6);
+       BitAnd(bit3, bit6, bit6);
+       if not(IsCLear(bit6)) then
+        tbLAFlag := 1;
+      end;
+    end;
+  end;
+  
+ {check if either rook is missing from home square}
+ if turn = 0 then
+  begin
+   offset := TWRO;
+   DataOps(2, startPage, dataSize, offset, bit1);
+   {check left home square}
+   offset := PIECELOC;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitAnd(bit1, bit2, bit6);
+   if IsClear(bit6) then
+    twLAFlag := 1;
+   {check right home square}
+   offset := PIECELOC + 56;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitAnd(bit1, bit2, bit6);
+   if IsClear(bit6) then
+    twRAFlag := 1;
+  end
+ else
+  begin
+   offset := TBRO;
+   DataOps(2, startPage, dataSize, offset, bit1);
+   {check left home square}
+   offset := PIECELOC + 448;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitAnd(bit1, bit2, bit6);
+   if IsClear(bit6) then
+    tbLAFlag := 1;
+   {check right home square}
+   offset := PIECELOC + 504;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitAnd(bit1, bit2, bit6);
+   if IsClear(bit6) then
+    tbRAFlag := 1;
+  end;
+
+ {add castling moves to head of list if possible}
+ if (wCastleFlag = 0) and (turn = 0) then
+  begin
+   if (twLAFlag = 0) and (twRookLFlag = 0) then
+    begin
+     new(currentMove);
+     currentMove^.id := 8;
+     currentMove^.startSq := 0;
+     currentMove^.endSq := 3;
+     currentMove^.link := moveList;
+     moveList := currentMove;
+     new(currentMove);
+     currentMove^.id := 40;
+     currentMove^.startSq := 4;
+     currentMove^.endSq := 2;
+     currentMove^.link := moveList;
+     moveList := currentMove;
+    end;
+   if (twRAFlag = 0) and (twRookRFlag = 0) then
+    begin
+     new(currentMove);
+     currentMove^.id := 8;
+     currentMove^.startSq := 7;
+     currentMove^.endSq := 5;
+     currentMove^.link := moveList;
+     moveList := currentMove;
+     new(currentMove);
+     currentMove^.id := 40;
+     currentMove^.startSq := 4;
+     currentMove^.endSq := 6;
+     currentMove^.link := moveList;
+     moveList := currentMove;
+    end;
+  end
+ else
+  if (bCastleFlag = 0) and (turn = 1) then
+   begin
+    if (tbLAFlag = 0) and (tbRookLFlag = 0) then
+     begin
+      new(currentMove);
+      currentMove^.id := 8;
+      currentMove^.startSq := 56;
+      currentMove^.endSq := 59;
+      currentMove^.link := moveList;
+      moveList := currentMove;
+      new(currentMove);
+      currentMove^.id := 40;
+      currentMove^.startSq := 60;
+      currentMove^.endSq := 58;
+      currentMove^.link := moveList;
+      moveList := currentMove;
+     end;
+    if (tbRAFlag = 0) and (tbRookRFlag = 0) then
+     begin
+      new(currentMove);
+      currentMove^.id := 8;
+      currentMove^.startSq := 63;
+      currentMove^.endSq := 61;
+      currentMove^.link := moveList;
+      moveList := currentMove;
+      new(currentMove);
+      currentMove^.id := 40;
+      currentMove^.startSq := 60;
+      currentMove^.endSq := 62;
+      currentMove^.link := moveList;
+      moveList := currentMove;
+     end;
+   end;
+
+ {$I move1.text}
+end; (* MoveGen *)
+
+end.
+

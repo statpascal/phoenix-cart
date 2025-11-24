@@ -17,6 +17,7 @@ procedure BitOr (var b1, b2, br: bitboard);
 procedure RShift (var b1, br: bitboard; n: integer);
 procedure LShift (var b1, br: bitboard; n: integer);
 
+procedure clearBit (var b: bitboard; n: integer);
 
 implementation
 
@@ -397,6 +398,22 @@ procedure LShift(var b1, br : bitboard; n : integer); assembler;
 
         lwpi    >8300
 end;
+
+procedure clearBit (var b: bitboard; n: integer); assembler;
+        mov  @b, r12
+        li   r14, >8000
+        mov  @n, r0
+        andi r0, 15
+        jeq  clearbit_1
+        
+        srl  r14, 0
+    clearbit_1:
+        mov  @n, r13
+        srl  r13, 3
+        a    r13, r12
+        szc  r14, *r12	// will ignore low bit of r12
+end;
+
 
 (*
 

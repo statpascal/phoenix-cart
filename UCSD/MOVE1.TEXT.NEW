@@ -1,0 +1,355 @@
+(* move1 *)
+ if turn = 0 then
+  bestScore := -20000
+ else
+  bestScore := 20000;
+
+ ClearBitboard(bit9);
+ {iterate through move list}
+ currentMove := attackList;
+ attackFlag := 1;
+ if currentMove^.link = NIL then
+  begin
+   attackFlag := 0;
+   currentMove := moveList;
+  end;
+
+ {stalemate condition}
+ if (currentMove^.link = NIL) and (attackFlag = 0) and (ply = gamePly) then
+  begin
+   gotoxy(20, 1);
+   write(chr(7), chr(7), 'stalemate!');
+   i := GetKey;
+   readln;
+   Utility(switchFlag);
+   exit(program);
+  end;
+
+ {save ply base bitboards}
+ offset := TWPO;
+ dataSize := 120;
+ DataOps(2, startPage, dataSize, offset, buffer);
+ offset := PLYBOARDS + ((ply + 3) * 120);
+ DataOps(1, sPage, dataSize, offset, buffer);
+ dataSize := 8;
+
+ repeat
+  foundFlag := FALSE;
+  tempMove.id := 99;
+  1:
+  {update base bitboards with current move}
+  if turn = 0 then
+   begin
+    offset1 := TWPIECES;
+    offset5 := TBPO;
+    offset6 := TBPIECES;
+    offset := TWPO + currentMove^.id;
+   end
+  else
+   begin
+    offset1 := TBPIECES;
+    offset5 := TWPO;
+    offset6 := TWPIECES;
+    offset := TBPO + currentMove^.id;
+   end;
+
+  offset4 := TAPIECES;
+  offset2 := PIECELOC + (currentMove^.startSq * 8);
+  offset3 := PIECELOC + (currentMove^.endSq * 8);
+
+  {erase piece at starting position}
+  DataOps(2, startPage, dataSize, offset, bit1);
+  DataOps(2, startPage, dataSize, offset2, bit2);
+  BitNot(bit2, bit2);
+  BitAnd(bit1, bit2, bit1);
+  DataOps(1, startPage, dataSize, offset, bit1);
+  DataOps(2, startPage, dataSize, offset1, bit1);
+  BitAnd(bit1, bit2, bit1);
+  DataOps(1, startPage, dataSize, offset1, bit1);
+  DataOps(2, startPage, dataSize, offset4, bit1);
+  BitAnd(bit1, bit2, bit1);
+  DataOps(1, startPage, dataSize, offset4, bit1);
+
+  {remove attacked piece from opponent's bitboards}
+  if attackFlag = 1 then
+   begin
+    DataOps(2, startPage, dataSize, offset3, bit2);
+    bit3 := bit2;
+    BitNot(bit2, bit2);
+
+    j := 0;
+    repeat
+     offset2 := offset5 + j;
+     DataOps(2, startPage, dataSize, offset2, bit1);
+     BitAnd(bit1, bit3, bitRes);
+     if not(IsClear(bitRes)) then
+      begin
+       foundFlag := TRUE;
+       l := currentMove^.id;
+       n := j;
+      end;
+     BitAnd(bit1, bit2, bit1);
+     DataOps(1, startPage, dataSize, offset2, bit1);
+     j := j + 8;
+    until (foundFlag) or (j > 40);
+   
+    {en passant capture handling}
+    if (foundFlag = FALSE) and (currentMove^.id = 0) then
+     begin
+      if abs(currentMove^.startSq - currentMove^.endSq) in[7, 9] then
+       begin
+        if turn = 0 then
+         offset7 := PIECELOC + ((currentMove^.endSq - 8) * 8)
+        else
+         offset7 := PIECELOC + ((currentMove^.endSq + 8) * 8);
+        DataOps(2, startPage, dataSize, offset7, bit3);
+        BitNot(bit3, bit3);
+        DataOps(2, startPage, dataSize, offset5, bit1);
+        BitAnd(bit3, bit1, bit1);
+        DataOps(1, startPage, dataSize, offset5, bit1);
+        offset5 := TAPIECES;
+        DataOps(2, startPage, dataSize, offset5, bit1);
+        BitAnd(bit3, bit1, bit1);
+        DataOps(1, startPage, dataSize, offset5, bit1);
+        if turn = 0 then
+         offset5 := TBPIECES
+        else
+         offset5 := TWPIECES;
+        DataOps(2, startPage, dataSize, offset5, bit1);
+        BitAnd(bit3, bit1, bit1);
+        DataOps(1, startPage, dataSize, offset5, bit1);
+       end;
+     end;
+
+   DataOps(2, startPage, dataSize, offset6, bit1);
+   BitAnd(bit1, bit2, bit1);
+   DataOps(1, startPage, dataSize, offset6, bit1);
+   DataOps(2, startPage, dataSize, offset4, bit1);
+   BitAnd(bit1, bit2, bit1);
+   DataOps(1, startPage, dataSize, offset4, bit1);
+  end;
+
+  {place piece at ending position}
+  if (currentMove^.id = 0) and (currentMove^.endSq in[0..7, 56..63]) then
+   begin
+    if turn = 0 then
+     offset := TWQO
+    else
+     offset := TBQO;
+   end;
+  DataOps(2, startPage, dataSize, offset, bit1);
+  DataOps(2, startPage, dataSize, offset3, bit2);
+  BitOr(bit1, bit2, bit1);
+  DataOps(1, startPage, dataSize, offset, bit1);
+  DataOps(2, startPage, dataSize, offset1, bit1);
+  BitOr(bit1, bit2, bit1);
+  DataOps(1, startPage, dataSize, offset1, bit1);
+  DataOps(2, startPage, dataSize, offset4, bit1);
+  BitOr(bit1, bit2, bit1);
+  DataOps(1, startPage, dataSize, offset4, bit1);
+
+  {check for castling move}
+  if (attackFlag = 0) and (currentMove^.id = 40) then
+   begin
+    if abs(currentMove^.startSq - currentMove^.endSq) = 2 then
+     begin
+      if ply = gamePly then
+       cMoveFlag := 1;
+      tempMove.id := currentMove^.id;
+      tempMove.startSq := currentMove^.startSq;
+      tempMove.endSq := currentMove^.endSq;
+      currentMove := currentMove^.link;
+      goto 1;
+     end;
+   end;
+
+  {process non-castling move}
+  if tempMove.id = 99 then
+   begin
+    tempMove.id := currentMove^.id;
+    tempMove.startSq := currentMove^.startSq;
+    tempMove.endSq := currentMove^.endSq;
+   end;
+
+  {check if own king in check after current move}
+  if ply = gamePly then
+   begin
+    pruneFlag := 0;
+    {save the main boards}
+    offset := WPO;
+    startPage := BASE;
+    dataSize := 120;
+    DataOps(2, startPage, dataSize, offset, buffer);
+    offset := SWPO;
+    startPage := BASE2;
+    DataOps(1, startPage, dataSize, offset, buffer);
+    {replace main boards with temp boards for current move}
+    offset := WPO;
+    offset1 := TWPO;
+    startPage := BASE;
+    DataOps(2, startPage, dataSize, offset1, buffer);
+    DataOps(1, startPage, dataSize, offset, buffer);
+    {generate combined trim boards}
+    dataSize := 8;
+    CombineTrim(bit3, bit5, lastMove);
+    {restore main boards}
+    startPage := BASE2;
+    dataSize := 120;
+    offset := SWPO;
+    DataOps(2, startPage, dataSize, offset, buffer);
+    startPage := BASE;
+    offset := WPO;
+    DataOps(1, startPage, dataSize, offset, buffer);
+    dataSize := 8;
+    {check if own king attacked by opposite trim board}
+    if turn = 0 then
+     offset := TWKO
+    else
+     offset := TBKO;
+    DataOps(2, startPage, dataSize, offset, bit1);
+    if not(IsClear(bit1)) then
+     begin
+      if turn = 0 then
+       BitAnd(bit1, bit5, bit1)
+      else
+       BitAnd(bit1, bit3, bit1);
+      if not(IsClear(bit1)) then
+       goto 5; {ignore move if own king still in check}
+     end;
+   end;
+
+  {terminal node check}
+  if ((not(foundFlag)) and (ply = 1)) or (ply = -1) then
+   begin
+    {update number of positions evaluated}
+    moveNum := moveNum + 1;
+
+    {evaluate position}
+    evalScore := Evaluate(cMoveFlag,attackFlag, l, n, lastMove, tempMove);
+    pruneFlag := 0;
+    if turn = 0 then
+     begin
+      if evalScore >= bestScore then
+       begin
+        bestScore := evalScore;
+        bestMove.id := tempMove.id;
+        bestMove.startSq := tempMove.startSq;
+        bestMove.endSq := tempMove.endSq;
+       end;
+      if bestScore > beta then
+       pruneFlag := 1;
+      if bestScore > alpha then
+       alpha := bestScore;
+     end
+    else
+     begin
+      if evalScore <= bestScore then
+       begin
+        bestScore := evalScore;
+        bestMove.id := tempMove.id;
+        bestMove.startSq := tempMove.startSq;
+        bestMove.endSq := tempMove.endSq;
+       end;
+      if bestScore < alpha then
+       pruneFlag := 1;
+      if bestScore < beta then
+       beta := bestScore;
+     end;
+   end
+  else
+   begin
+    {next ply}
+    ply := pred(ply);
+    if turn = 0 then
+     turn := 1
+    else
+     turn := 0;
+
+    MoveGen(tempMove, finalMove, score, alpha, beta, cMoveFlag);
+
+    if ply = gamePly then
+     cMoveFlag := 0;
+
+    {alpha/beta selection}
+    pruneFlag := 0;
+    if turn = 0 then
+     begin
+      if score >= bestScore then
+       begin
+        bestScore := score;
+        bestMove.id := tempMove.id;
+        bestMove.startSq := tempMove.startSq;
+        bestMove.endSq := tempMove.endSq;
+       end;
+      if bestScore > beta then
+       pruneFlag := 1;
+      if bestScore > alpha then
+       alpha := bestScore;
+     end
+    else
+     begin
+      if score <= bestScore then
+       begin
+        bestScore := score;
+        bestMove.id := tempMove.id;
+        bestMove.startSq := tempMove.startSq;
+        bestMove.endSq := tempMove.endSq;
+       end;
+      if bestScore < alpha then
+       pruneFlag := 1;
+      if bestScore < beta then
+       beta := bestScore;
+     end;
+   end;
+
+  5:
+  {restore the previous ply base bitboard}
+  offset := PLYBOARDS + ((ply + 3) * 120);
+  dataSize := 120;
+  DataOps(2, sPage, dataSize, offset, buffer);
+  offset := TWPO;
+  DataOps(1, startPage, dataSize, offset, buffer);
+  dataSize := 8;
+
+  currentMove := currentMove^.link;
+  if (currentMove^.link = NIL) and (attackFlag = 1) then
+   begin
+    attackFlag := 0;
+    currentMove := moveList;
+   end;
+ until (currentMove^.link = NIL) or (pruneFlag = 1);
+
+ finalMove := bestMove;
+ score := bestScore;
+ 
+ {up 1 ply}
+ ply := succ(ply);
+ if turn = 0 then
+  turn := 1
+ else
+  turn := 0;
+
+ {dispose of linked lists}
+ repeat
+  attackIndex := attackList;
+  if attackList^.link <> NIL then
+   begin
+    attackList := attackList^.link;
+    dispose(attackIndex);
+   end;
+ until attackList^.link = NIL;
+
+ repeat
+  tailIndex := moveList;
+  if moveList^.link <> NIL then
+   begin
+    moveList := moveList^.link;
+    dispose(tailIndex);
+   end;
+ until moveList^.link = NIL;
+
+ dispose(moveList);
+ dispose(attackList);
+
+
+  
