@@ -80,10 +80,12 @@ const
     WEPSTORE = 1536;
     BEPSTORE = 1616;
     PLYBOARDS = 1856;
+    
+    
     WPAWN = 0; {BASE 2}
     BPAWN = 128;
-    KNIGHT = 256;
-    BISHOP = 384;
+    EVALKNIGHT = 256;
+    EVALBISHOP = 384;
     KINGMID = 512;
     KINGEND = 640;
     KINGEDGE = 768;
@@ -105,16 +107,16 @@ const
     PLAYLIST = 896;
  (*OPENLIB = 0; {BASE 3}*)
     GAMESTORE = 0; {BASE 4}
+    
+const
+    Pawn = 0;
+    Rook = 8;
+    Knight = 16;
+    Bishop = 24;
+    Queen = 32;
+    King = 40;
 
 type 
-    // byte = 0..255;
-
-    dual = record
-        case boolean of 
-            TRUE: (value: integer);
-            FALSE: (bytes: array[0..1] of byte);
-    end;
-
     listPointer = ^moverec;
     moverec = record
         id: integer;
@@ -151,9 +153,8 @@ var
     doLogging: boolean;
     logFile: text;
 
-procedure ClearBitboard(var bit1: bitboard);
-function IsClear(var b: bitboard): boolean;
-procedure BitDisp(var bit1: bitboard);
+procedure ClearBitboard (var bit1: bitboard);
+function IsClear (var b: bitboard): boolean;
 
 function GetKeyInt: integer;
 
@@ -172,22 +173,6 @@ procedure ClearBitboard(var bit1: bitboard);
         for i := 0 to 3 do
             bit1[i] := 0;
     end; 
-
-(*
-function IsClear(var bit1: bitboard): boolean;
-    var 
-        i, flag: integer;
-    begin
-        flag := 0;
-        IsClear := TRUE;
-        for i := 0 to 3 do
-            if bit1[i] <> 0 then
-                flag := 1;
-
-        if flag <> 0 then
-            IsClear := FALSE;
-    end;
-*)    
 
 function IsClear(var b: bitboard): boolean; assembler;
         clr  r14
@@ -209,31 +194,5 @@ end;
     end;
 *)    
 
-
-procedure BitDisp(var bit1: bitboard);
-    var 
-        i, j, k, bitPos: integer;
-        bitVal: dual;
-    begin
-        gotoxy(0, 14);
-        bitPos := 256;
-        for i := 3 downto 0 do
-            begin
-                bitVal.value := bit1[i];
-                for j := 1 downto 0 do
-                    begin
-                        for k := 0 to 7 do
-                            begin
-                                bitPos := bitPos div 2;
-                                if ord (odd(bitVal.bytes[j]) and odd(bitPos)) <> 0 then
-                                    write('1')
-                                else
-                                    write('0');
-                            end;
-                        writeln;
-                        bitPos := 256;
-                    end;
-            end;
-    end;
 
 end.

@@ -112,66 +112,6 @@ procedure checkBackRowInterposing;
             end
     end;
                 
-(*
-
-procedure checkBackRowInterposing;
-    var 
-        offset, offset1, offset2: integer;
-    begin
-        if ((turn = 0) and (wCastleFlag = 0)) or
-           ((turn = 1) and (bCastleFlag = 0)) then
-            begin
-                offset := TAPIECES;
-                DataOps(2, startPage, dataSize, offset, bit1);
-                if turn = 0 then
-                    begin
-               {white}
-                        offset1 := WRCMASK;	
-                        offset2 := WLCMASK;
-               {right side}
-                        if (wRAFlag = 0) and (wRookRFlag = 0) then
-                            begin
-                                DataOps(2, startPage, dataSize, offset1, bit2);
-                                BitAnd(bit1, bit2, bit2);
-                                if not(IsClear(bit2)) then
-                                    wRAFlag := 1;
-                            end;
-               {left side}
-                        if (wLAFlag = 0) and (wRookLFlag = 0) then
-                            begin
-                                DataOps(2, startPage, dataSize, offset2, bit2);
-                                BitAnd(bit1, bit2, bit2);
-                                if not(IsClear(bit2)) then
-                                    wLAFlag := 1;
-                            end;
-                    end
-                else
-                    begin
-               {black}
-                        offset1 := BRCMASK;
-                        offset2 := BLCMASK;
-               {right side}
-                        if (bRAFlag = 0) and(bRookRFlag = 0) then
-                            begin
-                                DataOps(2, startPage, dataSize, offset1, bit2);
-                                BitAnd(bit1, bit2, bit2);
-                                if not(IsClear(bit2)) then
-                                    bRAFlag := 1;
-                            end;
-               {left side}
-                        if (bLAFlag = 0) and (bRookLFlag = 0) then
-                            begin
-                                DataOps(2, startPage, dataSize, offset2, bit2);
-                                BitAnd(bit1, bit2, bit2);
-                                if not(IsClear(bit2)) then
-                                    bLAFlag := 1;
-                            end;
-                    end;
-            end;
-    end;
-    
-*)    
-
 procedure checkRookMissing;
     begin
         if turn = 0 then
@@ -189,50 +129,6 @@ procedure checkRookMissing;
                     bRAFlag := 1
             end
     end;
-
-(*
-
-procedure checkRookMissing;
-    var offset: integer;
-    begin
-        if turn = 0 then
-            begin
-                offset := TWRO;
-                DataOps(2, startPage, dataSize, offset, bit1);
-       {check left home square}
-                offset := PIECELOC;
-                DataOps(2, startPage, dataSize, offset, bit2);
-                BitAnd(bit1, bit2, bit6);
-                if IsClear(bit6) then
-                    wLAFlag := 1;
-       {check right home square}
-                offset := PIECELOC + 56;
-                DataOps(2, startPage, dataSize, offset, bit2);
-                BitAnd(bit1, bit2, bit6);
-                if IsClear(bit6) then
-                    wRAFlag := 1;
-            end
-        else
-            begin
-                offset := TBRO;
-                DataOps(2, startPage, dataSize, offset, bit1);
-       {check left home square}
-                offset := PIECELOC + 448;
-                DataOps(2, startPage, dataSize, offset, bit2);
-                BitAnd(bit1, bit2, bit6);
-                if IsClear(bit6) then
-                    bLAFlag := 1;
-       {check right home square}
-                offset := PIECELOC + 504;
-                DataOps(2, startPage, dataSize, offset, bit2);
-                BitAnd(bit1, bit2, bit6);
-                if IsClear(bit6) then
-                    bRAFlag := 1;
-            end;
-    end;
-    
-*)    
-
 
 procedure checkCastling (var moveList: listPointer);
     var currentMove: listPointer;
@@ -328,85 +224,6 @@ procedure checkOwnBackRowAttack (var lastmove: moveRec);
             end
     end;
 
-(*
-
-procedure checkOwnBackRowAttack (var lastMove: moveRec);
-    var offset1, offset2: integer;
-    begin
-         {check if own back row attacked}
-        if ((turn = 0) and (wCastleFlag = 0)) or
-           ((turn = 1) and (bCastleFlag = 0)) then
-            begin
-                {generate combined opposite movement trim board}
-           
-                {save the main boards}
-//                DataOps(2, BASE, 120, WPO, buffer);
-//                DataOps(1, BASE2, 120, SWPO, buffer);
-                
-                {replace main boards with temp boards for current move}
-//                DataOps(2, BASE, 120, TWPO, buffer);
-//                DataOps(1, BASE, 120, WPO, buffer);
-                   
-//                CombineTrim(bit3, bit5, lastMove, tempBoard);
-             
-                        
-                {restore main boards}
-//                DataOps(2, BASE2, 120, SWPO, buffer);
-//                DataOps(1, BASE, 120, WPO, buffer);
-                
-
-                {check right and left back rows}
-                if turn = 0 then
-                    begin
-                    
-                        bit5 := combineTrimSide (true, lastmove, tempBoard);
-                    
-                        offset1 := WRBRMASK;
-                        offset2 := WLBRMASK;
-                        if (wRAFlag = 0) and (wRookRFlag = 0) then
-                            begin
-                                DataOps(2, startPage, dataSize, offset1, bit6);
-                                BitAnd(bit5, bit6, bit6);
-                                if not(IsClear(bit6)) then
-                                    wRAFlag := 1;
-                            end;
-
-                        if (wLAFlag = 0) and (wRookLFlag = 0) then
-                            begin
-                                DataOps(2, startPage, dataSize, offset2, bit6);
-                                BitAnd(bit5, bit6, bit6);
-                                if not(IsClear(bit6)) then
-                                    wLAFlag := 1;
-                            end;
-                    end
-                else
-                    begin
-                    
-                        bit3 := combineTrimSide (false, lastmove, tempBoard);
-                    
-                        offset1 := BRBRMASK;
-                        offset2 := BLBRMASK;
-                        if (bRAFlag = 0) and (bRookRFlag = 0) then
-                            begin
-                                DataOps(2, startPage, dataSize, offset1, bit6);
-                                BitAnd(bit3, bit6, bit6);
-                                if not(IsClear(bit6)) then
-                                    bRAFlag := 1;
-                            end;
-
-                        if (bLAFlag = 0) and (bRookLFlag = 0) then
-                            begin
-                                DataOps(2, startPage, dataSize, offset2, bit6);
-                                BitAnd(bit3, bit6, bit6);
-                                if not(IsCLear(bit6)) then
-                                    bLAFlag := 1;
-                            end;
-                    end;
-            end;
-    end;
-    
-*)    
-
 procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: moverec; attackIndex, tailIndex: listPointer; ply: integer);
     var 
         j, l, n, pLoc, epCapFlag: integer;
@@ -492,25 +309,15 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
     
 function isKingChecked (lastMove: moverec): boolean;
     begin
-        {save the main boards}
-//        DataOps(2, BASE, 120, WPO, buffer);
-//        DataOps(1, BASE2, 120, SWPO, buffer);
-        
-        {replace main boards with temp boards for current move}
-//        DataOps(2, BASE, 120, TWPO, buffer);
-//        DataOps(1, BASE, 120, WPO, buffer);
-        {generate combined trim boards}
-//        CombineTrim(bit3, bit5, lastMove, mainBoard);
         CombineTrim(bit3, bit5, lastMove, tempBoard);
-        datasize := 8;
-        {restore main boards}
-//        DataOps(2, BASE2, 120, SWPO, buffer);
-//        DataOps(1, BASE, 120, WPO, buffer);
+        
         {check if own king attacked by opposite trim board}
         if turn = 0 then
-            DataOps(2, BASE, 8, TWKO, bit1)
+            bit1 := tempBoard.white.kingBitboard
+//            DataOps(2, BASE, 8, TWKO, bit1)
         else
-            DataOps(2, BASE, 8, TBKO, bit1);
+            bit1 := tempBoard.black.kingBitboard;
+//            DataOps(2, BASE, 8, TBKO, bit1);
         
         if turn = 0 then
             BitAnd(bit1, bit5, bit1)
@@ -519,12 +326,69 @@ function isKingChecked (lastMove: moverec): boolean;
         isKingChecked := not isClear (bit1)
     end;
     
+    
+procedure enterMove (turn, attackFlag: integer; var l, n: integer; var foundFlag: boolean; var board: TBoardRecord; currentmove: ^moverec);
+        
+    procedure updateBitboards (var own, opponent: TSideRecord; var ownPieces, opponentPieces: bitboard);
+        var
+            epSquare: integer;
+            i, j: integer;
+        begin
+            {erase piece at starting position}
+            clearBit (board.allPieces, currentMove^.startSq);
+            clearBit (ownPieces, currentMove^.startSq);
+            clearBit (own.bitboards [currentMove^.id shr 3], currentMove^.startSq);
+
+            {remove attacked piece from opponent's bitboards}
+            if attackFlag = 1 then
+                begin
+                    j := 0;
+                    repeat
+                        if getBit (opponent.bitboards [j shr 3], currentMove^.endSq) <> 0 then
+                            begin
+                                foundFlag := true;
+                                l := currentMove^.id;
+                                n := j;
+                                clearBit (opponent.bitboards [j shr 3], currentMove^.endSq);
+                                clearBit (opponentPieces, currentMove^.endSq)
+                            end;
+                        j := j + 8;
+                    until (foundFlag) or (j > 40);
+
+                    {en passant capture handling}
+                    if not foundFlag and (currentMove^.id = 0) and (abs (currentMove^.startSq - currentMove^.endSq) in [7, 9]) then
+                        begin
+                            if turn = 0 then
+                                epSquare := currentMove^.endSq - 8
+                            else
+                                epSquare := currentMove^.endSq + 8;
+                            clearBit (opponent.pawnBitboard, epSquare);
+                            clearBit (opponentPieces, epSquare);
+                            clearBit (board.allPieces, epSquare);
+                        end
+                end;
+
+            {place piece at ending position}
+            setBit (board.allPieces, currentMove^.endSq);
+            setBit (ownPieces, currentMove^.endSq);
+            if (currentMove^.id = 0) and (currentMove^.endSq in [0..7, 56..63]) then
+                setBit (own.queenBitboard, currentMove^.endSq)
+            else
+                setBit (own.bitboards [currentMove^.id shr 3], currentMove^.endSq)
+        end;
+    
+    begin
+        if turn = 0 then
+            updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces)
+        else
+            updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces)
+    end;    
+    
 procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; cMoveFlag, ply: integer);
     label 
         l_1, l_3, l_5;
     var 
-        i, j, k, l, n, offset, initOffset, bestScore: integer;
-        offset1, offset2, offset3, offset4: integer;
+        i, j, k, l, n, offset, bestScore: integer;
         wCheckFlag, bCheckFlag, offset7, switchFlag: integer;
         offset5, offset6, attackFlag, evalScore: integer;
         sPage2, mateFlag: integer;
@@ -532,7 +396,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         bestMove, tempMove: moverec;
         moveList, attackList, tailIndex, attackIndex, currentMove: listPointer;
         bit8, bit9: bitboard;
-        savedBoard: array[0..59] of integer;
+        savedBoard: TBoardRecord;
         heap: pointer;
 
     begin
@@ -559,18 +423,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
         startPage := BASE;
         sPage := BASE1;
-(*
-        if turn = 0 then
-            begin
-                initOffset := TWPO;
-//                sideOffset := TWPIECES;
-            end
-        else
-            begin
-                initOffset := TBPO;
-//                sideOffset := TBPIECES;
-            end;
-*)
+        
         new(moveList);
         new(attackList);
         moveList^.link := nil;
@@ -614,160 +467,25 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
             end;
 
         {save bitboards}
-        DataOps (2, BASE, 120, TWPO, savedBoard);
-        dataSize := 8;
+        savedBoard := tempBoard;
+//        DataOps (2, BASE, 120, TWPO, savedBoard);
+//        dataSize := 8;
 
         repeat
             foundFlag := false;
-            tempMove.id := 99;
-            l_1: 
-      {update base bitboards with current move}
-            if turn = 0 then
-                begin
-                    offset1 := TWPIECES;
-                    offset5 := TBPO;
-                    offset6 := TBPIECES;
-                    offset := TWPO + currentMove^.id;
-                end
-            else
-                begin
-                    offset1 := TBPIECES;
-                    offset5 := TWPO;
-                    offset6 := TWPIECES;
-                    offset := TBPO + currentMove^.id;
-                end;
-
-            offset4 := TAPIECES;
-            offset2 := PIECELOC + (currentMove^.startSq * 8);
-            offset3 := PIECELOC + (currentMove^.endSq * 8);
-
-      {erase piece at starting position}
-      
-            if turn = 0 then
-                begin
-                    clearBit (tempBoard.whitePieces, currentMove^.startSq);
-                    clearBit (tempBoard.white.bitboards [currentMove^.id shr 3], currentMove^.startSq)
-                end
-            else
-                begin
-                    clearBit (tempBoard.blackPieces, currentMove^.startSq);
-                    clearBit (tempBoard.black.bitboards [currentMove^.id shr 3], currentMove^.startSq)
-                end;
-            clearBit (tempBoard.allPieces, currentMove^.startSq);
-      
-(*
-            DataOps(2, startPage, dataSize, offset, bit1);
-            DataOps(2, startPage, dataSize, offset2, bit2);
-            BitNot(bit2, bit2);
-            BitAnd(bit1, bit2, bit1);
-            DataOps(1, startPage, dataSize, offset, bit1);
-            DataOps(2, startPage, dataSize, offset1, bit1);
-            BitAnd(bit1, bit2, bit1);
-            DataOps(1, startPage, dataSize, offset1, bit1);
-            DataOps(2, startPage, dataSize, offset4, bit1);
-            BitAnd(bit1, bit2, bit1);
-            DataOps(1, startPage, dataSize, offset4, bit1);
-*)
-
-      {remove attacked piece from opponent's bitboards}
-            if attackFlag = 1 then
-                begin
-                    DataOps(2, startPage, dataSize, offset3, bit2);
-                    bit3 := bit2;
-                    BitNot(bit2, bit2);
-
-                    j := 0;
-                    repeat
-                        offset2 := offset5 + j;
-                        DataOps(2, startPage, dataSize, offset2, bit1);
-                        BitAnd(bit1, bit3, bitRes);
-                        if not(IsClear(bitRes)) then
-                            begin
-                                foundFlag := TRUE;
-                                l := currentMove^.id;
-                                n := j
-                            end;
-                        BitAnd(bit1, bit2, bit1);
-                        DataOps(1, startPage, dataSize, offset2, bit1);
-                        j := j + 8;
-                    until (foundFlag) or (j > 40);
-
-        {en passant capture handling}
-                    if (foundFlag = FALSE) and (currentMove^.id = 0) then
-                        begin
-                            if abs(currentMove^.startSq - currentMove^.endSq) in[7, 9] then
-                                begin
-                                    if turn = 0 then
-                                        offset7 := PIECELOC + ((currentMove^.endSq - 8) * 8)
-                                    else
-                                        offset7 := PIECELOC + ((currentMove^.endSq + 8) * 8);
-                                    DataOps(2, startPage, dataSize, offset7, bit3);
-                                    BitNot(bit3, bit3);
-                                    DataOps(2, startPage, dataSize, offset5, bit1);
-                                    BitAnd(bit3, bit1, bit1);
-                                    DataOps(1, startPage, dataSize, offset5, bit1);
-                                    offset5 := TAPIECES;
-                                    DataOps(2, startPage, dataSize, offset5, bit1);
-                                    BitAnd(bit3, bit1, bit1);
-                                    DataOps(1, startPage, dataSize, offset5, bit1);
-                                    if turn = 0 then
-                                        offset5 := TBPIECES
-                                    else
-                                        offset5 := TWPIECES;
-                                    DataOps(2, startPage, dataSize, offset5, bit1);
-                                    BitAnd(bit3, bit1, bit1);
-                                    DataOps(1, startPage, dataSize, offset5, bit1);
-                                end;
-                        end;
-
-                    DataOps(2, startPage, dataSize, offset6, bit1);
-                    BitAnd(bit1, bit2, bit1);
-                    DataOps(1, startPage, dataSize, offset6, bit1);
-                    DataOps(2, startPage, dataSize, offset4, bit1);
-                    BitAnd(bit1, bit2, bit1);
-                    DataOps(1, startPage, dataSize, offset4, bit1);
-                end;
-
-      {place piece at ending position}
-            if (currentMove^.id = 0) and (currentMove^.endSq in[0..7, 56..63]) then
-                begin
-                    if turn = 0 then
-                        offset := TWQO
-                    else
-                        offset := TBQO;
-                end;
-            DataOps(2, startPage, dataSize, offset, bit1);
-            DataOps(2, startPage, dataSize, offset3, bit2);
-            BitOr(bit1, bit2, bit1);
-            DataOps(1, startPage, dataSize, offset, bit1);
-            DataOps(2, startPage, dataSize, offset1, bit1);
-            BitOr(bit1, bit2, bit1);
-            DataOps(1, startPage, dataSize, offset1, bit1);
-            DataOps(2, startPage, dataSize, offset4, bit1);
-            BitOr(bit1, bit2, bit1);
-            DataOps(1, startPage, dataSize, offset4, bit1);
-
-      {check for castling move}
+            tempMove := currentMove^;
+            enterMove (turn, attackFlag, l, n, foundFlag, tempBoard, currentMove);
+            
+            {check for castling move}
             if (attackFlag = 0) and (currentMove^.id = 40) then
                 begin
                     if abs(currentMove^.startSq - currentMove^.endSq) = 2 then
                         begin
                             if ply = gamePly then
                                 cMoveFlag := 1;
-                            tempMove.id := currentMove^.id;
-                            tempMove.startSq := currentMove^.startSq;
-                            tempMove.endSq := currentMove^.endSq;
                             currentMove := currentMove^.link;
-                            goto l_1;
+                            enterMove (turn, attackFlag, l, n, foundFlag, tempBoard, currentMove);
                         end;
-                end;
-
-      {process non-castling move}
-            if tempMove.id = 99 then
-                begin
-                    tempMove.id := currentMove^.id;
-                    tempMove.startSq := currentMove^.startSq;
-                    tempMove.endSq := currentMove^.endSq;
                 end;
 
       {check if own king in check after current move}
@@ -786,7 +504,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                     moveNumLo := 0;
                                     inc (moveNumHi)
                                 end;
-                            evalScore := Evaluate (cMoveFlag, attackFlag, l, n, lastMove, tempMove);
+                            evalScore := Evaluate (cMoveFlag, attackFlag, l, n, lastMove, tempMove, tempBoard);
                             if doLogging then begin   
                                 indent (ply - 1); 
                                 printMove (tempMove); 
@@ -801,7 +519,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                 cMoveFlag := 0
                         end;
 
-                   {alpha/beta selection}
+                    {alpha/beta selection}
                     pruneFlag := false;
                     if turn = 0 then
                         begin
@@ -836,15 +554,14 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 end;
 
             {restore the previous ply base bitboard}
-            DataOps (1, BASE, 120, TWPO, savedBoard);
-            dataSize := 8;
+            tempBoard := savedBoard;
 
             currentMove := currentMove^.link;
             if (currentMove^.link = nil) and (attackFlag = 1) then
                 begin
                     attackFlag := 0;
                     currentMove := moveList;
-                end;
+                end
         until (currentMove^.link = nil) or pruneFlag;
 
         finalMove := bestMove;
@@ -859,7 +576,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
         {up 1 ply}
         turn := 1 - turn;
-        release (heap);
+        release (heap)
     end;
 
 end.

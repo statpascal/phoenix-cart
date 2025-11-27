@@ -18,6 +18,8 @@ procedure RShift (var b1, br: bitboard; n: integer);
 procedure LShift (var b1, br: bitboard; n: integer);
 
 procedure clearBit (var b: bitboard; n: integer);
+procedure setBit (var b: bitboard; n: integer);
+function getBit (var b: bitboard; n: integer): integer;
 
 implementation
 
@@ -77,9 +79,6 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
     end;
 
     const
-        Bishop = 24;
-        Rook = 8;
-        
         LeftVal = $0A18;	// sla r8, 1
         RightVal = $0918;	// srl r9, 1
         
@@ -399,21 +398,46 @@ procedure LShift(var b1, br : bitboard; n : integer); assembler;
         lwpi    >8300
 end;
 
+const
+    bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
+
 procedure clearBit (var b: bitboard; n: integer); assembler;
         mov  @b, r12
-        li   r14, >8000
-        mov  @n, r0
-        andi r0, 15
-        jeq  clearbit_1
-        
-        srl  r14, 0
-    clearbit_1:
         mov  @n, r13
+        mov  r13, r14
         srl  r13, 3
+        andi r14, 7
         a    r13, r12
-        szc  r14, *r12	// will ignore low bit of r12
+        szcb @bitmasks(r14), *r12
 end;
 
+procedure setBit (var b: bitboard; n: integer); assembler;
+        mov  @b, r12
+        mov  @n, r13
+        mov  r13, r14
+        srl  r13, 3
+        andi r14, 7
+        a    r13, r12
+        socb @bitmasks(r14), *r12
+end;
+
+function getBit (var b: bitboard; n: integer): integer; assembler;
+        mov  @b, r12
+        mov  @n, r13
+        mov  r13, r0
+        srl  r13, 3
+        andi r0, 7
+        inc  r0
+        a    r13, r12
+        movb *r12, r12	// byte to check
+        mov  *r10, r13	// pointer to result
+        clr  *r13	
+        sla  r12, 0
+        jnc  getbit_1
+        
+        inc  *r13	// return 1
+    getbit_1:        
+end;
 
 (*
 
