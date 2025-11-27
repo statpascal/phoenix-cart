@@ -1,4 +1,4 @@
-(* version 11-23-25 v2.2)
+(* version 11-26-25 v2.2)
 (* MinMax, no iterative deepening, capture evaluation bonus *)
 (* fixed castling when rook has moved bug *)
 (* adjustments to scorepos
@@ -56,6 +56,8 @@
 (* 11-17-15: changed ply levels to 1..3 *)
 (* 11-20-25: fixed en-passant bug *)
 (* 11-23-25: added bonus for connected rooks *)
+(* 11-26-25: decreased castling bonus *)
+(* 11-26-25: limited en passant capture risk penalty to current turn *)
 
 Program Main;
 uses random,

@@ -103,7 +103,8 @@ begin
  for side := 0 to 1 do
   begin
    {en passant capture risk}
-   if (tempMove.id = 0) and (abs(tempMove.startSq - tempMove.endSq) = 16) then
+   sPage1 := BASE1;
+   if (tempMove.id = 0) and (abs(tempMove.startSq - tempMove.endSq) = 16) and (side = turn) then
     begin
      if side = 0 then
       begin
@@ -333,7 +334,7 @@ begin
                evalScore := evalScore + l;
                {apply castling bonus}
                if (cMoveFlag = 1) and (side = gameSide) then
-                evalScore := evalScore + 300;
+                evalScore := evalScore + 150;
               end;
          end;
         end;
