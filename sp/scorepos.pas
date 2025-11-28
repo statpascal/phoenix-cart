@@ -12,185 +12,171 @@ implementation
 uses trimprocs, resources;
 
 function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var lastMove: moverec; cMoveFlag, side, endGame: integer): integer;
-    const
-        KingEdge: bitboard = ($ff81, $8181, $8181, $81ff);
-
     var
-        evalScore, pieceType, pLoc, i: integer;
-        rooksConnected: boolean;
-        locArray: bitarray;
-        ownKing, opponentKing, bits: bitboard;
+        evalScore: integer;
         
-    procedure evaluatePawn;
+    procedure evaluatePawns;
         var
             row, col: integer;
+            pLoc, i: integer;            
+            locArray: bitarray;
         begin
-            row := pLoc shr 3;
-            col := pLoc and 7;
-            inc (evalScore, 150);
-            
-            if side = 0 then
+            BitPos (sideBoards.pawnBitboard, locArray);
+            for i := 1 to locArray [0] do
                 begin
-                     {promote pawn advancement in end game}
-                     if (endGame > 0) and (row >= 3) then
-                         inc (evalScore, row * 50);
-                     {check for pawn promotion}
-                     if row = 7 then
-                         inc (evalScore, 1000);
-                     {check pawn support}
-                     if row >= 2 then
-                         begin
-                             if (col <> 0) and (getBit (sideBoards.pawnBitboard, pLoc - 9) <> 0) then
-                                 inc (evalScore, 15);
-                             if (col <> 7) and (getBit (sideBoards.pawnBitboard, ploc - 7) <> 0) then
-                                 inc (evalScore, 15)
-                          end;
-                     {doubled pawns penalty}
-                     if (row < 7) and (getBit (sideBoards.pawnBitboard, pLoc + 8) <> 0) then
-                         dec (evalScore, 25);
-                     inc (evalScore, getPieceScoreValue (WhitePawnScore, pLoc))
-                end
-            else
-                begin
-                    {promote pawn advancement in endgame}
-                    if (endGame > 0) and (row <= 4) then
-                        inc (evalScore, (7 - row) * 50);
-                     {check for pawn promotion}
-                    if row = 0 then
-                        inc (evalScore, 1000);
-                    {check pawn support}
-                    if row <= 5 then 
+                    pLoc := locArray [i];
+                    row := pLoc shr 3;
+                    col := pLoc and 7;
+                    inc (evalScore, 150);
+                    
+                    if side = 0 then
                         begin
-                            if (col <> 0) and (getBit (sideBoards.pawnBitboard, ploc + 7) <> 0) then
-                                inc (evalScore, 15);
-                            if (col <> 7) and (getBit (sideBoards.pawnBitboard, ploc + 9) <> 0) then
-                                inc (evalScore, 15)
-                         end;
-                    {doubled pawns penalty}
-                    if (row > 0) and (getBit (sideBoards.pawnBitboard, pLoc - 8) <> 0) then
-                        dec (evalScore, 25);
-                    inc (evalScore, getPieceScoreValue (BlackPawnScore, pLoc))
+                             {promote pawn advancement in end game}
+                             if (endGame > 0) and (row >= 3) then
+                                 inc (evalScore, row * 50);
+                             {check for pawn promotion}
+                             if row = 7 then
+                                 inc (evalScore, 1000);
+                             {check pawn support}
+                             if row >= 2 then
+                                 begin
+                                     if (col <> 0) and (getBit (sideBoards.pawnBitboard, pLoc - 9) <> 0) then
+                                         inc (evalScore, 15);
+                                     if (col <> 7) and (getBit (sideBoards.pawnBitboard, ploc - 7) <> 0) then
+                                         inc (evalScore, 15)
+                                  end;
+                             {doubled pawns penalty}
+                             if (row < 7) and (getBit (sideBoards.pawnBitboard, pLoc + 8) <> 0) then
+                                 dec (evalScore, 25);
+                             inc (evalScore, getPieceScoreValue (WhitePawnScore, pLoc))
+                        end
+                    else
+                        begin
+                            {promote pawn advancement in endgame}
+                            if (endGame > 0) and (row <= 4) then
+                                inc (evalScore, (7 - row) * 50);
+                             {check for pawn promotion}
+                            if row = 0 then
+                                inc (evalScore, 1000);
+                            {check pawn support}
+                            if row <= 5 then 
+                                begin
+                                    if (col <> 0) and (getBit (sideBoards.pawnBitboard, ploc + 7) <> 0) then
+                                        inc (evalScore, 15);
+                                    if (col <> 7) and (getBit (sideBoards.pawnBitboard, ploc + 9) <> 0) then
+                                        inc (evalScore, 15)
+                                 end;
+                            {doubled pawns penalty}
+                            if (row > 0) and (getBit (sideBoards.pawnBitboard, pLoc - 8) <> 0) then
+                                dec (evalScore, 25);
+                            inc (evalScore, getPieceScoreValue (BlackPawnScore, pLoc))
+                        end
                 end
         end;
         
-    procedure evaluateRook;
+    procedure evaluateRooks;
         var
             locArray: bitarray;
             epDummy: integer;
-            bit1, bit2: bitboard;
+            bits: bitboard;
         begin
-            inc (evalScore, 525);
-            
-            {bonus if rooks are connected}
-            if rooksConnected then
-                exit;
-                
             BitPos (sideBoards.rookBitboard, locArray);
-            if locArray [0] <> 2 then
-                exit;
-                
-            bit1 := Trim (side, 0, locArray [1], LastMove, board, epDummy);
-            bit2 := Trim (side, 0, locArray [2], LastMove, board, epDummy);
-            BitAnd (bit1, bit2, bit1);
-            if isClear (bit1) then
-                exit;
-            
-            rooksConnected := true;
-            inc (evalScore, 100)
+            inc (evalScore, 525 * locArray [0]);
+            if locArray [0] = 2 then
+                begin
+                    {bonus for connected rooks - check if other rook could be caught as opponent}
+                    bits := Trim (1 - side, 0, locArray [1], LastMove, board, epDummy);
+                    if getBit (bits, locArray [2]) <> 0 then
+                        inc (evalScore, 100)
+                end
         end;
         
-    procedure evaluateKnight;
+    procedure evaluateKnightsBishops (var bits: bitboard; scoreType: TPieceScoreType);
+        var
+            locArray: bitarray;
+            i: integer;
         begin
-            inc (evalScore, 400 + getPieceScoreValue (KnightScore, pLoc))
-        end;
-        
-    procedure evaluateBishop;
-        begin
-            inc (evalScore, 400 + getPieceScoreValue (BishopScore, pLoc))
+            BitPos (bits, locArray);
+            for i := 1 to locArray [0] do
+                inc (evalScore, 400 + getPieceScoreValue (scoreType, locArray [i]))
         end;
         
     procedure evaluateQueen;
         begin
-            inc (evalScore, 973)
+            inc (evalScore, 973 * bitCount (sideBoards.queenBitboard))
         end;
         
     procedure evaluateKing;
+        const
+            KingEdge: bitboard = ($ff81, $8181, $8181, $81ff);
+        var
+            ownKing, opponentKing, bits: bitboard;
+            locArray: bitarray;
+            ownPos: integer;
         begin
-            if endGame > 0 then
-                inc (evalScore, getPieceScoreValue (KingEndScore, pLoc))
+            if side = 0 then
+                begin
+                    ownKing := board.white.kingBitboard;
+                    opponentKing := board.black.kingBitboard
+                end
             else
-                inc (evalScore, getPieceScoreValue (KingMidScore, pLoc));
+                begin
+                    ownKing := board.black.kingBitboard;
+                    opponentKing := board.white.kingBitboard
+                end;
+
+            {own king immediate check penalty}
+            if isClear (ownKing) then
+                begin
+                    evalScore := -20000;
+                    exit
+                end;
+                
+            BitPos (ownKing, locArray);
+            ownPos := locArray [1];
+            
+            if endGame > 0 then
+                inc (evalScore, getPieceScoreValue (KingEndScore, ownPos))
+            else
+                inc (evalScore, getPieceScoreValue (KingMidScore, ownPos));
+                
             {apply castling bonus}
             if (cMoveFlag = 1) and (side = gameSide) then
                  evalScore := evalScore + 150;
+                    
+            {bonus for checking opposite king}
+            if isClear (opponentKing) then
+                inc (evalScore, 50)
+            else
+                begin
+                    {encourage moving opposite king to board edge}
+                    if endGame > 0 then
+                        begin
+                            BitAnd (opponentKing, KingEdge, bits);
+                            if not isClear (bits) then
+                                inc (evalScore, 100)
+                    end;
+
+                    {move own king toward opposite king when <=4 pieces left}
+                    if endGame = 2 then
+                        begin
+                            BitPos (opponentKing, locArray);
+                            if not (abs (ownPos - locArray[1]) in [2, 15, 16, 17]) then
+                                inc (evalScore, (8 - (abs (ownPos - locArray [1]) div 2)) * 10)
+                           end
+                end
         end;    
 
     begin 
-        rooksConnected := false;
         evalScore := 0;
-        pieceType := Pawn;
-        while pieceType <= King do
-            begin
-                BitPos (sideBoards.bitboards [pieceType shr 3], locArray);
-                for i := 1 to locArray [0] do
-                    begin
-                        pLoc := locArray [i];
-                        case pieceType of
-                            Pawn:
-                                evaluatePawn;
-                            Rook:
-                                evaluateRook;
-                            Knight:
-                                evaluateKnight;
-                            Bishop:
-                                evaluateBishop;
-                            Queen:
-                                evaluateQueen;
-                            King:
-                                evaluateKing
-                        end
-                    end;
-                  inc (pieceType, 8)
-            end;    
+        
+        evaluatePawns;
+        evaluateRooks;
+        evaluateKnightsBishops (sideBoards.knightBitboard, KnightScore);
+        evaluateKnightsBishops (sideBoards.bishopBitboard, BishopScore);
+        evaluateQueen;
+        evaluateKing;
             
-        if side = 0 then
-            begin
-                ownKing := board.white.kingBitboard;
-                opponentKing := board.black.kingBitboard
-            end
-        else
-            begin
-                ownKing := board.black.kingBitboard;
-                opponentKing := board.white.kingBitboard
-            end;
-
-        {own king immediate check penalty}
-        if isClear (ownKing) then
-            begin
-                evalScore := -20000;
-                exit
-            end;
-            
-        {bonus for checking opposite king}
-        if isClear (opponentKing) then
-            inc (evalScore, 50);
-
-        {encourage moving opposite king to board edge}
-        if endGame > 0 then
-            begin
-                BitAnd (opponentKing, KingEdge, bits);
-                if not isClear (bits) then
-                    inc (evalScore, 100)
-        end;
-
-        {move own king toward opposite king when <=4 pieces left}
-        if endGame = 2 then
-            begin
-                BitPos (opponentKing, locArray);
-                if not (abs (pLoc - locArray[1]) in [2, 15, 16, 17]) then
-                    inc (evalScore, (8 - (abs (pLoc - locArray [1]) div 2)) * 10)
-           end;
-           
         evaluateSide := evalScore
     end;
 

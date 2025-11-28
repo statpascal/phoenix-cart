@@ -16,10 +16,10 @@ uses resources;
 
 function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBoardRecord; var epCapFlag: integer): bitboard;
     var 
-        row, bitmask, epCapSquare: integer;
+        row, col, bitmask, epCapSquare: integer;
         bit1, bit2, bit3: bitboard;
     begin
-        if piece = 0 then
+        if piece = Pawn then
             begin
                 if turn = 0 then
                     result := getMovementBitboard (WhitePawnMove, iLoc)
@@ -30,6 +30,7 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                 BitAndNot (result, board.allPieces, result);
                 
                 row := iLoc shr 3;
+(*                
                 if (row = 1) or (row = 6) then
                     begin
                         bitMask := 128 shr (iLoc and 7);
@@ -38,6 +39,11 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                         else if (row = 6) and (result [2] and bitmask = 0) then
                             result [2] := result [2] and not (bitmask shl 8)
                     end;
+*)
+                if (turn = 0) and (row = 1) and (getBit (result, iLoc + 8) = 0) then
+                    clearBit (result, iLoc + 16);
+                if (turn = 1) and (row = 6) and (getBit (result, iLoc - 8) = 0) then
+                    clearBit (result, iLoc - 16);
                     
                 {trim diagonal movement if no opposite piece to capture}
                 if turn = 0 then
@@ -82,7 +88,7 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
         else 
             begin
                 bit1 := getMovementBitboard (TBitboardType ((piece - 8) shr 3), iLoc);
-                if (piece = 16) or (piece = 40) then	// knight, king
+                if (piece = Knight) or (piece = King) then
                     begin
                         if turn = 0 then 
                             BitAndNot (bit1, board.whitePieces, result)

@@ -127,7 +127,7 @@ type
 
     TSideRecord = record
         case boolean of
-            false: (pawnBitboard, rookBitboard, knightBitboard, bishipBitboard, queenBitboard, kingBitboard: bitboard);
+            false: (pawnBitboard, rookBitboard, knightBitboard, bishopBitboard, queenBitboard, kingBitboard: bitboard);
             true:  (bitboards: array [0..5] of bitboard)
         end;
     

@@ -314,10 +314,8 @@ function isKingChecked (lastMove: moverec): boolean;
         {check if own king attacked by opposite trim board}
         if turn = 0 then
             bit1 := tempBoard.white.kingBitboard
-//            DataOps(2, BASE, 8, TWKO, bit1)
         else
             bit1 := tempBoard.black.kingBitboard;
-//            DataOps(2, BASE, 8, TBKO, bit1);
         
         if turn = 0 then
             BitAnd(bit1, bit5, bit1)
@@ -327,7 +325,7 @@ function isKingChecked (lastMove: moverec): boolean;
     end;
     
     
-procedure enterMove (turn, attackFlag: integer; var l, n: integer; var foundFlag: boolean; var board: TBoardRecord; currentmove: ^moverec);
+procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; currentmove: ^moverec);
         
     procedure updateBitboards (var own, opponent: TSideRecord; var ownPieces, opponentPieces: bitboard);
         var
@@ -347,8 +345,8 @@ procedure enterMove (turn, attackFlag: integer; var l, n: integer; var foundFlag
                         if getBit (opponent.bitboards [j shr 3], currentMove^.endSq) <> 0 then
                             begin
                                 foundFlag := true;
-                                l := currentMove^.id;
-                                n := j;
+                                attackId := currentMove^.id;
+                                capId := j;
                                 clearBit (opponent.bitboards [j shr 3], currentMove^.endSq);
                                 clearBit (opponentPieces, currentMove^.endSq)
                             end;
@@ -385,17 +383,14 @@ procedure enterMove (turn, attackFlag: integer; var l, n: integer; var foundFlag
     end;    
     
 procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; cMoveFlag, ply: integer);
-    label 
-        l_1, l_3, l_5;
     var 
-        i, j, k, l, n, offset, bestScore: integer;
-        wCheckFlag, bCheckFlag, offset7, switchFlag: integer;
-        offset5, offset6, attackFlag, evalScore: integer;
-        sPage2, mateFlag: integer;
+        i, j, k, attackId, capId, bestScore: integer;
+        wCheckFlag, bCheckFlag, switchFlag: integer;
+        attackFlag, evalScore: integer;
+        mateFlag: integer;
         foundFlag, pruneFlag, ignoreMove: boolean;
         bestMove, tempMove: moverec;
         moveList, attackList, tailIndex, attackIndex, currentMove: listPointer;
-        bit8, bit9: bitboard;
         savedBoard: TBoardRecord;
         heap: pointer;
 
@@ -421,9 +416,6 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         pruneFlag := false;
         ignoreMove := false;
 
-        startPage := BASE;
-        sPage := BASE1;
-        
         new(moveList);
         new(attackList);
         moveList^.link := nil;
@@ -438,14 +430,12 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         checkRookMissing;
         checkCastling (moveList);
 
-    (* move1 *)
         if turn = 0 then
             bestScore := -20000
         else
             bestScore := 20000;
 
-        ClearBitboard(bit9);
-     {iterate through move list}
+        {iterate through move list}
         currentMove := attackList;
         attackFlag := 1;
         if currentMove^.link = nil then
@@ -454,7 +444,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 currentMove := moveList;
             end;
 
-     {stalemate condition}
+        {stalemate condition}
         if (currentMove^.link = nil) and (attackFlag = 0) and (ply = gamePly) then
             begin
                 gotoxy(20, 1);
@@ -468,13 +458,11 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
         {save bitboards}
         savedBoard := tempBoard;
-//        DataOps (2, BASE, 120, TWPO, savedBoard);
-//        dataSize := 8;
 
         repeat
             foundFlag := false;
             tempMove := currentMove^;
-            enterMove (turn, attackFlag, l, n, foundFlag, tempBoard, currentMove);
+            enterMove (turn, attackFlag, attackId, capId, foundFlag, tempBoard, currentMove);
             
             {check for castling move}
             if (attackFlag = 0) and (currentMove^.id = 40) then
@@ -484,11 +472,11 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                             if ply = gamePly then
                                 cMoveFlag := 1;
                             currentMove := currentMove^.link;
-                            enterMove (turn, attackFlag, l, n, foundFlag, tempBoard, currentMove);
+                            enterMove (turn, attackFlag, attackId, capId, foundFlag, tempBoard, currentMove);
                         end;
                 end;
 
-      {check if own king in check after current move}
+            {check if own king in check after current move}
 //            if (cWarning = 1) and (ply = gamePly) then
             ignoreMove := isKingChecked (lastMove);
 
@@ -504,7 +492,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                     moveNumLo := 0;
                                     inc (moveNumHi)
                                 end;
-                            evalScore := Evaluate (cMoveFlag, attackFlag, l, n, lastMove, tempMove, tempBoard);
+                            evalScore := Evaluate (cMoveFlag, attackFlag, attackId, capId, lastMove, tempMove, tempBoard);
                             if doLogging then begin   
                                 indent (ply - 1); 
                                 printMove (tempMove); 
@@ -526,9 +514,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                             if evalScore >= bestScore then
                                 begin
                                     bestScore := evalScore;
-                                    bestMove.id := tempMove.id;
-                                    bestMove.startSq := tempMove.startSq;
-                                    bestMove.endSq := tempMove.endSq;
+                                    bestMove := tempMove
                                 end;
                             if bestScore > beta then
                                 pruneFlag := true
@@ -541,9 +527,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                             if evalScore <= bestScore then
                                 begin
                                     bestScore := evalScore;
-                                    bestMove.id := tempMove.id;
-                                    bestMove.startSq := tempMove.startSq;
-                                    bestMove.endSq := tempMove.endSq;
+                                    bestMove := tempMove
                                 end;
                             if bestScore < alpha then
                                 pruneFlag := true

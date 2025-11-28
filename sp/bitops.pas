@@ -9,6 +9,7 @@ type
 
 procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
 procedure BitPos (var b1: bitboard; var posarray: bitarray);
+function BitCount (var b: bitboard): integer;
 
 procedure BitNot (var b1, br: bitboard);
 procedure BitAnd (var b1, b2, br: bitboard);
@@ -25,19 +26,20 @@ implementation
 
 uses bitopsorig, globals;
 
+const
+    bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
+
 procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
 
     type 
         bitboard_byte = array [0..7] of uint8;
         
     procedure trimRay (var b: bitboard_byte; pos, dy, dxOp, oponent: integer); assembler;
-            mov  @pos, r0
-            li   r8, >8000
-            andi r0, 7
-            jeq  trimrayasm_0
-            srl  r8, 0		// r8: bitval in high byte
+            mov  @pos, r12
+            andi r12, 7
+            clr  r8
+            movb @bitmasks(r12), r8	// bitval in high byte of r8
             
-        trimrayasm_0
             mov  @pos, r0
             srl  r0, 3		// r0: row
             clr	 r12		// clearing = false
@@ -190,6 +192,33 @@ procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
         srl	r13, 1		// calculate number of pieces
         mov	r13, *r12	// store number of pieces at begin of posarray
 end;
+
+function BitCount (var b: bitboard): integer; assembler;
+        mov  @b, r0
+        li   r12, 4
+        clr  r13
+        
+    bitcount_1:
+        mov  *r0+, r14
+        
+    bitcount_2:
+        mov  r14, r15
+        jeq  bitcount_3
+        dec  r15
+        inv  r15
+        szc  r15, r14		// r14 = r14 and (r14 - 1) clears rightmost bit
+        inc  r13
+        jmp  bitcount_2
+        
+    bitcount_3:
+        dec  r12
+        jne  bitcount_1
+        
+        mov  *r10, r12		// store result
+        mov  r13, *r12
+end;
+        
+
 
 // complements a bitboard
 // the complement of bitboard1 will be stored in bitboard2
@@ -397,9 +426,6 @@ procedure LShift(var b1, br : bitboard; n : integer); assembler;
 
         lwpi    >8300
 end;
-
-const
-    bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
 
 procedure clearBit (var b: bitboard; n: integer); assembler;
         mov  @b, r12
