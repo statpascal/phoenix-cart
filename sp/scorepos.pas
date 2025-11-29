@@ -85,9 +85,9 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
             if locArray [0] = 2 then
                 begin
                     {bonus for connected rooks - check if other rook could be caught as opponent}
-                    bits := Trim (1 - side, 0, locArray [1], LastMove, board, epDummy);
-                    if getBit (bits, locArray [2]) <> 0 then
-                        inc (evalScore, 100)
+                    bits := Trim (1 - side, Rook, locArray [1], LastMove, board, epDummy);
+                    if (getBit (bits, locArray [2]) <> 0) and not (abs (locArray [2] - locArray [1]) in [1, 8]) then
+//                        inc (evalScore, 100)
                 end
         end;
         

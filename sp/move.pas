@@ -92,6 +92,8 @@ procedure printMove (var move: moverec);
                 write (logFile, '-');
                 writecoord (move.endSq)
             end
+        else
+            write (logFile, 'None')
     end;
 
 procedure checkBackRowInterposing;
@@ -429,6 +431,8 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         checkOwnBackRowAttack (lastMove);
         checkRookMissing;
         checkCastling (moveList);
+        
+        bestMove.id := 99;
 
         if turn = 0 then
             bestScore := -20000
