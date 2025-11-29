@@ -574,6 +574,8 @@ procedure printMove (var move: moverec);
                 write (logFile, '-');
                 writecoord (move.endSq)
             end
+        else
+            write (logFile, 'None')
     end;
 
 procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer; aVal, bVal, cMoveFlag: integer);
@@ -651,7 +653,8 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
      {add castling moves to head of list if possible}
         checkCastling (moveList);
-
+        
+        bestMove.id := 99;
 
     (* move1 *)
         if turn = 0 then

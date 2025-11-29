@@ -204,7 +204,7 @@ begin
                  if pLoc <= 7 then
                   evalScore := evalScore + 1000;
                  {check pawn support}
-                 if pLoc < 55 then
+                 if pLoc < 48 then
                   begin
                    for l := 0 to 1 do
                     begin
@@ -214,9 +214,9 @@ begin
                      if not(IsClear(bit4)) then
                       begin
                        if l = 0 then
-                        offset2 := PIECELOC + ((pLoc + 9) * 8)
+                        offset2 := PIECELOC + ((pLoc + 7) * 8)
                        else
-                        offset2 := PIECELOC + ((pLoc + 7) * 8);
+                        offset2 := PIECELOC + ((pLoc + 9) * 8);
                        DataOps(2, startPage, dataSize, offset2, bit4);
                        DataOps(2, startPage, dataSize, initOffset, bit5);
                        BitAnd(bit5, bit4, bit4);
@@ -279,7 +279,7 @@ begin
                     begin
                      {check if on same column}
                      if Abs(moveArray[1] - moveArray[2]) Mod 8 = 0 then
-                      evalScore := evalScore + 100
+ //                      evalScore := evalScore + 100
                      else
                       begin
                        {check if on same row}
@@ -291,7 +291,7 @@ begin
                        BitAnd(bit9, bitRes, bit9);
                        BitAnd(bit8, bit9, bitRes);
                        if not(IsClear(bitRes)) then
-                        evalScore := evalScore + 100;
+ //                        evalScore := evalScore + 100;
                       end;
                     end;
                    {restore primary boards}

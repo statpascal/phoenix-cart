@@ -9,6 +9,7 @@ type
 
 procedure BitTrim(var b1, b2 : bitboard; var n, ptype : integer; flg : integer);
 procedure BitPos(var b1 : bitboard; var posarray : bitarray);
+function BitCount (var b: bitboard): integer;
 
 procedure BitNot(var b1, br : bitboard);
 procedure BitAnd(var b1, b2, br : bitboard);
@@ -157,43 +158,69 @@ procedure BitTrim (var b1, b2: bitboard; var n, ptype: integer; flg: integer);
 //starting at index 1 and board position 
 
 procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
-        mov    	@posarray, r13  
-        inct   	r13		// R13: data pointer
-        mov    	@b1, r14	// R14: pointer to bitboard
+        mov  @posarray, r13  
+        inct r13             // R13: data pointer
+        mov  @b1, r14        // R14: pointer to bitboard
         
-        clr	r0		// R0: piece positition (0-63)
-        li     	r15, 4		// R0: loop counter over bitboard words
+        clr  r0              // R0: piece positition (0-63)
+        li   r15, 4          // R0: loop counter over bitboard words
         
     bitpos_1:
-        mov	*r14+, r8	// R8: content of bitboard block
-        jeq	bitpos_4	// skip if 0
-        li	r12, 16		// loop over 16 bits
+        mov  *r14+, r8       // R8: content of bitboard block
+        jeq  bitpos_4        // skip if 0
+        li   r12, 16         // loop over 16 bits
         
     bitpos_2:
-        sla	r8, 1
-        jnc     bitpos_3
+        sla  r8, 1
+        jnc  bitpos_3
         
-        mov	r0, *r13+
+        mov  r0, *r13+
         
     bitpos_3:
-        inc	r0
-        dec 	r12		// bit bounter
-        jne	bitpos_2
-        jmp	bitpos_5
+        inc  r0
+        dec  r12             // bit bounter
+        jne  bitpos_2
+        jmp  bitpos_5
         
     bitpos_4:
-        ai	r0, 16
+        ai   r0, 16
 
     bitpos_5:
-        dec	r15		// word counter
-        jne	bitpos_1
+        dec  r15             // word counter
+        jne  bitpos_1
         
-        mov    	@posarray, r12  // r12: pointer to posarray
-        s	r12, r13
-        dect	r13
-        srl	r13, 1		// calculate number of pieces
-        mov	r13, *r12	// store number of pieces at begin of posarray
+        mov  @posarray, r12  // r12: pointer to posarray
+        s    r12, r13
+        dect r13
+        srl  r13, 1          // calculate number of pieces
+        mov  r13, *r12       // store number of pieces at begin of posarray
 end;
+
+function BitCount (var b: bitboard): integer; assembler;
+        mov  @b, r0
+        li   r12, 4
+        clr  r13
+        
+    bitcount_1:
+        mov  *r0+, r14
+        
+    bitcount_2:
+        mov  r14, r15
+        jeq  bitcount_3
+        dec  r15
+        inv  r15
+        szc  r15, r14		// r14 = r14 & (r14 - 1) clears rightmost bit
+        inc  r13
+        jmp  bitcount_2
+        
+    bitcount_3:
+        dec  r12
+        jne  bitcount_1
+        
+        mov  *r10, r12		// store result
+        mov  r13, *r10
+end;
+        
 
 // complements a bitboard
 // the complement of bitboard1 will be stored in bitboard2
