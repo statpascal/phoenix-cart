@@ -6,7 +6,7 @@ uses {$U chesslib.code} globals;
 
 procedure PrintGame;
 procedure BoardDisplay;
-procedure EnterPos;
+procedure EnterPos (var board: TBoardRecord);
 procedure MoveCoord(score, iLoc, eLoc : integer; flag : boolean);
 
 implementation
@@ -194,7 +194,7 @@ begin
     gotoxy(0, 14);
 end; {ClearPrompts}
 
-procedure EnterPos;
+procedure EnterPos (var board: TBoardRecord);
 
 label 
     l_1;
@@ -387,16 +387,7 @@ begin
             end;
     until sideKey = 81;
 
-    wCastleFlag := 0;
-    bCastleFlag := 0;
-    wLAFlag := 0;
-    wRAFlag := 0;
-    bLAFlag := 0;
-    wRAFlag := 0;
-    wRookRFlag := 0;
-    wRookLFlag := 0;
-    bRookLFlag := 0;
-    bRookRFlag := 0;
+    castleFlags := 0;
 
     writeln;
     writeln(chr(7), 'allow white castling? (y/n)');
@@ -404,25 +395,13 @@ begin
         ans := GetKeyInt;
     until ans in[78, 89];
     if ans = 78 then
-        wCastleFlag := 1
+        castleFlags := castleFlags or whiteCastleFlag
     else
         begin
-            offset := WRO;
-            DataOps(2, startPage, dataSize, offset, bit1);
-            offset := PIECELOC;
-            DataOps(2, startPage, dataSize, offset, bit2);
-            BitAnd(bit1, bit2, bit3);
-            if IsClear(bit3) then
-                begin
-                    wRookLFlag := 1;
-                end;
-            offset := PIECELOC + 56;
-            DataOps(2, startPage, dataSize, offset, bit2);
-            BitAnd(bit1, bit2, bit3);
-            if IsClear(bit3) then
-                begin
-                    wRookRFlag := 1;
-                end;
+            if getBit (board.white.rookBitboard, 0) = 0 then
+                castleFlags := castleFlags or whiteRookLeftFlag;
+            if getBit (board.white.rookBitboard, 7) = 0 then
+                castleFlags := castleFlags or whiteRookRightFlag
         end;
 
     writeln(chr(7), 'allow black castling? (y/n)');
@@ -430,25 +409,13 @@ begin
         ans := GetKeyInt;
     until ans in[78, 89];
     if ans = 78 then
-        bCastleFlag := 1
+        castleFlags := castleFlags or blackCastleFlag
     else
         begin
-            offset := BRO;
-            DataOps(2, startPage, dataSize, offset, bit1);
-            offset := PIECELOC + 448;
-            DataOps(2, startPage, dataSize, offset, bit2);
-            BitAnd(bit1, bit2, bit3);
-            if IsClear(bit3) then
-                begin
-                    bRookLFlag := 1;
-                end;
-            offset := PIECELOC + 504;
-            DataOps(2, startPage, dataSize, offset, bit2);
-            BitAnd(bit1, bit2, bit3);
-            if IsClear(bit3) then
-                begin
-                    bRookRFlag := 1;
-                end;
+            if getBit (board.black.rookBitboard, 56) = 0 then
+                castleFlags := castleFlags or blackRookLeftFlag;
+            if getBit (board.black.rookBitboard, 63) = 0 then
+                castleFlags := castleFlags or blackRookRightFlag
         end;
 
     writeln(chr(7), 'side to start? [w]hite/[b]lack');
@@ -465,8 +432,6 @@ begin
             writeln('*** black to move ***');
             turn := 1;
         end;
-
-    ans := GetKeyInt;
 
     write('enter move number: ');
     readln(gameMove);

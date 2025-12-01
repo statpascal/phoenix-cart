@@ -63,6 +63,7 @@ procedure saveGame (gname: string; showMsg: boolean);
         gBuffer: array[0..67] of integer;
     
     begin    
+    (*
         startPage := BASE2;
         dataSize := 2;
         offset := 4000;
@@ -138,6 +139,7 @@ procedure saveGame (gname: string; showMsg: boolean);
             gotoxy(20, 11);
             write('           ')
         end
+*)        
     end;
 
 procedure Utility(var switch: integer);
@@ -202,6 +204,7 @@ procedure Utility(var switch: integer);
                 end;
                 49: 
                 begin {load}
+(*                
                     gotoxy(20, 9);
                     write('file name: ');
                     ans := ord (getKeyInt ());
@@ -298,6 +301,7 @@ procedure Utility(var switch: integer);
                     write('                  ');
                     gotoxy(20, 11);
                     write('           ');
+*)                    
                 end;
                 50: 
                 begin {save}
@@ -308,8 +312,9 @@ procedure Utility(var switch: integer);
                     readln(gname);
                     saveGame (gname, true)
                 end;
-                51: 
+                51:                 
                 begin {backup}
+(*                
                     tmpPtr := tmpPtr - 136;
                     if tmpPtr < 0 then
                         begin
@@ -340,9 +345,11 @@ procedure Utility(var switch: integer);
                             gameMove := gBuffer[7];
                             UpdateBoard(tmpBase, tmpPtr);
                         end;
+*)                        
                 end;
                 52: 
                 begin {forward}
+(*                
                     if (tmpBase <> storeBase) or ((tmpBase = storeBase) and
                        (tmpPtr < (storePtr - 136))) then
                         begin
@@ -359,20 +366,25 @@ procedure Utility(var switch: integer);
                         end
                     else
                         writeln(chr(7));
+*)                        
                 end;
                 54: 
                 begin {last move}
+(*                
                     tempGPointer := gamePointer;
                     tmpPtr := storePtr - 136;
                     tmpBase := storeBase;
                     goto l_2;
+*(                    
                 end;
                 53: 
                 begin {first move}
+(*                
                     tempGPointer := 0;
                     tmpPtr := 0;
                     tmpBase := 24;
                     goto l_2;
+*)                    
                 end;
                 55: 
                 begin {switch sides}

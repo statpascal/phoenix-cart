@@ -22,7 +22,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
         sideOffset, offset2, offset3, offset4, switchState: integer;
         validSq, foundFlag: boolean;
         fn: string [20];
-        epCapDummy: integer;
+        castleRights, epCapDummy: integer;
     begin
         turn := pturn;
         startPage := BASE;
@@ -164,124 +164,20 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
                         begin
     {player castling move check}
 
-    {check for back row interposing pieces}
-                            if ((turn = 0) and (wCastleFlag = 0)) or
-                               ((turn = 1) and (bCastleFlag = 0)) then
+                            castleRights := checkCastleRights (mainBoard, castleFlags, turn);
+
+                            if turn = 0 then
                                 begin
-                                    offset := APIECES;
-                                    DataOps(2, startPage, dataSize, offset, bit1);
-                                    if turn = 0 then
-                                        begin
-        {white}
-                                            offset1 := WRCMASK;
-                                            offset2 := WLCMASK;
-        {right side}
-                                            if (wRAFlag = 0) and (wRookRFlag = 0) then
-                                                begin
-                                                    DataOps(2, startPage, dataSize, offset1, bit2);
-                                                    BitAnd(bit1, bit2, bit2);
-                                                    if not(IsClear(bit2)) then
-                                                        wRAFlag := 1;
-                                                end;
-        {left side}
-                                            if (wLAFlag = 0) and (wRookLFlag = 0) then
-                                                begin
-                                                    DataOps(2, startPage, dataSize, offset2, bit2);
-                                                    BitAnd(bit1, bit2, bit2);
-                                                    if not(IsClear(bit2)) then
-                                                        wLAFlag := 1;
-                                                end;
-                                        end
-                                    else
-                                        begin
-        {black}
-                                            offset1 := BRCMASK;
-                                            offset2 := BLCMASK;
-        {right side}
-                                            if (bRAFlag = 0) and(bRookRFlag = 0) then
-                                                begin
-                                                    DataOps(2, startPage, dataSize, offset1, bit2);
-                                                    BitAnd(bit1, bit2, bit2);
-                                                    if not(IsClear(bit2)) then
-                                                        bRAFlag := 1;
-                                                end;
-        {left side}
-                                            if (bLAFlag = 0) and (bRookLFlag = 0) then
-                                                begin
-                                                    DataOps(2, startPage, dataSize, offset2, bit2);
-                                                    BitAnd(bit1, bit2, bit2);
-                                                    if not(IsClear(bit2)) then
-                                                        bLAFlag := 1;
-                                                end;
-                                        end;
-                                end;
-
-
-    {check if own back row attacked}
-                            if ((turn = 0) and (wCastleFlag = 0)) or
-                               ((turn = 1) and (bCastleFlag = 0)) then
-                                begin
-      {generate combined opposite movement trim board}
-                                    CombineTrim(bit3, bit5, lastMove, mainBoard);
-
-      {check right and left back rows}
-                                    if turn = 0 then
-                                        begin
-                                            offset1 := WRBRMASK;
-                                            offset2 := WLBRMASK;
-                                            if (wRAFlag = 0) and (wRookRFlag = 0) then
-                                                begin
-                                                    DataOps(2, startPage, dataSize, offset1, bit6);
-                                                    BitAnd(bit5, bit6, bit6);
-                                                    if not(IsClear(bit6)) then
-                                                        wRAFlag := 1;
-                                                end;
-
-                                            if (wLAFlag = 0) and (wRookLFlag = 0) then
-                                                begin
-                                                    DataOps(2, startPage, dataSize, offset2, bit6);
-                                                    BitAnd(bit5, bit6, bit6);
-                                                    if not(IsClear(bit6)) then
-                                                        wLAFlag := 1;
-                                                end;
-                                        end
-                                    else
-                                        begin
-                                            offset1 := BRBRMASK;
-                                            offset2 := BLBRMASK;
-                                            if (bRAFlag = 0) and (bRookRFlag = 0) then
-                                                begin
-                                                    DataOps(2, startPage, dataSize, offset1, bit6);
-                                                    BitAnd(bit3, bit6, bit6);
-                                                    if not(IsClear(bit6)) then
-                                                        bRAFlag := 1;
-                                                end;
-
-                                            if (bLAFlag = 0) and (bRookLFlag = 0) then
-                                                begin
-                                                    DataOps(2, startPage, dataSize, offset2, bit6);
-                                                    BitAnd(bit3, bit6, bit6);
-                                                    if not(IsCLear(bit6)) then
-                                                        bLAFlag := 1;
-                                                end;
-                                        end;
-                                end;
-
-                            if (turn = 0) and (wCastleFlag = 0) then
-                                begin
-                                    if (((iLoc - eLoc) > 0) and (wLAFlag = 0) and (wRookLFlag = 0)) or
-                                       (((iLoc - eLoc) < 0) and (wRAFlag = 0) and (wRookRFlag = 0)) then
-                                        validSq := TRUE;
+                                    if (((iLoc - eLoc) > 0) and (castleRights and whiteLeftCastleRight <> 0)) or
+                                       (((iLoc - eLoc) < 0) and (castleRights and whiteRightCastleRight <> 0)) then
+                                        validSq := true
                                 end
                             else
-                                if (turn = 1) and (bCastleFlag = 0) then
-                                    begin
-                                        if (((iLoc - eLoc) > 0) and (bLAFlag = 0) and (bRookLFlag = 0))
-                                           or
-                                           (((iLoc - eLoc) < 0) and (bRAFlag = 0) and (bRookRFlag = 0))
-                                            then
-                                            validSq := TRUE;
-                                    end;
+                                begin
+                                    if (((iLoc - eLoc) > 0) and (castleRights and blackLeftCastleRight <> 0)) or
+                                       (((iLoc - eLoc) < 0) and (castleRights and blackRightCastleRight <> 0)) then
+                                        validSq := true
+                                end
 
                         end
                     else

@@ -76,8 +76,8 @@ procedure UpdateMove(var playMove: moverec);
         kCastleFlag := 0;
 
      {check for castling move}
-        if (gameSide = 0) and (wCastleFlag = 0) or
-           (gameSide = 1) and (bCastleFlag = 0) then
+        if (gameSide = 0) and (castleFlags and whiteCastleFlag = 0) or
+           (gameSide = 1) and (castleFlags and blackCastleFlag = 0) then
             begin
                 if  (playMove.id = 40) and (abs(playMove.startSq - playMove.endSq) = 2) then
                     begin
@@ -89,22 +89,22 @@ procedure UpdateMove(var playMove: moverec);
             end;
 
      {check if rooks have moved from home square}
-        if (gameSide = 0) and (wCastleFlag = 0) and (playMove.id = 8) then
+        if (gameSide = 0) and (castleFlags and whiteCastleFlag = 0) and (playMove.id = 8) then
             begin
                 if (playMove.startSq = 0) and (qCastleFlag = 0) then
-                    wRookLFlag := 1
+                    castleFlags := castleFlags or whiteRookLeftFlag
                 else
                     if (playMove.startSq = 7) and (kCastleFlag = 0) then
-                        wRookRFlag := 1;
+                        castleFlags := castleFlags or whiteRookRightFlag;
             end
         else
-            if (gameSide = 1) and (bCastleFlag = 0) and (playMove.id = 8) then
+            if (gameSide = 1) and (castleFlags and blackCastleFlag = 0) and (playMove.id = 8) then
                 begin
                     if (playMove.startSq = 58) and (qCastleFlag = 0) then
-                        bRookLFlag := 1
+                        castleFlags := castleFlags or blackRookLeftFlag
                     else
                         if (playMove.startSq = 63) and (kCastleFlag = 0) then
-                            bRookRFlag := 1;
+                            castleFlags := castleFlags or blackRookRightFlag;
                 end;
 
         promFlag := FALSE;
@@ -143,14 +143,14 @@ procedure UpdateMove(var playMove: moverec);
                 offset4 := BPIECES;
                 if qCastleFlag = 1 then
                     begin
-                        wCastleFlag := 1;
+                        castleFlags := castleFlags or whiteCastleFlag;
                         offset2 := PIECELOC;
                         offset3 := WRO;
                     end
                 else
                     if kCastleFlag = 1 then
                         begin
-                            wCastleFlag := 1;
+                            castleFlags := castleFlags or whiteCastleFlag;
                             offset2 := PIECELOC + 56;
                             offset3 := WRO;
                         end;
@@ -162,14 +162,14 @@ procedure UpdateMove(var playMove: moverec);
                 offset4 := WPIECES;
                 if qCastleFlag = 1 then
                     begin
-                        bCastleFlag := 1;
+                        castleFlags := castleFlags or blackCastleFlag;
                         offset2 := PIECELOC + 448;
                         offset3 := BRO;
                     end
                 else
                     if kCastleFlag = 1 then
                         begin
-                            bCastleFlag := 1;
+                            castleFlags := castleFlags or blackCastleFlag;
                             offset2 := PIECELOC + 504;
                             offset3 := BRO;
                         end;
@@ -218,26 +218,26 @@ procedure UpdateMove(var playMove: moverec);
             if not(IsClear(bitRes)) then
                 begin
                     found := 1;
-                    if (wCastleFlag = 0) and (offset1 = WRO) then
+                    if (castleFlags and whiteCastleFlag = 0) and (offset1 = WRO) then
                         begin
                             if playMove.endSq = 0 then
                                 begin
-                                    wRookLFlag := 1;
+                                    castleFlags := castleFlags or whiteRookLeftFlag;
                                 end;
                             if playMove.endSq = 7 then
                                 begin
-                                    wRookRFlag := 1;
+                                    castleFlags := castleFlags or whiteRookRightFlag;
                                 end;
                         end;
-                    if (bCastleFlag = 0) and (offset1 = BRO) then
+                    if (castleFlags and blackCastleFlag = 0) and (offset1 = BRO) then
                         begin
                             if playMove.endSq = 56 then
                                 begin
-                                    bRookLFlag := 1;
+                                    castleFlags := castleFlags or blackRookLeftFlag;
                                 end;
                             if playMove.endSq = 63 then
                                 begin
-                                    bRookRFlag := 1;
+                                    castleFlags := castleFlags or blackRookRightFlag;
                                 end;
                         end;
                 end;
@@ -405,7 +405,8 @@ procedure SaveMove;
         DataOps(1, storeBase, dataSize, offset, buffer);
         offset := offset + 120;
         dataSize := 2;
-        DataOps(1, storeBase, dataSize, offset, wCastleFlag);
+(*        
+        DataOps(1, storeBase, dataSize, offset, CastleFlag);
         offset := offset + 2;
         DataOps(1, storeBase, dataSize, offset, bCastleFlag);
         offset := offset + 2;
@@ -417,6 +418,7 @@ procedure SaveMove;
         offset := offset + 2;
         DataOps(1, storeBase, dataSize, offset, bRookRFlag);
         offset := offset + 2;
+*)        
         DataOps(1, storeBase, dataSize, offset, cWarning);
         offset := offset + 2;
         DataOps(1, storeBase, dataSize, offset, gameMove);
@@ -441,12 +443,8 @@ procedure initGame;
         turn := 0;
         gameSide := turn;
         gameMove := 1;
-        wCastleFlag := 0;
-        bCastleFlag := 0;
-        wRookRFlag := 0;
-        wRookLFlag := 0;
-        bRookRFlag := 0;
-        bRookLFlag := 0;
+        castleFlags := 0;
+
         lastMove.id := 99;
         lastMove.startSq := 0;
         lastMove.endSq := 0;
@@ -511,7 +509,7 @@ procedure initGame;
         until ans in[78, 89];
         if ans = 89 then
             begin
-                EnterPos;
+                EnterPos (mainBoard);;
                 gameSide := turn;
                {look for check condition}
                 lastMove.id := 0;
@@ -615,10 +613,10 @@ procedure chainMain;
         ans := GetKeyInt;
 
         repeat
-            wLAFlag := 0;
-            wRAFlag := 0;
-            bLAFlag := 0;
-            bRAFlag := 0;
+//            wLAFlag := 0;
+//            wRAFlag := 0;
+//            bLAFlag := 0;
+//            bRAFlag := 0;
             cFlag := 0;
 
       {transfer current board state to temp boards}
@@ -654,63 +652,6 @@ procedure chainMain;
                         exit;
                     if i = 1 then
                         goto l_0;
-
-     {check if opponent's back row attacked}
-                    if ((turn = 0) and (bCastleFlag = 0)) or
-                       ((turn = 1) and (wCastleFlag = 0)) then
-                        begin
-                            offset := PIECELOC + (playMove.endSq * 8);
-                            DataOps(2, startPage, dataSize, offset, bit1);
-                            if turn = 0 then
-                                offset := WPIECES
-                            else
-                                offset := BPIECES;
-                            bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, mainBoard, epCapDummy);
-
-       {combine piece location with trimmed move list}
-                            BitOr(bit1, bit2, bit3);
-       {check right and left back rows}
-                            if turn = 0 then
-                                begin
-                                    offset := BRBRMASK;
-                                    offset1 := BLBRMASK;
-                                    if (bRAFlag = 0) and (bRookRFlag = 0) then
-                                        begin
-                                            DataOps(2, startPage, dataSize, offset, bit6);
-                                            BitAnd(bit3, bit6, bit6);
-                                            if not(IsClear(bit6)) then
-                                                bRAFlag := 1;
-                                        end;
-
-                                    if (bLAFlag = 0) and (bRookLFlag = 0) then
-                                        begin
-                                            DataOps(2, startPage, dataSize, offset1, bit6);
-                                            BitAnd(bit3, bit6, bit6);
-                                            if not(IsClear(bit6)) then
-                                                bLAFlag := 1;
-                                        end;
-                                end
-                            else
-                                begin
-                                    offset := WRBRMASK;
-                                    offset1 := WLBRMASK;
-                                    if (wRAFlag = 0) and (wRookRFlag = 0) then
-                                        begin
-                                            DataOps(2, startPage, dataSize, offset, bit6);
-                                            BitAnd(bit3, bit6, bit6);
-                                            if not(IsClear(bit6)) then
-                                                wRAFlag := 1;
-                                        end;
-
-                                    if (wLAFlag = 0) and (wRookLFlag = 0) then
-                                        begin
-                                            DataOps(2, startPage, dataSize, offset1, bit6);
-                                            BitAnd(bit3, bit6, bit6);
-                                            if not(IsCLear(bit6)) then
-                                                wLAFlag := 1;
-                                        end;
-                                end;
-                        end;
 
 
                     l_0: 
@@ -833,30 +774,30 @@ procedure chainMain;
 
             UpdateMove(playMove);
 
-            if (wCastleFlag = 0) and (gameSide = 0) then
+            if (castleFlags and whiteCastleFlag = 0) and (gameSide = 0) then
                 begin
                     if playMove.id = 40 then
-                        wCastleFlag := 1;
+                        castleFlags := castleFlags or whiteCastleFlag;
 
                     if playMove.id = 8 then
                         begin
                             if playMove.startSq = 0 then
-                                wRookLFlag := 1;
+                                castleFlags := castleFlags or whiteRookLeftFlag;
                             if playMove.startSq = 7 then
-                                wRookRFlag := 1;
+                                castleFlags := castleFlags or whiteRookRightFlag
                         end;
                 end;
-            if (bCastleFlag = 0) and (gameSide = 1) then
+            if (castleFlags and blackCastleFlag = 0) and (gameSide = 1) then
                 begin
                     if playMove.id = 40 then
-                        bCastleFlag := 1;
+                        castleFlags := castleFlags or blackCastleFlag;
 
                     if playMove.id = 8 then
                         begin
                             if playMove.startSq = 56 then
-                                bRookLFlag := 1;
+                                castleFlags := castleFlags or blackRookLeftFlag;
                             if playMove.startSq = 63 then
-                                bRookRFlag := 1;
+                                castleFlags := castleFlags or blackRookRightFlag
                         end;
                 end;
 

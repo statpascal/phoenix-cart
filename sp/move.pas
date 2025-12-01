@@ -96,20 +96,21 @@ procedure printMove (var move: moverec);
             write (logFile, 'None')
     end;
 
+(*
 procedure checkBackRowInterposing;
     begin
-        if (turn = 0) and (wCastleFlag = 0) then
+        if (turn = 0) and (castleFlag and whiteCastleFlag = 0) then
             begin
-                if (wRookRFlag = 0) and (tempBoard.allPieces [0] and $0600 <> 0) then
+                if (castleeFlag and whiteRookRightFlag = 0) and (tempBoard.allPieces [0] and $0600 <> 0) then
                     wRAFlag := 1;
-                if (wRookLFlag = 0) and (tempBoard.allPieces [0] and $7000 <> 0) then
+                if (castleFlag and whiteRookLeftFlag = 0) and (tempBoard.allPieces [0] and $7000 <> 0) then
                     wLAFlag := 1
             end
-        else if (turn = 1) and (bCastleFlag = 0) then
+        else if (turn = 1) and (castleFlag and blackCastleFlag = 0) then
             begin
-                if (bRookRFlag = 0) and (tempBoard.allPieces [3] and $0006 <> 0) then
+                if (castleFlag and blackRookRightFlag = 0) and (tempBoard.allPieces [3] and $0006 <> 0) then
                     bRAFlag := 1;
-                if (bRookLFlag = 0) and (tempBoard.allPieces [3] and $0070 <> 0) then
+                if (castleFlag and blackRookLeftFlag = 0) and (tempBoard.allPieces [3] and $0070 <> 0) then
                     bLAFlag := 1
             end
     end;
@@ -131,13 +132,18 @@ procedure checkRookMissing;
                     bRAFlag := 1
             end
     end;
+*)
 
-procedure checkCastling (var moveList: listPointer);
+procedure checkCastling (var board: TBoardRecord; var moveList: listPointer);
     var currentMove: listPointer;
+        castleRights: integer;
     begin
-        if (wCastleFlag = 0) and (turn = 0) then
+        castleRights := checkCastleRights (board, castleFlags, turn);
+        if castleRights = 0 then
+            exit;
+        if turn = 0 then
             begin
-                if (wLAFlag = 0) and (wRookLFlag = 0) then
+                if castleRights and whiteLeftCastleRight <> 0 then
                     begin
                         new(currentMove);
                         currentMove^.id := 8;
@@ -152,7 +158,7 @@ procedure checkCastling (var moveList: listPointer);
                         currentMove^.link := moveList;
                         moveList := currentMove;
                     end;
-                if (wRAFlag = 0) and (wRookRFlag = 0) then
+                if castleRights and whiteRightCastleRight <> 0 then 
                     begin
                         new(currentMove);
                         currentMove^.id := 8;
@@ -169,46 +175,44 @@ procedure checkCastling (var moveList: listPointer);
                     end;
             end
         else
-            if (bCastleFlag = 0) and (turn = 1) then
+            if castleRights and blackLeftCastleRight <> 0 then
                 begin
-                    if (bLAFlag = 0) and (bRookLFlag = 0) then
-                        begin
-                            new(currentMove);
-                            currentMove^.id := 8;
-                            currentMove^.startSq := 56;
-                            currentMove^.endSq := 59;
-                            currentMove^.link := moveList;
-                            moveList := currentMove;
-                            new(currentMove);
-                            currentMove^.id := 40;
-                            currentMove^.startSq := 60;
-                            currentMove^.endSq := 58;
-                            currentMove^.link := moveList;
-                            moveList := currentMove;
-                        end;
-                    if (bRAFlag = 0) and (bRookRFlag = 0) then
-                        begin
-                            new(currentMove);
-                            currentMove^.id := 8;
-                            currentMove^.startSq := 63;
-                            currentMove^.endSq := 61;
-                            currentMove^.link := moveList;
-                            moveList := currentMove;
-                            new(currentMove);
-                            currentMove^.id := 40;
-                            currentMove^.startSq := 60;
-                            currentMove^.endSq := 62;
-                            currentMove^.link := moveList;
-                            moveList := currentMove;
-                        end;
+                    new(currentMove);
+                    currentMove^.id := 8;
+                    currentMove^.startSq := 56;
+                    currentMove^.endSq := 59;
+                    currentMove^.link := moveList;
+                    moveList := currentMove;
+                    new(currentMove);
+                    currentMove^.id := 40;
+                    currentMove^.startSq := 60;
+                    currentMove^.endSq := 58;
+                    currentMove^.link := moveList;
+                    moveList := currentMove;
+                end;
+            if castleRights and blackRightCastleRight <> 0 then
+                begin
+                    new(currentMove);
+                    currentMove^.id := 8;
+                    currentMove^.startSq := 63;
+                    currentMove^.endSq := 61;
+                    currentMove^.link := moveList;
+                    moveList := currentMove;
+                    new(currentMove);
+                    currentMove^.id := 40;
+                    currentMove^.startSq := 60;
+                    currentMove^.endSq := 62;
+                    currentMove^.link := moveList;
+                    moveList := currentMove;
                 end;
     end;
     
+(*    
 procedure checkOwnBackRowAttack (var lastmove: moveRec);
     var
         bits: bitboard;
     begin
-        if (turn = 0) and (wCastleFlag = 0) and ((wRookRFlag <> 0) or (wRookLFlag <> 0)) then
+        if (turn = 0) and (castleFlag and whiteCastleFlag = 0) and ((castleFlag and whiteRookightRFlag = 0) or (castleFlag and whiteRookLeftFlag = 0)) then
             begin
                 bits := combineTrimSide (true, lastmove, tempBoard);
                 if bits [0] and $0f00 <> 0 then		// TODO: not correct - rook may be attacked for castling
@@ -216,7 +220,7 @@ procedure checkOwnBackRowAttack (var lastmove: moveRec);
                 if bits [0] and $f000 <> 0 then
                     wLAFlag := 1
             end
-        else if (turn = 1) and (bCastleFlag = 0) and ((bRookRFlag <> 0) or (bRookLFlag <> 0)) then
+        else if (turn = 1) and (castleFlag and blackCastleFlag = 0) and ((castleFlag and blackRookRightFlag = 0) or (castleFlag and blackRookLeftFlag = 0)) then
             begin
                 bits := combineTrimSide (false, lastmove, tempBoard);
                 if bits [3] and $000f <> 0 then
@@ -225,6 +229,7 @@ procedure checkOwnBackRowAttack (var lastmove: moveRec);
                     bLAFlag := 1
             end
     end;
+*)
 
 procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: moverec; attackIndex, tailIndex: listPointer; ply: integer);
     var 
@@ -427,10 +432,10 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
         loopAllPieces (tempBoard, turn, lastMove, attackIndex, tailIndex, ply);
 
-        checkBackRowInterposing;
-        checkOwnBackRowAttack (lastMove);
-        checkRookMissing;
-        checkCastling (moveList);
+//        checkBackRowInterposing;
+//        checkOwnBackRowAttack (lastMove);
+//        checkRookMissing;
+        checkCastling (tempBoard, moveList);
         
         bestMove.id := 99;
 

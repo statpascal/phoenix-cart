@@ -136,30 +136,99 @@ type
         allPieces, whitePieces, blackPieces: bitboard
     end;
     
+const
+    whiteCastleFlag = 1;
+    blackCastleFlag = 2;    
+    whiteRookLeftFlag = 4;
+    whiteRookRightFlag = 8;
+    blackRookLeftFlag = 16;
+    blackRookRightFlag = 32;
+    
+    whiteLeftCastleRight = 1;
+    whiteRightCastleRight = 2;
+    blackLeftCastleRight = 4;
+    blackRightCastleRight = 8;
+    
 var
     mainBoard: TBoardRecord absolute $2000;
     tempBoard: TBoardRecord absolute $2f6e;
+    
+    castleFlags: integer;
 
 var 
     startPage, sPage, dataSize, turn, gameSide, gamePointer: integer;
-    pieceCount, wCastleFlag, bCastleFlag, cWarning: integer;
+    pieceCount, (* wCastleFlag, bCastleFlag, *) cWarning: integer;
     gamePly, wMobility, bMobility, gameMove, humanSide: integer;
-    wRAFlag, wLAFlag, bRAFlag, bLAFlag: integer;
-    wRookLFlag, wRookRFlag, bRookLFlag, bRookRFlag: integer;
+//    wRAFlag, wLAFlag, bRAFlag, bLAFlag: integer;
+//    wRookLFlag, wRookRFlag, bRookLFlag, bRookRFlag: integer;
     moveNumHi, moveNumLo: integer;
     bit1, bit2, bit3, bit4, bit5, bit6, bit7, bitRes: bitboard;
     buffer: array[0..59] of integer;
     
     doLogging: boolean;
     logFile: text;
+    
+
 
 procedure ClearBitboard (var bit1: bitboard);
 function IsClear (var b: bitboard): boolean;
 
 function GetKeyInt: integer;
 
+function checkCastleRights (var board: TBoardRecord; castleFlags, turn: integer): integer;
 
 implementation
+
+
+uses trimprocs;
+
+function checkCastleRights (var board: TBoardRecord; castleFlags, turn: integer): integer;
+    var
+        bits: bitboard;
+        dummyMove: moverec;
+    begin
+        result := 0;
+        if (turn = 0) and (castleFlags and whiteCastleFlag = 1) or
+           (turn = 1) and (castleFlags and blackCastleFlag = 2) then
+            exit;
+            
+        {check back row interposing pieces}
+        if turn = 0 then 
+            begin
+                if (castleFlags and whiteRookLeftFlag = 0) and (board.allPieces [0] and $7000 = 0) then
+                    result := whiteLeftCastleRight;
+                if (castleFlags and whiteRookRightFlag = 0) and (board.allPieces [0] and $0600 = 0) then
+                    result := result or whiteRightCastleRight
+            end
+        else
+            begin
+                if (castleFlags and blackRookLeftFlag = 0) and (board.allPieces [3] and $0007 = 0) then
+                    result := blackLeftCastleRight;
+                if (castleFlags and blackRookRightFlag = 0) and (board.allPieces [3] and $0006 = 0) then
+                    result := result or blackRightCastleRight
+            end;
+        if result = 0 then
+            exit;
+            
+        {check for back row attack and remove affected rights}
+        fillChar (dummyMove, sizeof (dummyMove), 0);
+        bits := combineTrimSide (turn = 0, dummyMove, board);
+        if turn = 0 then
+            begin
+                if bits [0] and $f000 <> 0 then		// not correct - rook may be attacked
+                    result := result and not whiteLeftCastleRight;
+                if bits [0] and $0f00 <> 0 then
+                    result := result and not whiteRightCastleRight
+            end
+        else
+            begin
+                if bits [3] and $00f0 <> 0 then
+                    result := result and not blackLeftCastleRight;
+                if bits [3] and $000f <> 0 then
+                    result := result and not blackRightCastleRight
+            end
+    end;        
+           
 
 function getKeyInt: integer;
     begin
