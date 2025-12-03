@@ -1,6 +1,6 @@
 program phoenix;
 
-uses globals, main, vdp;
+uses globals, main, resources, vdp;
 
 var 
     n: integer;
@@ -30,6 +30,7 @@ function boarddat3: TBoardDataPage;
     end;
 
 procedure loadBoardData;
+(*
     var 
         buf: TBoardDataPage;
     begin
@@ -39,10 +40,13 @@ procedure loadBoardData;
         DataOps (1, BASE1, 4096, 0, buf);
         buf := boarddat3;
         DataOps (1, BASE2, 4096, 0, buf)
+*)
+    begin
+        mainBoard := getInitPosition;
     end;
 
 begin
-    initHeap ($b000, 16384);
+//    initHeap ($b000, 16384);
     clrscr;
 //    setTextColor (lightyellow);
     setBackColor (white);

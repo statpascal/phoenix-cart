@@ -10,6 +10,7 @@ implementation
 
 uses globals, ui;
 
+(*
 procedure UpdateBoard(gBase, gOffset: integer);
     var 
         offset: integer;
@@ -42,6 +43,7 @@ procedure UpdateBoard(gBase, gOffset: integer);
 
         dataSize := 8;
     end;
+*)    
 
 procedure ClearFields;
     var 
@@ -159,12 +161,11 @@ procedure Utility(var switch: integer);
         tempGPointer := gamePointer;
         utilFlag := FALSE;
         switch := 0;
-        startPage := BASE2;
-        dataSize := 2;
+//        startPage := BASE2;
         offset := 4000;
-        DataOps(2, startPage, dataSize, offset, storePtr);
+//        DataOps(2, startPage, dataSize, offset, storePtr);
         offset := 4002;
-        DataOps(2, startPage, dataSize, offset, storeBase);
+//        DataOps(2, startPage, dataSize, offset, storeBase);
         tmpPtr := storePtr - 136;
         tmpBase := storeBase;
 
@@ -412,6 +413,7 @@ procedure Utility(var switch: integer);
                 57: 
                 begin {play}
                     l_1: 
+(*                    
                     storeBase := tmpBase;
                     storePtr := tmpPtr + 136;
                     startPage := BASE2;
@@ -420,14 +422,17 @@ procedure Utility(var switch: integer);
                     DataOps(1, startPage, dataSize, offset, storePtr);
                     offset := 4002;
                     DataOps(1, startPage, dataSize, offset, storeBase);
+*)                    
                     utilFlag := TRUE;
                     turn := gameSide;
                     gamePointer := tempGPointer;
                     tempStore.id := 99;
+(*                    
                     startPage := BASE2;
                     dataSize := 8;
                     offset := PLAYLIST + gamePointer;
                     DataOps(1, startPage, dataSize, offset, tempStore);
+*)                    
                     ClearFields;
                 end;
                 48: 
@@ -446,8 +451,6 @@ procedure Utility(var switch: integer);
                     ClearFields;
                 end;
             end;
-            startPage := BASE;
-            dataSize := 8;
         until utilFlag;
     end;
 

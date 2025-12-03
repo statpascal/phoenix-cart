@@ -27,7 +27,7 @@ const
     dataOpsWrite =   1;
     dataOpsRead =   2;
 
-procedure dataOps (rwcode, startPage, dataSize, offset: integer; var data);
+//procedure dataOps (rwcode, startPage, dataSize, offset: integer; var data);
 //procedure dataOps (rwcode: integer; var startPage, dataSize, offset: integer; var data);
 
 

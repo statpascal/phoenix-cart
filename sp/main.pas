@@ -61,11 +61,13 @@ uses
 
 var 
     i, j, moveScore, offset, found, aVal, bVal, ans: integer;
-    sideOffset, offset1, offset2, cFlag, tempPointer: integer;
-    humanFlag, cmFlag, checkFlag, promFlag, repFlag: boolean;
+    sideOffset, offset1, offset2, tempPointer: integer;
+    humanFlag, checkFlag, promFlag, repFlag: boolean;
     moveArray: bitarray;
     lastMove, playMove, moveStore, tempMove: moverec;
     bit8: bitboard;
+
+(*
 
 {update main boards with current move}
 procedure UpdateMove(var playMove: moverec);
@@ -114,6 +116,10 @@ procedure UpdateMove(var playMove: moverec);
            (playMove.endSq in[0..7])) then
             begin
                 promFlag := TRUE;
+                
+
+            Check: should be empty anyway?
+
                 if turn = 0 then
                     offset := WPO
                 else
@@ -125,6 +131,7 @@ procedure UpdateMove(var playMove: moverec);
                 BitNot(bit2, bit2);
                 BitAnd(bit1, bit2, bit1);
                 DataOps(1, startPage, dataSize, offset, bit1);
+                
             end;
 
      {erase initial position}
@@ -350,39 +357,13 @@ procedure UpdateMove(var playMove: moverec);
             end;
     end;
 
-
-procedure SaveBoards;
-    var 
-        offset, i: integer;
-    begin
-        startPage := BASE;
-        dataSize := 120;
-
-        offset := WPO;
-        DataOps(2, startPage, dataSize, offset, buffer);
-        offset := TWPO;
-        DataOps(1, startPage, dataSize, offset, buffer);
-        dataSize := 8;
-    end;
-
-procedure GetBoards;
-    var 
-        offset: integer;
-    begin
-        startPage := BASE;
-        dataSize := 120;
-
-        offset := TWPO;
-        DataOps(2, startPage, dataSize, offset, buffer);
-        offset := WPO;
-        DataOps(1, startPage, dataSize, offset, buffer);
-        dataSize := 8;
-end;
+*)
 
 procedure SaveMove;
     var 
         offset, offset1, storeBase, storePtr: integer;
     begin
+(*
      {retrieve the storePtr and storeBase variables}
         startPage := BASE2;
         dataSize := 2;
@@ -405,7 +386,7 @@ procedure SaveMove;
         DataOps(1, storeBase, dataSize, offset, buffer);
         offset := offset + 120;
         dataSize := 2;
-(*        
+
         DataOps(1, storeBase, dataSize, offset, CastleFlag);
         offset := offset + 2;
         DataOps(1, storeBase, dataSize, offset, bCastleFlag);
@@ -418,7 +399,7 @@ procedure SaveMove;
         offset := offset + 2;
         DataOps(1, storeBase, dataSize, offset, bRookRFlag);
         offset := offset + 2;
-*)        
+
         DataOps(1, storeBase, dataSize, offset, cWarning);
         offset := offset + 2;
         DataOps(1, storeBase, dataSize, offset, gameMove);
@@ -434,6 +415,7 @@ procedure SaveMove;
 
         startPage := BASE;
         dataSize := 8;
+*)        
     end;
 
 procedure initGame;
@@ -452,33 +434,9 @@ procedure initGame;
         moveStore.id := 99;
         moveStore.startSq := 99;
         moveStore.endSq := 99;
-        wMobility := 0;
-        bMobility := 0;
         gamePointer := 0;
 
              {initialize the game storage pointers}
-        startPage := BASE2;
-        dataSize := 2;
-
-             {storePtr}
-        offset := 4000;
-        offset1 := 0;
-        DataOps(1, startPage, dataSize, offset, offset1);
-//        writeln ('STARTING');
-
-             {storeBase}
-        offset := 4002;
-        offset1 := BASE4;
-        DataOps(1, startPage, dataSize, offset, offset1);
-        startPage := BASE;
-
-             {initialize the game record}
-        sPage := BASE2;
-        dataSize := 6;
-        offset := PLAYLIST;
-        DataOps(1, sPage, dataSize, offset, moveStore);
-        dataSize := 8;
-
         write(chr(7), 'enter ply: [1-6] ');
         repeat
             ans := GetKeyInt;
@@ -512,6 +470,8 @@ procedure initGame;
                 EnterPos (mainBoard);;
                 gameSide := turn;
                {look for check condition}
+               
+(* TODO: check cehck               
                 lastMove.id := 0;
                 lastMove.startSq := 0;
                 lastMove.endSq := 0;
@@ -527,6 +487,7 @@ procedure initGame;
                     BitAnd(bit1, bit3, bit2);
                 if not(IsClear(bit2)) then
                     cWarning := 1;
+*)                    
             end
         else
             begin
@@ -548,6 +509,8 @@ procedure initGame;
             
     end;
 
+
+(*
 
 procedure check3Rep;
     begin
@@ -587,13 +550,88 @@ procedure check3Rep;
                     end;
             end;
     end;
+    
+*)    
+    
+    
+function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: moverec): boolean;
+    var
+        moveArray: bitarray;
+        bits, kingMovement, opponentMoves: bitboard;
+        kingPos, epCapDummy: integer;
+        dummyMove, move: moverec;
+        tempBoard: TBoardRecord;
+    begin
+        isOpponentMate := false;
+        
+        {get opposite king position}
+        if gameSide = 0 then
+            BitPos (board.black.kingBitboard, moveArray)
+        else
+            BitPos (board.white.kingBitboard, moveArray);
+        kingPos := moveArray [1];
+
+        {obtain list of all possible opposite king movement}
+        fillChar (dummyMove, sizeof (dummyMove), 0);
+        kingMovement := Trim (1 - gameSide, King, kingPos, playMove, board, epCapDummy);
+        BitPos (kingMovement, moveArray);
+        
+        move.id := King;
+        move.startSq := kingPos;
+        for i := 1 to moveArray [0] do
+            begin
+                tempBoard := board;
+                move.endSq := moveArray [i];
+                enterMoveSimple (1 - gameSide, tempBoard, move);
+                if not isKingChecked (1 - gameSide, tempBoard) then
+                    exit
+            end;
+
+        {remove opposite king from all opposite boards}
+        tempBoard := board;
+        if gameSide = 0 then
+            begin
+                clearBit (tempBoard.black.kingBitboard, kingPos);
+                clearBit (tempBoard.blackPieces, kingPos);
+            end
+        else
+            begin
+                clearBit (tempBoard.white.kingBitboard, kingPos);
+                clearBit (tempBoard.whitePieces, kingPos);
+            end;
+        clearBit (tempBoard.allPieces, kingPos);
+        
+        {check if attacking piece can be captured}
+        opponentMoves := combineTrimSide (gameSide = 0, dummyMove, tempBoard);
+        if getBit (opponentMoves, playMove.endSq) <> 0 then
+            exit;
+        
+        {generate trim board for attacking piece}
+        bits := Trim (gameSide, playMove.id, playMove.endSq, dummyMove, tempBoard, epCapDummy); 
+
+        {check if any opposite piece movement blocks it}
+        BitAnd (bits, opponentMoves, bits);
+
+        {update bitboards with opposite combined movement trim board}
+        // TODO: could we use opponentMoves directly to block all movevemnt?
+        BitOr (bits, tempBoard.allPieces, tempBoard.allPieces);
+        if gameside = 0 then
+            BitOr (bits, tempBoard.blackPieces, tempBoard.blackPieces)
+        else
+            BitOr (bits, tempBoard.whitePieces, tempBoard.whitePieces);
+
+        {regenerate Trim board for attacking piece}
+        bits := Trim (gameSide, playMove.id, playMove.endSq, dummyMove, tempBoard, epCapDummy);
+
+        {check if overalp with opposite king}
+        if getBit (bits, kingPos) = 0 then
+            exit;
+            
+        isOpponentMate := true
+end;                        
+    
 
 procedure chainMain;
-    label 
-        l_0, l_1, l_2;
-        // TODO: numeric labels in 9900 generator do not work
-    var 
-        epCapDummy: integer;
     begin
         initGame;
 
@@ -613,20 +651,8 @@ procedure chainMain;
         ans := GetKeyInt;
 
         repeat
-//            wLAFlag := 0;
-//            wRAFlag := 0;
-//            bLAFlag := 0;
-//            bRAFlag := 0;
-            cFlag := 0;
-
-      {transfer current board state to temp boards}
-            dataSize := 120;
-            offset := WPO;
-            DataOps(2, startPage, dataSize, offset, buffer);
-            offset := TWPO;
-            DataOps(1, startPage, dataSize, offset, buffer);
-
-            dataSize := 8;
+            {transfer current board state to temp boards}
+            tempBoard := mainBoard;
             moveNumLo := 0;
             moveNumHi := 0;
 
@@ -636,8 +662,6 @@ procedure chainMain;
 
             humanFlag := FALSE;
 
-            i := 0;
-
             if humanSide = gameSide then
                 begin
                     humanFlag := TRUE;
@@ -646,19 +670,14 @@ procedure chainMain;
 // TODO: move to VDP                    SaveMove;
 
                     playerMove(playMove, lastMove, gameSide);
-                    if humanSide <> gameSide then
-                        i := 1;
+//                    if humanSide <> gameSide then
+//				TODO: handle side change
                     if pieceCount = -1 then
-                        exit;
-                    if i = 1 then
-                        goto l_0;
-
-
-                    l_0: 
+                        exit
                 end
             else
                 begin
-        {opening move selection}
+                    {opening move selection}
                     if gameMove = 1 then
                         begin
                             moveScore := 0;
@@ -747,11 +766,13 @@ procedure chainMain;
                         begin
                             gotoxy(20, 7);
                             write('thinking...');
-                            MoveGen(lastMove, playMove, moveScore, aVal, bVal, cFlag, gamePly);
+                            MoveGen(lastMove, playMove, moveScore, aVal, bVal, 0, gamePly);
                         end;
                 end;
 
-    {update move list}
+            {update move list}
+(*            
+        TODO: save move history
             sPage := BASE2;
             dataSize := 8;
             offset := PLAYLIST + gamePointer;
@@ -760,19 +781,13 @@ procedure chainMain;
             moveStore.id := 99;
             offset := offset + 8;
             DataOps(1, sPage, dataSize, offset, moveStore);
-
-
-            if i = 1 then
-                goto l_2;
+*)            
 
             lastMove := playMove;
 
-            if humanFlag then
-                sPage := 1
-            else
-                sPage := 0;
 
-            UpdateMove(playMove);
+//            UpdateMove(playMove);
+            enterMoveSimple (gameSide, mainBoard, playMove);
 
             if (castleFlags and whiteCastleFlag = 0) and (gameSide = 0) then
                 begin
@@ -801,240 +816,36 @@ procedure chainMain;
                         end;
                 end;
 
-      {convert move to coordinates}
+            {convert move to coordinates}
             BoardDisplay;
-            CombineTrim(bit3, bit5, lastMove, mainBoard);
 
-      {look for check condition}
-            checkFlag := FALSE;
-            cWarning := 0;
-            if gameSide = 0 then
-                offset := BKO
-            else
-                offset := WKO;
-            DataOps(2, startPage, dataSize, offset, bit1);
-            if gameSide = 0 then
-                BitAnd(bit1, bit3, bit2)
-            else
-                BitAnd(bit1, bit5, bit2);
-            if not(IsClear(bit2)) then
+            {look for check condition}
+            checkFlag := isKingChecked (1 - gameSide, mainBoard);
+            if checkFlag then
                 begin
                     gotoxy(20, 1);
                     write(chr(7), chr(7), 'check!');
-                    checkFlag := TRUE;
                     cWarning := 1;
                 end;
 
-     {look for checkmate or stalemate condition}
-            cmFlag := FALSE;
-            if checkFlag then
+            {look for checkmate or stalemate condition}
+            if checkFlag and isOpponentMate (gameSide, mainBoard, playMove) then
                 begin
-                    SaveBoards;
-                    if gameSide = 0 then
-                        begin
-                            turn := 1;
-                            offset := BKO;
-                            offset1 := WPIECES;
-                            sideOffset := BPIECES;
-                        end
-                    else
-                        begin
-                            turn := 0;
-                            offset := WKO;
-                            offset1 := BPIECES;
-                            sideOffset := WPIECES;
-                        end;
-
-        {get opposite king position}
-                    DataOps(2, startPage, dataSize, offset, bit1);
-                    BitPos(bit1, moveArray);
-
-        {obtain list of all possible opposite king movement}
-                    bit2 := Trim(turn, 40, moveArray[1], lastMove, mainBoard, epCapDummy);
-
-                    if not(IsCLear(bit2)) then
-                        begin
-                            BitPos(bit2, moveArray);
-                            for i := 1 to moveArray[0] do
-                                begin
-            {get opposite king's current move}
-                                    offset := PIECELOC + (moveArray[i] * 8);
-                                    DataOps(2, startPage, dataSize, offset, bit2);
-
-                                    if gameSide = 0 then
-                                        offset := BKO
-                                    else
-                                        offset := WKO;
-
-            {remove original opposite king from king board}
-                                    DataOps(2, startPage, dataSize, offset, bit3);
-                                    BitNot(bit3, bit3);
-
-            {update opposite king board with king move}
-                                    DataOps(1, startPage, dataSize, offset, bit2);
-
-            {remove original king position from APIECES}
-                                    offset := APIECES;
-                                    DataOps(2, startPage, dataSize, offset, bit1);
-                                    BitAnd(bit3, bit1, bit1);
-
-            {add opposite king movement to APIECES}
-                                    BitOr(bit2, bit1, bit1);
-                                    DataOps(1, startPage, dataSize, offset, bit1);
-
-            {remove own pieces captured by opposite king}
-                                    BitNot(bit2, bit2);
-                                    DataOps(2, startPage, dataSize, offset1, bit1);
-                                    BitAnd(bit2, bit1, bit1);
-                                    DataOps(1, startPage, dataSize, offset1, bit1);
-                                    j := 0;
-                                    if gameSide = 0 then
-                                        offset := WPO
-                                    else
-                                        offset := BPO;
-
-                                    repeat
-                                        offset2 := offset + j;
-                                        DataOps(2, startPage, dataSize, offset2, bit1);
-                                        BitAnd(bit2, bit1, bit1);
-                                        DataOps(1, startPage, dataSize, offset2, bit1);
-                                        j := j + 8;
-                                    until j > 32;
-
-            {remove original king position from opposite pieces board}
-                                    DataOps(2, startPage, dataSize, sideOffset, bit1);
-                                    BitAnd(bit3, bit1, bit1);
-
-            {add opposite king move to opposite pieces board}
-                                    BitNot(bit2, bit2);
-
-                                    BitOr(bit2, bit1, bit1);
-                                    DataOps(1, startPage, dataSize, sideOffset, bit1);
-
-            {check if opposite king attacked by own side}
-                                    bit8 := bit2;
-
-                                    CombineTrim(bit3, bit5, lastMove, mainBoard);
-
-                                    if gameSide = 0 then
-                                        BitAnd(bit8, bit3, bit2)
-                                    else
-                                        BitAnd(bit8, bit5, bit2);
-
-                                    if IsClear(bit2) then
-             {if clear then no checkmate. cmFlag still FALSE at this point}
-                                        goto l_1;
-
-                                    GetBoards;
-                                end;
-                        end;
-
-        {get combined trim boards without the opposite king}
-                    if gameSide = 0 then
-                        offset := BKO
-                    else
-                        offset := WKO;
-
-        {remove opposite king from all opposite boards}
-                    DataOps(2, startPage, dataSize, offset, bit2);
-                    BitNot(bit2, bit2);
-                    ClearBitboard(bit1);
-                    DataOps(1, startPage, dataSize, offset, bit1);
-                    DataOps(2, startPage, dataSize, sideOffset, bit1);
-                    BitAnd(bit2, bit1, bit1);
-                    DataOps(1, startPage, dataSize, sideOffset, bit1);
-                    offset := APIECES;
-                    DataOps(2, startPage, dataSize, offset, bit1);
-                    BitAnd(bit2, bit1, bit1);
-                    DataOps(1, startPage, dataSize, offset, bit1);
-
-                    CombineTrim(bit3, bit5, lastMove, mainBoard);
-
-                    if gameSide = 0 then
-                        bit8 := bit5
-                    else
-                        bit8 := bit3;
-
-        {check if attacking piece can be captured}
-                    offset := PIECELOC + (playMove.endSq * 8);
-                    DataOps(2, startPage, dataSize, offset, bit3);
-                    BitAnd(bit8, bit3, bit3);
-                    if not(IsClear(bit3)) then
-                        goto l_1;
-
-        {generate trim board for attacking piece}
-                    if gameSide = 0 then
-                        begin
-                            sideOffset := WPIECES;
-                            turn := 0;
-                        end
-                    else
-                        begin
-                            sideOffset := BPIECES;
-                            turn := 1;
-                        end;
-                    bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, mainBoard, epCapDummy);
-
-        {check if any opposite piece movement blocks it}
-                    BitAnd(bit2, bit8, bit1);
-
-        {update bitboards with opposite combined trim board}
-                    offset := APIECES;
-                    DataOps(2, startPage, dataSize, offset, bit3);
-                    BitOr(bit1, bit3, bit2);
-                    DataOps(1, startPage, dataSize, offset, bit2);
-                    if gameSide = 0 then
-                        offset := BPIECES
-                    else
-                        offset := WPIECES;
-                    DataOps(2, startPage, dataSize, offset, bit3);
-                    BitOr(bit1, bit3, bit2);
-                    DataOps(1, startPage, dataSize, offset, bit2);
-
-        {regenerate Trim board for attacking piece}
-                    if gameSide = 0 then
-                        begin
-                            sideOffset := WPIECES;
-                            offset := BKO;
-                        end
-                    else
-                        begin
-                            sideOffset := BPIECES;
-                            offset := WKO;
-                        end;
-                    bit2 := Trim(turn, playMove.id, playMove.endSq, lastMove, mainBoard, epCapDummy);
-
-        {check if overalp with opposite king}
-                    GetBoards;
-                    DataOps(2, startPage, dataSize, offset, bit1);
-                    BitAnd(bit2, bit1, bit1);
-                    if not(IsCLear(bit1)) then
-                        cmFlag := TRUE;
-
-                    l_1: 
-                    if cmFlag then
-                        begin
-                            gotoxy(20, 1);
-                            write(chr(7), chr(7), 'checkmate!');
-                            ans := GetKeyInt;
-                            readln;
-                            Utility(i);
-                            exit;
-                        end
-                    else
-                        GetBoards;
-                end
-            else
+                    gotoxy(20, 1);
+                    write(chr(7), chr(7), 'checkmate!');
+                    ans := GetKeyInt;
+                    readln;
+                    Utility(i);
+                    exit;
+                end;
+            if abs(moveScore) = 20000 then
                 begin
-                    if abs(moveScore) = 20000 then
-                        begin
-                            gotoxy(20, 1);
-                            write(chr(7), chr(7), 'resign!');
-                            ans := GetKeyInt;
-                            readln;
-                            Utility(i);
-                            exit;
-                        end;
+                    gotoxy(20, 1);
+                    write(chr(7), chr(7), 'resign!');
+                    ans := GetKeyInt;
+                    readln;
+                    Utility(i);
+                    exit;
                 end;
 
             if humanFlag then
@@ -1059,15 +870,13 @@ procedure chainMain;
                     write('turn: white');
                 end;
 
-            check3Rep;
+//            check3Rep;
 
             gotoxy(10, 1);
             writeln('move: ', gameMove);
 
             MoveCoord(moveScore, playMove.startSq, playMove.endSq, humanFlag);
-            ans := GetKeyInt;
 //            ply := gamePly;
-            l_2: 
         until FALSE;
     end;
 

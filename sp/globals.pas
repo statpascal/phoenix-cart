@@ -4,11 +4,11 @@ interface
 
 uses samsutil, vdp, bitops;
 
-const 
 //    BASE = 20;
 //    BASE1 = 21;
 //    BASE2 = 22;
 
+(*
     BASE = $2000;
     BASE1 = $3000;
     BASE2 = $A000;
@@ -105,8 +105,8 @@ const
     SWPIECES = 880;
     SBPIECES = 888;
     PLAYLIST = 896;
- (*OPENLIB = 0; {BASE 3}*)
     GAMESTORE = 0; {BASE 4}
+*)
     
 const
     Pawn = 0;
@@ -115,6 +115,7 @@ const
     Bishop = 24;
     Queen = 32;
     King = 40;
+    InvalidPiece = 99;
 
 type 
     listPointer = ^moverec;
@@ -150,20 +151,15 @@ const
     blackRightCastleRight = 8;
     
 var
-    mainBoard: TBoardRecord absolute $2000;
-    tempBoard: TBoardRecord absolute $2f6e;
+    mainBoard, tempBoard: TBoardRecord;
     
     castleFlags: integer;
 
 var 
-    startPage, sPage, dataSize, turn, gameSide, gamePointer: integer;
-    pieceCount, (* wCastleFlag, bCastleFlag, *) cWarning: integer;
-    gamePly, wMobility, bMobility, gameMove, humanSide: integer;
-//    wRAFlag, wLAFlag, bRAFlag, bLAFlag: integer;
-//    wRookLFlag, wRookRFlag, bRookLFlag, bRookRFlag: integer;
+    turn, gameSide, gamePointer: integer;
+    pieceCount, cWarning: integer;
+    gamePly, gameMove, humanSide: integer;
     moveNumHi, moveNumLo: integer;
-    bit1, bit2, bit3, bit4, bit5, bit6, bit7, bitRes: bitboard;
-    buffer: array[0..59] of integer;
     
     doLogging: boolean;
     logFile: text;
@@ -176,12 +172,124 @@ function IsClear (var b: bitboard): boolean;
 function GetKeyInt: integer;
 
 function checkCastleRights (var board: TBoardRecord; castleFlags, turn: integer): integer;
+function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
+
+procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: moverec);
+procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: moverec);
+
+procedure soundBell;
 
 implementation
 
 
 uses trimprocs;
 
+procedure soundBell;
+    begin
+        // TODO
+    end;
+
+function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
+    var
+        dummyMove: moverec;
+        bit1, bit3, bit5: bitboard;
+    begin
+        {ignore en passant - cannot affect king}
+        fillchar (dummyMove, sizeof (dummyMove), 0);
+        CombineTrim(bit3, bit5, dummyMove, board);
+        
+        {check if own king attacked by opposite trim board}
+        if turn = 0 then
+            bit1 := board.white.kingBitboard
+        else
+            bit1 := board.black.kingBitboard;
+        
+        if turn = 0 then
+            BitAnd(bit1, bit5, bit1)
+        else
+            BitAnd(bit1, bit3, bit1);
+        isKingChecked := not isClear (bit1)
+    end;
+    
+
+
+procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: moverec);
+        
+    procedure updateBitboards (var own, opponent: TSideRecord; var ownPieces, opponentPieces: bitboard; id, startSq, endSq: integer);
+        var
+            epSquare: integer;
+            i, j: integer;
+        begin
+            {erase piece at starting position}
+            clearBit (board.allPieces, startSq);
+            clearBit (ownPieces, startSq);
+            clearBit (own.bitboards [id shr 3], startSq);
+
+            {remove attacked piece from opponent's bitboards}
+            if attackFlag = 1 then
+                begin
+                    j := 0;
+                    repeat
+                        if getBit (opponent.bitboards [j shr 3], endSq) <> 0 then
+                            begin
+                                foundFlag := true;
+                                attackId := id;
+                                capId := j;
+                                clearBit (opponent.bitboards [j shr 3], endSq);
+                                clearBit (opponentPieces, endSq)
+                            end;
+                        j := j + 8;
+                    until (foundFlag) or (j > 40);
+
+                    {en passant capture handling}
+                    if not foundFlag and (id = 0) and (abs (startSq - endSq) in [7, 9]) then
+                        begin
+                            if turn = 0 then
+                                epSquare := endSq - 8
+                            else
+                                epSquare := endSq + 8;
+                            clearBit (opponent.pawnBitboard, epSquare);
+                            clearBit (opponentPieces, epSquare);
+                            clearBit (board.allPieces, epSquare);
+                        end
+                end;
+
+            {place piece at end position}
+            setBit (board.allPieces, endSq);
+            setBit (ownPieces, endSq);
+            if (id = 0) and (endSq in [0..7, 56..63]) then
+                setBit (own.queenBitboard, endSq)
+            else
+                setBit (own.bitboards [id shr 3], endSq)
+        end;
+    
+    begin
+        if turn = 0 then
+            begin
+                updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces, move.id, move.startsq, move.endsq);
+                if (move.id = King) and (move.startSq = 4) and (move.endSq = 6) then
+                    updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces, Rook, 7, 5);
+                if (move.id = King) and (move.startSq = 4) and (move.endSq = 2) then
+                    updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces, Rook, 0, 3)
+            end
+        else
+            begin
+                updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces, move.id, move.startsq, move.endsq);
+                if (move.id = King) and (move.startSq = 60) and (move.endSq = 58) then
+                    updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces, Rook, 56, 59);
+                if (move.id = King) and (move.startSq = 60) and (move.endSq = 62) then
+                    updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces, Rook, 63, 61)
+            end
+    end;    
+    
+procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: moverec);
+    var
+        dummyId1, dummyId2: integer;
+        dummyFlg: boolean;
+    begin
+        enterMove (turn, 1, dummyId1, dummyId2, dummyFlg, board, move)
+    end;
+    
 function checkCastleRights (var board: TBoardRecord; castleFlags, turn: integer): integer;
     var
         bits: bitboard;

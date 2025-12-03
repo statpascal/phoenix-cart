@@ -21,6 +21,7 @@ procedure LShift (var b1, br: bitboard; n: integer);
 procedure clearBit (var b: bitboard; n: integer);
 procedure setBit (var b: bitboard; n: integer);
 function getBit (var b: bitboard; n: integer): integer;
+procedure setBit (var b: bitboard; pos, val: integer);
 
 implementation
 
@@ -464,6 +465,14 @@ function getBit (var b: bitboard; n: integer): integer; assembler;
         inc  *r13	// return 1
     getbit_1:        
 end;
+
+procedure setBit (var b: bitboard; pos, val: integer);
+    begin
+        if val = 0 then
+            clearBit (b, pos)
+        else
+            setBit (b, pos)
+    end;
 
 (*
 

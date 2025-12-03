@@ -15,9 +15,6 @@ uses trimprocs;
 
 procedure PrintGame;
 
-label 
-    l_1;
-
 var 
     pturn, offset : integer;
     pcname : array [0..40] of char;
@@ -26,6 +23,7 @@ var
     rdir, iLocString, eLocString, gDate, pName : string;
 
 begin
+(*
     rdir := 'PIO';
     pcname[0] := 'P';
     pcname[8] := 'R';
@@ -104,7 +102,7 @@ begin
     close (output);
     assign (output, '');
     rewrite (output);
-    
+*)    
     gotoxy(20, 12);
     write('               ');
 end;
@@ -136,306 +134,233 @@ end; {NewBoard}
 
 procedure BoardDisplay;
 
-var 
-    i, j, x, y, side, offset, offset1, pLoc : integer;
-    posArray : bitarray;
-
-begin
-    NewBoard;
-    startPage := BASE;
-    dataSize := 8;
-    for side := 0 to 1 do
+    procedure displaySide (side: integer; var sideBoard: TSideRecord);
+        var 
+            piece, i, pLoc, x, y: integer;
+            posArray : bitarray;
         begin
-            if side = 0 then
-                offset := WPO
-            else
-                offset := BPO;
-
-            j := 0;
-            repeat
-                offset1 := offset + ((j div 8) * 8);
-                DataOps(2, startPage, dataSize, offset1, bit1);
-                if not(IsClear(bit1)) then
-                    begin
-                        BitPos(bit1, posArray);
-                        for i := 1 to posArray[0] do
-                            begin
-                                pLoc := posArray[i];
-                                y := 11 - (pLoc div 8);
-                                x := ((pLoc mod 8) * 2) + 2;
-                                gotoxy(x, y);
-                                case j of 
-                                    0 : write(chr(80 + (side * 32)));
-                                    8 : write(chr(82 + (side * 32)));
-                                    16: write(chr(78 + (side * 32)));
-                                    24: write(chr(66 + (side * 32)));
-                                    32: write(chr(81 + (side * 32)));
-                                    40: write(chr(75 + (side * 32)));
-                                end;
-                            end;
-                    end;
-                j := j + 8;
-            until j > 40;
+            for piece := 0 to 5 do
+                begin
+                    BitPos (sideBoard.bitboards [piece], posArray);
+                    for i := 1 to posArray [0] do
+                        begin
+                            pLoc := posArray[i];
+                            y := 11 - (pLoc div 8);
+                            x := ((pLoc mod 8) * 2) + 2;
+                            gotoxy(x, y);
+                            case piece of 
+                                0: write(chr(80 + (side * 32)));
+                                1: write(chr(82 + (side * 32)));
+                                2: write(chr(78 + (side * 32)));
+                                3: write(chr(66 + (side * 32)));
+                                4: write(chr(81 + (side * 32)));
+                                5: write(chr(75 + (side * 32)));
+                            end
+                        end
+                end
         end;
-    gotoxy(0, 14);
-end; {BoardDisplay}
+            
+    begin
+        NewBoard;
+        displaySide (0, mainBoard.white);
+        displaySide (1, mainBoard.black);
+        gotoxy(0, 14);
+    end;
+
 
 procedure ClearPrompts;
-
-var 
-    y : integer;
-
-begin
-    for y := 14 to 20 do
-        begin
-            gotoxy(0, y);
-            write('                                    ');
-        end;
-    gotoxy(0, 14);
-end; {ClearPrompts}
+    var 
+        y : integer;
+    begin
+        for y := 14 to 20 do
+            begin
+                gotoxy(0, y);
+                write('                                    ');
+            end;
+        gotoxy(0, 14);
+    end; 
 
 procedure EnterPos (var board: TBoardRecord);
+    var 
+        x, y, orgX, orgY, row, column, sideKey, pieceKey, offset : integer;
+        ans, pLoc : integer;
+        pname : string;
+        pieceType, bitval, side: integer;
 
-label 
-    l_1;
+    begin
+        NewBoard;
+        orgX := 2;
+        orgY := 11;
 
-var 
-    x, y, orgX, orgY, row, column, sideKey, pieceKey, offset : integer;
-    offset1, offset2, ans, pLoc : integer;
-    pname : string;
+        fillChar (board, sizeof (board), 0);
 
-begin
-    NewBoard;
-    startPage := BASE;
-    dataSize := 8;
-    orgX := 2;
-    orgY := 11;
-
-    offset := WPO;
-    repeat
-        ClearBitboard(bit1);
-        Dataops(1, startPage, dataSize, offset, bit1);
-        offset := offset + 8;
-    until offset > 40;
-
-    offset := BPO;
-    repeat
-        ClearBitboard(bit1);
-        DataOps(1, startPage, dataSize, offset, bit1);
-        offset := offset + 8;
-    until offset > (BPO + 40);
-
-    offset := WPIECES;
-    ClearBitboard(bit1);
-    DataOps(1, startPage, dataSize, offset, bit1);
-    offset := BPIECES;
-    ClearBitboard(bit1);
-    DataOps(1, startPage, dataSize, offset, bit1);
-    offset := APIECES;
-    ClearBitboard(bit1);
-    DataOps(1, startPage, dataSize, offset, bit1);
-
-    gotoxy(0, 14);
-    repeat
-        writeln(chr(7), 'select side: [w]hite/[b]black');
-        write('[q] to exit  ');
+        gotoxy(0, 14);
         repeat
-            sideKey := GetKeyInt;
-        until sideKey in[87, 66, 81];
-        if sideKey <> 81 then
-            begin
-                if sideKey = 87 then
-                    writeln('*** white selected ***')
-                else
-                    writeln('*** black selected ***');
-                writeln(chr(7), 'select piece: P / R / N / B / Q / K');
-                repeat
-                    pieceKey := GetKeyInt;
-                until pieceKey in[66, 75, 78, 80, 81, 82, 88];
-                case pieceKey of 
-                    66: 
-                    begin
-                        if sideKey = 87 then
-                            offset := WBO
-                        else
-                            offset := BBO;
-                        pname := 'bishop';
+            writeln(chr(7), 'select side: [w]hite/[b]black');
+            write('[q] to exit  ');
+            repeat
+                sideKey := GetKeyInt;
+            until sideKey in[87, 66, 81];
+            if sideKey <> 81 then
+                begin
+                    if sideKey = 87 then
+                        writeln('*** white selected ***')
+                    else
+                        writeln('*** black selected ***');
+                    side := ord (sideKey <> 87);
+                        
+                    writeln(chr(7), 'select piece: P / R / N / B / Q / K');
+                    repeat
+                        pieceKey := GetKeyInt;
+                    until pieceKey in[66, 75, 78, 80, 81, 82, 88];
+                    case pieceKey of 
+                        66: 
+                        begin
+                            pieceType := Bishop;
+                            pname := 'bishop';
+                        end;
+                        75: 
+                        begin
+                            pieceType := King;
+                            pname := 'king';
+                        end;
+                        78: 
+                        begin
+                            pieceType := Knight;
+                            pname := 'knight';
+                        end;
+                        80: 
+                        begin
+                            pieceType := Pawn;
+                            pname := 'pawn';
+                        end;
+                        81: 
+                        begin
+                            pieceType := Queen;
+                            pname := 'queen';
+                        end;
+                        82: 
+                        begin
+                            pieceType := Rook;
+                            pname := 'rook';
+                        end;
                     end;
-                    75: 
-                    begin
-                        if sideKey = 87 then
-                            offset := WKO
-                        else
-                            offset := BKO;
-                        pname := 'king';
-                    end;
-                    78: 
-                    begin
-                        if sideKey = 87 then
-                            offset := WNO
-                        else
-                            offset := BNO;
-                        pname := 'knight';
-                    end;
-                    80: 
-                    begin
-                        if sideKey = 87 then
-                            offset := WPO
-                        else
-                            offset := BPO;
-                        pname := 'pawn';
-                    end;
-                    81: 
-                    begin
-                        if sideKey = 87 then
-                            offset := WQO
-                        else
-                            offset := BQO;
-                        pname := 'queen';
-                    end;
-                    82: 
-                    begin
-                        if sideKey = 87 then
-                            offset := WRO
-                        else
-                            offset := BRO;
-                        pname := 'rook';
-                    end;
+                    writeln('*** ', pname, ' selected ***');
+                    writeln(chr(7), 'enter board square [column|row]');
+                    repeat
+                        gotoxy(0, 19);
+                        write('                       ');
+                        gotoxy(0, 20);
+                        write('                                    ');
+                        gotoxy(0, 19);
+                        repeat
+                            column := GetKeyInt
+                        until column in[65..72];
+                        write(chr(column));
+                        repeat
+                            row := GetKeyInt
+                        until row in[49..56];
+                        writeln(chr(row));
+                        write('[c]onfirm [r]edo [d]elete piece');
+                        repeat
+                            ans := GetKeyInt
+                        until ans in[67, 68, 82]
+                    until ans <> 82;
+                    pLoc := ((row - 49) * 8) + (column - 65);
+                    x := ((column - 65) * 2) + orgX;
+                    y := orgY - (row - 49);
+                    gotoxy(x, y);
+                    if ans = 67 then
+                        begin
+                            if side = 0 then
+                                write(chr(pieceKey))
+                            else
+                                write(chr(pieceKey + 32));
+                        end
+                    else
+                        begin
+                            if odd(row) then
+                                begin
+                                    if odd(column) then
+                                        write('=')
+                                    else
+                                        write(' ');
+                                end
+                            else
+                                begin
+                                    if odd(column) then
+                                        write(' ')
+                                    else
+                                        write('=');
+                                end;
+                        end;
+                        
+                    bitval := ord (ans = 67);
+                    if side = 0 then
+                        begin
+                            setBit (board.white.bitboards [pieceType shr 3], pLoc, bitval);
+                            setBit (board.whitePieces, pLoc, bitval)
+                        end
+                    else
+                        begin
+                            setBit (board.black.bitboards [pieceType shr 3], pLoc, bitval);
+                            setBit (board.blackPieces, pLoc, bitval)
+                        end;
+                    setBit (board.allPieces, pLoc, bitval);
+                    
+                    ClearPrompts;
                 end;
-                writeln('*** ', pname, ' selected ***');
-                writeln(chr(7), 'enter board square [column|row]');
-                l_1: 
-                gotoxy(0, 19);
-                write('                       ');
-                gotoxy(0, 20);
-                write('                                    ');
-                gotoxy(0, 19);
-                repeat
-                    column := GetKeyInt;
-                until column in[65..72];
-                write(chr(column));
-                repeat
-                    row := GetKeyInt;
-                until row in[49..56];
-                writeln(chr(row));
-                write('[c]onfirm [r]edo [d]elete piece');
-                repeat
-                    ans := GetKeyInt;
-                until ans in[67, 68, 82];
-                if ans = 82 then
-                    goto l_1;
-                pLoc := ((row - 49) * 8) + (column - 65);
-                x := ((column - 65) * 2) + orgX;
-                y := orgY - (row - 49);
-                gotoxy(x, y);
-                if ans = 67 then
-                    begin
-                        if sideKey = 87 then
-                            write(chr(pieceKey))
-                        else
-                            write(chr(pieceKey + 32));
-                    end
-                else
-                    begin
-                        if odd(row) then
-                            begin
-                                if odd(column) then
-                                    write('=')
-                                else
-                                    write(' ');
-                            end
-                        else
-                            begin
-                                if odd(column) then
-                                    write(' ')
-                                else
-                                    write('=');
-                            end;
-                    end;
-                offset1 := PIECELOC + (pLoc * 8);
-                DataOps(2, startPage, dataSize, offset, bit1);
-                DataOps(2, startPage, dataSize, offset1, bit2);
-                offset1 := APIECES;
-                if sideKey = 87 then
-                    offset2 := WPIECES
-                else
-                    offset2 := BPIECES;
-                if ans = 68 then
-                    begin
-                        BitNot(bit2, bit2);
-                        BitAnd(bit1, bit2, bit1);
-                        DataOps(1, startPage, dataSize, offset, bit1);
-                        DataOps(2, startPage, dataSize, offset1, bit1);
-                        BitAnd(bit1, bit2, bit1);
-                        DataOps(1, startPage, dataSize, offset1, bit1);
-                        DataOps(2, startPage, dataSize, offset2, bit1);
-                        BitAnd(bit1, bit2, bit1);
-                        DataOps(1, startPage, dataSize, offset2, bit1);
-                    end
-                else
-                    begin
-                        BitOr(bit1, bit2, bit1);
-                        DataOps(1, startPage, dataSize, offset, bit1);
-                        DataOps(2, startPage, dataSize, offset1, bit1);
-                        BitOr(bit1, bit2, bit1);
-                        DataOps(1, startPage, dataSize, offset1, bit1);
-                        DataOps(2, startPage, dataSize, offset2, bit1);
-                        BitOr(bit1, bit2, bit1);
-                        DataOps(1, startPage, dataSize, offset2, bit1);
-                    end;
-                ClearPrompts;
+        until sideKey = 81;
+
+        castleFlags := 0;
+
+        writeln;
+        writeln(chr(7), 'allow white castling? (y/n)');
+        repeat
+            ans := GetKeyInt;
+        until ans in[78, 89];
+        if ans = 78 then
+            castleFlags := castleFlags or whiteCastleFlag
+        else
+            begin
+                if getBit (board.white.rookBitboard, 0) = 0 then
+                    castleFlags := castleFlags or whiteRookLeftFlag;
+                if getBit (board.white.rookBitboard, 7) = 0 then
+                    castleFlags := castleFlags or whiteRookRightFlag
             end;
-    until sideKey = 81;
 
-    castleFlags := 0;
+        writeln(chr(7), 'allow black castling? (y/n)');
+        repeat
+            ans := GetKeyInt;
+        until ans in[78, 89];
+        if ans = 78 then
+            castleFlags := castleFlags or blackCastleFlag
+        else
+            begin
+                if getBit (board.black.rookBitboard, 56) = 0 then
+                    castleFlags := castleFlags or blackRookLeftFlag;
+                if getBit (board.black.rookBitboard, 63) = 0 then
+                    castleFlags := castleFlags or blackRookRightFlag
+            end;
 
-    writeln;
-    writeln(chr(7), 'allow white castling? (y/n)');
-    repeat
-        ans := GetKeyInt;
-    until ans in[78, 89];
-    if ans = 78 then
-        castleFlags := castleFlags or whiteCastleFlag
-    else
-        begin
-            if getBit (board.white.rookBitboard, 0) = 0 then
-                castleFlags := castleFlags or whiteRookLeftFlag;
-            if getBit (board.white.rookBitboard, 7) = 0 then
-                castleFlags := castleFlags or whiteRookRightFlag
-        end;
+        writeln(chr(7), 'side to start? [w]hite/[b]lack');
+        repeat
+            ans := GetKeyInt;
+        until ans in[87, 66];
+        if ans = 87 then
+            begin
+                writeln('*** white to move ***');
+                turn := 0;
+            end
+        else
+            begin
+                writeln('*** black to move ***');
+                turn := 1;
+            end;
 
-    writeln(chr(7), 'allow black castling? (y/n)');
-    repeat
-        ans := GetKeyInt;
-    until ans in[78, 89];
-    if ans = 78 then
-        castleFlags := castleFlags or blackCastleFlag
-    else
-        begin
-            if getBit (board.black.rookBitboard, 56) = 0 then
-                castleFlags := castleFlags or blackRookLeftFlag;
-            if getBit (board.black.rookBitboard, 63) = 0 then
-                castleFlags := castleFlags or blackRookRightFlag
-        end;
-
-    writeln(chr(7), 'side to start? [w]hite/[b]lack');
-    repeat
-        ans := GetKeyInt;
-    until ans in[87, 66];
-    if ans = 87 then
-        begin
-            writeln('*** white to move ***');
-            turn := 0;
-        end
-    else
-        begin
-            writeln('*** black to move ***');
-            turn := 1;
-        end;
-
-    write('enter move number: ');
-    readln(gameMove);
-end; {EnterPos}
+        write('enter move number: ');
+        readln(gameMove)
+    end;
 
 var
     rs232: text;

@@ -11,6 +11,8 @@ function getMovementBitboard (bitboardType: TBitboardType; loc: integer): bitboa
 function getPieceLocationBitboard (loc: integer): bitboard;
 function getEnPassantBitboard (isBlack: boolean; col: integer): bitboard;
 
+function getInitPosition: TBoardRecord;
+
 type
     TPieceScoreType = (WhitePawnScore, BlackPawnScore, KnightScore, BishopScore, KingMidScore, KingEndScore);
 
@@ -61,6 +63,14 @@ function getPieceScoreValue (pieceScoreType: TPieceScoreType; loc: integer): int
     
     begin
         result := TPieceScoreData (addr (data_score)) [pieceScoreType, loc]
+    end;
+    
+function getInitPosition: TBoardRecord;
+
+    procedure data_init; external '../resources/initboard.dat';
+    
+    begin
+        result := TBoardRecord (addr (data_init))
     end;
     
 end.
