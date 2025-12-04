@@ -60,13 +60,9 @@ uses
     globals, move, trimprocs, ui, pmove, utility, resources;
 
 var 
-    turn, i, j, moveScore, offset, found, aVal, bVal, ans: integer;
-    tempPointer: integer;
-    humanFlag, checkFlag, promFlag, repFlag: boolean;
-    lastMove, playMove, moveStore, tempMove: moverec;
+    i, j, moveScore, aVal, bVal, ans: integer;
+    lastMove, playMove, moveStore: moverec;
 
-(*
-*)
 
 procedure SaveMove;
     begin
@@ -75,8 +71,7 @@ procedure SaveMove;
 procedure initGame (var mainBoard: TBoardRecord);
     begin
         // Randomize;	// TODO
-        turn := 0;
-        gameSide := turn;
+        gameSide := 0;
         gameMove := 1;
 
         lastMove.id := 99;
@@ -88,14 +83,12 @@ procedure initGame (var mainBoard: TBoardRecord);
         moveStore.endSq := 99;
         gamePointer := 0;
 
-             {initialize the game storage pointers}
         write(chr(7), 'enter ply: [1-6] ');
         repeat
             ans := GetKeyInt;
         until ans in[49..54];
         writeln(chr(ans));
         gamePly := ans - 48;
-//        gamePly := ply;
 
         writeln(chr(7), 'select side to play: [w]hite/[b]lack');
         repeat
@@ -119,8 +112,8 @@ procedure initGame (var mainBoard: TBoardRecord);
         until ans in[78, 89];
         if ans = 89 then
             begin
-                EnterPos (mainBoard, turn);
-                gameSide := turn;
+                EnterPos (mainBoard, gameside);
+//                gameSide := turn;	<->
                {look for check condition}
                
 (* TODO: check cehck               
@@ -142,10 +135,7 @@ procedure initGame (var mainBoard: TBoardRecord);
 *)                    
             end
         else
-            begin
-                turn := 0;
-                gameSide := turn;
-            end;
+            gameSide := 0;	// turn := gameside
 
         writeln;            
         write(chr(7), 'debug log to DSK0.phoenix.log (y/n)');
@@ -286,6 +276,7 @@ end;
 procedure chainMain;
 
     var mainBoard: TBoardRecord;
+        checkFlag, humanFlag: boolean;
 
     begin
         mainBoard := getInitPosition;
@@ -293,12 +284,6 @@ procedure chainMain;
 
      {start game}
         BoardDisplay (mainBoard);
-        gotoxy(10, 1);
-        writeln('move: ', gameMove);
-        if gameSide = 0 then
-            write('turn: white')
-        else
-            write('turn: black');
         if cWarning = 1 then
             begin
                 gotoxy(20, 1);
@@ -307,7 +292,14 @@ procedure chainMain;
         ans := GetKeyInt;
 
         repeat
-            {transfer current board state to temp boards}
+        
+            gotoxy(10, 1);
+            writeln('move: ', gameMove);
+            if gameSide = 0 then
+                write('turn: white')
+            else
+                write('turn: black');
+        
             moveNumLo := 0;
             moveNumHi := 0;
 
@@ -421,7 +413,7 @@ procedure chainMain;
                         begin
                             gotoxy(20, 7);
                             write('thinking...');
-                            MoveGen (mainBoard, lastMove, playMove, moveScore, aVal, bVal, 0, gamePly, turn);
+                            MoveGen (mainBoard, lastMove, playMove, moveScore, aVal, bVal, 0, gamePly, gameSide);
                         end;
                 end;
 
@@ -439,9 +431,6 @@ procedure chainMain;
 *)            
 
             lastMove := playMove;
-
-
-//            UpdateMove(playMove);
             enterMoveSimple (gameSide, mainBoard, playMove);
 
             {convert move to coordinates}
@@ -475,36 +464,13 @@ procedure chainMain;
                     Utility(i);
                     exit;
                 end;
-
-            if humanFlag then
-                begin
-                    gotoxy(20, 7);
-                    write('thinking...');
-                end;
-
-            if gameSide = 0 then
-                begin
-                    gameSide := 1;
-                    turn := 1;
-                    gotoxy(0, 2);
-                    write('turn: black');
-                end
-            else
-                begin
-                    gameSide := 0;
-                    turn := 0;
-                    gameMove := succ(gameMove);
-                    gotoxy(0, 2);
-                    write('turn: white');
-                end;
+                
+            inc (gameMove, gameSide);	// add 1 if black
+            gameSide := 1 - gameSide;
 
 //            check3Rep;
 
-            gotoxy(10, 1);
-            writeln('move: ', gameMove);
-
             MoveCoord(moveScore, playMove.startSq, playMove.endSq, humanFlag);
-//            ply := gamePly;
         until FALSE;
     end;
 

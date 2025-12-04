@@ -25,7 +25,7 @@ procedure setBit (var b: bitboard; pos, val: integer);
 
 implementation
 
-uses bitopsorig, globals;
+uses globals;
 
 const
     bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);

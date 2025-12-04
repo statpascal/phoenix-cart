@@ -47,7 +47,7 @@ type
     end;
     
 var
-    (* turn, *) gameSide, gamePointer: integer;
+    gameSide, gamePointer: integer;
     pieceCount, cWarning: integer;
     gamePly, gameMove, humanSide: integer;
     moveNumHi, moveNumLo: integer;
