@@ -4,8 +4,10 @@ interface
 
 uses globals;
 
-procedure MoveGen(lastMove: moverec; var finalMove: moverec;
-                  var score: integer; alpha, beta: integer; cMoveFlag, ply: integer);
+procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec;
+                   var score: integer; alpha, beta: integer; cMoveFlag, ply, turn: integer);
+
+procedure dumpBitBoard (var b: bitboard);
 
 implementation
 
@@ -34,7 +36,7 @@ procedure dumpBitBoard (var b: bitboard);
     end;
 
 
-procedure printBoard;
+procedure printBoard (var board: TBoardRecord);
     const 
         figure: array [0..1, 0..5] of char = (('^', 'R', 'N', 'B', 'Q', 'K'),
                                               ('v', 'r', 'n', 'b', 'q', 'k'));
@@ -52,9 +54,9 @@ procedure printBoard;
             for piece := 0 to 5 do
                 begin
                     if side = 0 then
-                        BitPos (mainBoard.white.bitboards [piece], pos)
+                        BitPos (board.white.bitboards [piece], pos)
                     else
-                        BitPos (mainBoard.black.bitboards [piece], pos);
+                        BitPos (board.black.bitboards [piece], pos);
                     for i := 1 to pos [0] do
                         s [pos [i] shr 3][succ (pos [i] and 7)] := figure [side, piece]
                 end;
@@ -124,7 +126,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
     procedure checkCastling (var board: TBoardRecord; var moveList: listPointer);
         var castleRights: integer;
         begin
-            castleRights := checkCastleRights (board, castleFlags, turn);
+            castleRights := checkCastleRights (board, turn);
             if castleRights = 0 then
                 exit;
             if turn = 0 then
@@ -162,7 +164,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                     {allows for stalemate detection}
                     if (j = 40) and (ply = gamePly) then
                         begin
-                            CombineTrim(bit3, bit5, lastMove, mainBoard);
+                            CombineTrim(bit3, bit5, lastMove, board);
                             
                             {check if king movement overlaps opposite pieces combined movement}
                             if turn = 0 then 
@@ -205,16 +207,15 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
         
     end;
     
-procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; cMoveFlag, ply: integer);
+procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; cMoveFlag, ply, turn: integer);
     var 
-        i, j, k, attackId, capId, bestScore: integer;
-        wCheckFlag, bCheckFlag, switchFlag: integer;
+        i, attackId, capId, bestScore: integer;
+        switchFlag: integer;
         attackFlag, evalScore: integer;
-        mateFlag: integer;
         foundFlag, pruneFlag, ignoreMove: boolean;
         bestMove, tempMove: moverec;
         moveList, attackList, tailIndex, attackIndex, currentMove: listPointer;
-        savedBoard: TBoardRecord;
+        workBoard: TBoardRecord;
         heap: pointer;
 
     begin
@@ -223,7 +224,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         if doLogging then begin
             if ply = gamePly then
                 begin
-                    printBoard;
+                    printBoard (board);
                     write (logFile, 'Last move: ');
                     printMove (lastMove);
                     writeln (logFile)
@@ -246,7 +247,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         tailIndex := moveList;
         attackIndex := attackList;
 
-        loopAllPieces (tempBoard, turn, lastMove, attackIndex, tailIndex, ply);
+        loopAllPieces (board, turn, lastMove, attackIndex, tailIndex, ply);
         bestMove.id := 99;
 
         if turn = 0 then
@@ -275,13 +276,12 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                 exit;
             end;
 
-        {save bitboards}
-        savedBoard := tempBoard;
-
         repeat
-            foundFlag := false;
             tempMove := currentMove^;
-            enterMove (turn, attackFlag, attackId, capId, foundFlag, tempBoard, tempMove);
+            workBoard := board;
+            enterMove (turn, attackFlag, attackId, capId, foundFlag, workBoard, tempMove);
+            // TODO: do not set castle flags for decision tree
+            workBoard.castleFlags := board.castleFlags;
             
             {check for castling move}
             if (currentMove^.id = 40) and (ply = gamePly) and (abs (currentMove^.startSq - currentMove^.endSq) = 2) then
@@ -289,7 +289,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
 
             {check if own king in check after current move}
 //            if (cWarning = 1) and (ply = gamePly) then
-            ignoreMove := isKingChecked (turn, tempBoard);
+            ignoreMove := isKingChecked (turn, workBoard);
 
             if not ignoreMove then 
                 begin
@@ -303,7 +303,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                                     moveNumLo := 0;
                                     inc (moveNumHi)
                                 end;
-                            evalScore := Evaluate (cMoveFlag, attackFlag, attackId, capId, lastMove, tempMove, tempBoard);
+                            evalScore := Evaluate (cMoveFlag, attackFlag, attackId, capId, lastMove, tempMove, workBoard, turn);
                             if doLogging then begin   
                                 indent (ply - 1); 
                                 printMove (tempMove); 
@@ -312,8 +312,8 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                         end
                     else
                         begin
-                            turn := 1 - turn;
-                            MoveGen (tempMove, finalMove, evalScore, alpha, beta, cMoveFlag, pred (ply));
+  //                          turn := 1 - turn;
+                            MoveGen (workBoard, tempMove, finalMove, evalScore, alpha, beta, cMoveFlag, pred (ply), 1 - turn);
                             if ply = gamePly then
                                 cMoveFlag := 0
                         end;
@@ -348,9 +348,6 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
                         end
                 end;
 
-            {restore the previous ply base bitboard}
-            tempBoard := savedBoard;
-
             currentMove := currentMove^.link;
             if (currentMove^.link = nil) and (attackFlag = 1) then
                 begin
@@ -370,7 +367,7 @@ procedure MoveGen(lastMove: moverec; var finalMove: moverec; var score: integer;
         end;
 
         {up 1 ply}
-        turn := 1 - turn;
+//        turn := 1 - turn;
         release (heap)
     end;
 

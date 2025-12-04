@@ -4,7 +4,7 @@ interface
 
 uses globals;
 
-procedure PlayerMove(var playMove : moverec; lastMove: moverec; pturn: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; lastMove: moverec; turn: integer);
 
 implementation
 
@@ -41,7 +41,7 @@ procedure clearEntryField;
         gotoxy (whereX - 2, whereY)
     end;
             
-procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; lastMove: moverec; turn: integer);
     label 
         l_1, l_2;
     var 
@@ -51,14 +51,11 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
         fn: string [20];
         castleRights, epCapDummy: integer;
         playerPieces, bits: bitboard;
-        
+        workBoard: TBoardRecord;
+                
     begin
-        turn := pturn;
-
-     {back up current game state}
-        tempBoard := mainBoard;
-
         l_1: 
+        workBoard := board;
         gotoxy(20, 6);
         write(chr(7), 'enter move');
         gotoxy(20, 7);
@@ -97,16 +94,16 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
 
             {validate square}
             if turn = 0 then
-                playerPieces := mainBoard.whitePieces
+                playerPieces := workBoard.whitePieces
             else
-                playerPieces := mainBoard.blackPieces;
+                playerPieces := workBoard.blackPieces;
             validSq := getBit (playerPieces, iLoc) <> 0;
             if not validSq then
                 clearEntryField
         until validSq;
 
         playMove.startSq := iLoc;
-        playMove.id := findPieceType (mainBoard, turn, iLoc);
+        playMove.id := findPieceType (workBoard, turn, iLoc);
 
         l_2: 
      {get end square}
@@ -135,7 +132,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
                     {check if castling move}
                     if (playMove.id = 40) and (abs(iLoc - eLoc) = 2) then
                         begin
-                            castleRights := checkCastleRights (mainBoard, castleFlags, turn);
+                            castleRights := checkCastleRights (workBoard, turn);
                             if turn = 0 then
                                 begin
                                     if (((iLoc - eLoc) > 0) and (castleRights and whiteLeftCastleRight <> 0)) or
@@ -153,7 +150,7 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
                     else
                         begin
                             {trim movement to blocks}
-                            bits := Trim (turn, playMove.id, iLoc, lastMove, mainBoard, epCapDummy);
+                            bits := Trim (turn, playMove.id, iLoc, lastMove, workBoard, epCapDummy);
                             validSq := getBit (bits, eLoc) <> 0
                         end
                 end;
@@ -165,11 +162,10 @@ procedure PlayerMove(var playMove: moverec; lastMove: moverec; pturn: integer);
         playMove.endSq := eLoc;
 
         {verify if own king in check after move}
-        enterMoveSimple (turn, mainBoard, playMove);
-        if isKingChecked (turn, mainBoard) then
+        enterMoveSimple (turn, workBoard, playMove);
+        if isKingChecked (turn, workBoard) then
             begin
                 {king in check. undo move}
-                mainBoard := tempBoard;
                 validSq := FALSE;
                 clearEntryField;
                 goto l_2;

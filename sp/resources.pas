@@ -70,7 +70,8 @@ function getInitPosition: TBoardRecord;
     procedure data_init; external '../resources/initboard.dat';
     
     begin
-        result := TBoardRecord (addr (data_init))
+        result := TBoardRecord (addr (data_init));
+        result.castleFlags := 0
     end;
     
 end.

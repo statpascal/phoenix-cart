@@ -424,7 +424,7 @@ procedure Utility(var switch: integer);
                     DataOps(1, startPage, dataSize, offset, storeBase);
 *)                    
                     utilFlag := TRUE;
-                    turn := gameSide;
+//	 TODO:                    turn := gameSide;
                     gamePointer := tempGPointer;
                     tempStore.id := 99;
 (*                    

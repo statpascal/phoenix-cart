@@ -5,9 +5,9 @@ interface
 uses {$U chesslib.code} globals;
 
 procedure PrintGame;
-procedure BoardDisplay;
-procedure EnterPos (var board: TBoardRecord);
-procedure MoveCoord(score, iLoc, eLoc : integer; flag : boolean);
+procedure BoardDisplay (var board: TBoardRecord);
+procedure EnterPos (var board: TBoardRecord; var turn: integer);
+procedure MoveCoord (score, iLoc, eLoc: integer; flag: boolean);
 
 implementation
 
@@ -132,7 +132,7 @@ begin
     writeln('  A B C D E F G H');
 end; {NewBoard}
 
-procedure BoardDisplay;
+procedure BoardDisplay (var board: TBoardRecord);
 
     procedure displaySide (side: integer; var sideBoard: TSideRecord);
         var 
@@ -162,8 +162,8 @@ procedure BoardDisplay;
             
     begin
         NewBoard;
-        displaySide (0, mainBoard.white);
-        displaySide (1, mainBoard.black);
+        displaySide (0, board.white);
+        displaySide (1, board.black);
         gotoxy(0, 14);
     end;
 
@@ -180,7 +180,7 @@ procedure ClearPrompts;
         gotoxy(0, 14);
     end; 
 
-procedure EnterPos (var board: TBoardRecord);
+procedure EnterPos (var board: TBoardRecord; var turn: integer);
     var 
         x, y, orgX, orgY, row, column, sideKey, pieceKey, offset : integer;
         ans, pLoc : integer;
@@ -312,7 +312,7 @@ procedure EnterPos (var board: TBoardRecord);
                 end;
         until sideKey = 81;
 
-        castleFlags := 0;
+        board.castleFlags := 0;
 
         writeln;
         writeln(chr(7), 'allow white castling? (y/n)');
@@ -320,13 +320,15 @@ procedure EnterPos (var board: TBoardRecord);
             ans := GetKeyInt;
         until ans in[78, 89];
         if ans = 78 then
-            castleFlags := castleFlags or whiteCastleFlag
+            board.castleFlags := board.castleFlags or whiteCastleFlag
         else
             begin
                 if getBit (board.white.rookBitboard, 0) = 0 then
-                    castleFlags := castleFlags or whiteRookLeftFlag;
+                    board.castleFlags := board.castleFlags or whiteRookLeftFlag;
                 if getBit (board.white.rookBitboard, 7) = 0 then
-                    castleFlags := castleFlags or whiteRookRightFlag
+                    board.castleFlags := board.castleFlags or whiteRookRightFlag;
+                if board.castleFlags and (whiteRookLeftFlag or whiteRookRightFlag) = (whiteRookLeftFlag or whiteRookRightFlag) then
+                    board.castleFlags := board.castleFlags or whiteCastleFlag
             end;
 
         writeln(chr(7), 'allow black castling? (y/n)');
@@ -334,13 +336,15 @@ procedure EnterPos (var board: TBoardRecord);
             ans := GetKeyInt;
         until ans in[78, 89];
         if ans = 78 then
-            castleFlags := castleFlags or blackCastleFlag
+            board.castleFlags := board.castleFlags or blackCastleFlag
         else
             begin
                 if getBit (board.black.rookBitboard, 56) = 0 then
-                    castleFlags := castleFlags or blackRookLeftFlag;
+                    board.castleFlags := board.castleFlags or blackRookLeftFlag;
                 if getBit (board.black.rookBitboard, 63) = 0 then
-                    castleFlags := castleFlags or blackRookRightFlag
+                    board.castleFlags := board.castleFlags or blackRookRightFlag;
+                if board.castleFlags and (blackRookLeftFlag or blackRookRightFlag) = (blackRookLeftFlag or blackRookRightFlag) then
+                    board.castleFlags := board.castleFlags or blackCastleFlag
             end;
 
         writeln(chr(7), 'side to start? [w]hite/[b]lack');

@@ -60,8 +60,8 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                 BitOr (result, bit1, result);
 
                 { check for en passant capture }
-                if (lastMove.id = 0) and (abs (lastMove.endSq - lastMove.startSq) = 16) and
-                   ((turn = 0) and (row = 4) or (turn = 1) and (row = 3)) then
+                if (lastMove.id = 0) and (abs (lastMove.endSq - lastMove.startSq) = 16) and (row = 4 - turn) then
+//                   ((turn = 0) and (row = 4) or (turn = 1) and (row = 3)) then
                     begin
                         if turn = 0 then
                             begin

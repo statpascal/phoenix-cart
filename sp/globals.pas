@@ -4,110 +4,6 @@ interface
 
 uses samsutil, vdp, bitops;
 
-//    BASE = 20;
-//    BASE1 = 21;
-//    BASE2 = 22;
-
-(*
-    BASE = $2000;
-    BASE1 = $3000;
-    BASE2 = $A000;
-
- {BASE3 = 23;}
-    BASE4 = 24;
-    WPO = 0; {BASE}
-    WRO = 8;
-    WNO = 16;
-    WBO = 24;
-    WQO = 32;
-    WKO = 40;
-    BPO = 48;
-    BRO = 56;
-    BNO = 64;
-    BBO = 72;
-    BQO = 80;
-    BKO = 88;
-    APIECES = 96;
-    WPIECES = 104;
-    BPIECES = 112;
-//    EMPTYSQUARES = 120;
-//    FILEMASK = 128;
-    FILEBLANK = 192;
-//    RANKMASK = 256;
-//    RANKBLANK = 320;
-    PIECELOC = 384;
-    WPMOVE = 896;
-    BPMOVE = 1344;
-    KMOVE = 1792;
-    NMOVE = 2304;
-    QMOVE = 2816;
-    RMOVE = 3328;
-//    SIDES = 3840;
-//    WPDOUBLE = 3848;
-//    BPDOUBLE = 3856;
-//    WEPFLAG = 3864;
-//    BEPFLAG = 3872;
-    WLBRMASK = 3886;		// f0 00 00 00 00 00 00 00
-    WRBRMASK = 3894;		// 0f 00 00 00 00 00 00 00
-    BLBRMASK = 3902;		// 00 00 00 00 00 00 00 f0
-    BRBRMASK = 3910;		// 00 00 00 00 00 00 00 0f
-    WRCMASK = 3918;		// 06 00 00 00 00 00 00 00 
-    WLCMASK = 3926;		// 70 00 00 00 00 00 00 00
-    BRCMASK = 3934;		// 00 00 00 00 00 00 00 06
-    BLCMASK = 3942;		// 00 00 00 00 00 00 00 70
-    TWPO = 3950;
-    TWRO = 3958;
-    TWNO = 3966;
-    TWBO = 3974;
-    TWQO = 3982;
-    TWKO = 3990;
-    TBPO = 3998;
-    TBRO = 4006;
-    TBNO = 4014;
-    TBBO = 4022;
-    TBQO = 4030;
-    TBKO = 4038;
-    TAPIECES = 4046;
-    TWPIECES = 4054;
-    TBPIECES = 4062;
-    
-    
-    BMOVE = 0; {BASE 1}
-    WPDIAG = 512;
-    BPDIAG = 960;
-    WEP = 1408;
-    BEP = 1472;
-    WEPSTORE = 1536;
-    BEPSTORE = 1616;
-    PLYBOARDS = 1856;
-    
-    
-    WPAWN = 0; {BASE 2}
-    BPAWN = 128;
-    EVALKNIGHT = 256;
-    EVALBISHOP = 384;
-    KINGMID = 512;
-    KINGEND = 640;
-    KINGEDGE = 768;
-    SWPO = 776;
-    SWRO = 784;
-    SWNO = 792;
-    SWBO = 800;
-    SWQO = 808;
-    SWKO = 816;
-    SBPO = 824;
-    SBRO = 832;
-    SBNO = 840;
-    SBBO = 848;
-    SBQO = 856;
-    SBKO = 864;
-    SAPIECES = 872;
-    SWPIECES = 880;
-    SBPIECES = 888;
-    PLAYLIST = 896;
-    GAMESTORE = 0; {BASE 4}
-*)
-    
 const
     Pawn = 0;
     Rook = 8;
@@ -117,6 +13,18 @@ const
     King = 40;
     InvalidPiece = 99;
 
+    whiteCastleFlag = 1;
+    blackCastleFlag = 2;    
+    whiteRookLeftFlag = 4;
+    whiteRookRightFlag = 8;
+    blackRookLeftFlag = 16;
+    blackRookRightFlag = 32;
+    
+    whiteLeftCastleRight = 1;
+    whiteRightCastleRight = 2;
+    blackLeftCastleRight = 4;
+    blackRightCastleRight = 8;
+    
 type 
     listPointer = ^moverec;
     moverec = record
@@ -134,29 +42,12 @@ type
     
     TBoardRecord = record
         white, black: TSideRecord;
-        allPieces, whitePieces, blackPieces: bitboard
+        allPieces, whitePieces, blackPieces: bitboard;
+        castleFlags: integer;
     end;
     
-const
-    whiteCastleFlag = 1;
-    blackCastleFlag = 2;    
-    whiteRookLeftFlag = 4;
-    whiteRookRightFlag = 8;
-    blackRookLeftFlag = 16;
-    blackRookRightFlag = 32;
-    
-    whiteLeftCastleRight = 1;
-    whiteRightCastleRight = 2;
-    blackLeftCastleRight = 4;
-    blackRightCastleRight = 8;
-    
 var
-    mainBoard, tempBoard: TBoardRecord;
-    
-    castleFlags: integer;
-
-var 
-    turn, gameSide, gamePointer: integer;
+    (* turn, *) gameSide, gamePointer: integer;
     pieceCount, cWarning: integer;
     gamePly, gameMove, humanSide: integer;
     moveNumHi, moveNumLo: integer;
@@ -165,13 +56,12 @@ var
     logFile: text;
     
 
-
 procedure ClearBitboard (var bit1: bitboard);
 function IsClear (var b: bitboard): boolean;
 
 function GetKeyInt: integer;
 
-function checkCastleRights (var board: TBoardRecord; castleFlags, turn: integer): integer;
+function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 
 procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: moverec);
@@ -224,8 +114,9 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
             clearBit (board.allPieces, startSq);
             clearBit (ownPieces, startSq);
             clearBit (own.bitboards [id shr 3], startSq);
-
+            
             {remove attacked piece from opponent's bitboards}
+            foundFlag := false;
             if attackFlag = 1 then
                 begin
                     j := 0;
@@ -270,7 +161,13 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
                 if (move.id = King) and (move.startSq = 4) and (move.endSq = 6) then
                     updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces, Rook, 7, 5);
                 if (move.id = King) and (move.startSq = 4) and (move.endSq = 2) then
-                    updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces, Rook, 0, 3)
+                    updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces, Rook, 0, 3);
+                if getBit (board.white.rookBitBoard, 0) = 0 then
+                    board.castleFlags := board.castleFlags or whiteRookLeftFlag;
+                if getBit (board.white.rookBitboard, 7) = 0 then
+                    board.castleFlags := board.castleFlags or whiteRookRightFlag;
+                if (move.id = King) or (board.castleFlags and (whiteRookLeftFlag or whiteRookRightFlag) = (whiteRookLeftFlag or whiteRookRightFlag)) then
+                    board.castleFlags := board.castleFlags or whiteCastleFlag;
             end
         else
             begin
@@ -278,7 +175,13 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
                 if (move.id = King) and (move.startSq = 60) and (move.endSq = 58) then
                     updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces, Rook, 56, 59);
                 if (move.id = King) and (move.startSq = 60) and (move.endSq = 62) then
-                    updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces, Rook, 63, 61)
+                    updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces, Rook, 63, 61);
+                if getBit (board.black.rookBitBoard, 56) = 0 then
+                    board.castleFlags := board.castleFlags or blackRookLeftFlag;
+                if getBit (board.black.rookBitboard, 63) = 0 then
+                    board.castleFlags := board.castleFlags or blackRookRightFlag;
+                if (move.id = King) or (board.castleFlags and (blackRookLeftFlag or blackRookRightFlag) = (blackRookLeftFlag or blackRookRightFlag)) then
+                    board.castleFlags := board.castleFlags or blackCastleFlag;
             end
     end;    
     
@@ -290,29 +193,29 @@ procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: mov
         enterMove (turn, 1, dummyId1, dummyId2, dummyFlg, board, move)
     end;
     
-function checkCastleRights (var board: TBoardRecord; castleFlags, turn: integer): integer;
+function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
     var
         bits: bitboard;
         dummyMove: moverec;
     begin
         result := 0;
-        if (turn = 0) and (castleFlags and whiteCastleFlag = 1) or
-           (turn = 1) and (castleFlags and blackCastleFlag = 2) then
+        if (turn = 0) and (board.castleFlags and whiteCastleFlag = 1) or
+           (turn = 1) and (board.castleFlags and blackCastleFlag = 2) then
             exit;
             
         {check back row interposing pieces}
         if turn = 0 then 
             begin
-                if (castleFlags and whiteRookLeftFlag = 0) and (board.allPieces [0] and $7000 = 0) then
+                if (board.castleFlags and whiteRookLeftFlag = 0) and (board.allPieces [0] and $7000 = 0) then
                     result := whiteLeftCastleRight;
-                if (castleFlags and whiteRookRightFlag = 0) and (board.allPieces [0] and $0600 = 0) then
+                if (board.castleFlags and whiteRookRightFlag = 0) and (board.allPieces [0] and $0600 = 0) then
                     result := result or whiteRightCastleRight
             end
         else
             begin
-                if (castleFlags and blackRookLeftFlag = 0) and (board.allPieces [3] and $0007 = 0) then
+                if (board.castleFlags and blackRookLeftFlag = 0) and (board.allPieces [3] and $0007 = 0) then
                     result := blackLeftCastleRight;
-                if (castleFlags and blackRookRightFlag = 0) and (board.allPieces [3] and $0006 = 0) then
+                if (board.castleFlags and blackRookRightFlag = 0) and (board.allPieces [3] and $0006 = 0) then
                     result := result or blackRightCastleRight
             end;
         if result = 0 then

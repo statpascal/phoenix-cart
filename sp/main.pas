@@ -57,375 +57,27 @@ implementation
 // uses random,
 
 uses 
-    globals, move, trimprocs, ui, pmove, utility;
+    globals, move, trimprocs, ui, pmove, utility, resources;
 
 var 
-    i, j, moveScore, offset, found, aVal, bVal, ans: integer;
-    sideOffset, offset1, offset2, tempPointer: integer;
+    turn, i, j, moveScore, offset, found, aVal, bVal, ans: integer;
+    tempPointer: integer;
     humanFlag, checkFlag, promFlag, repFlag: boolean;
-    moveArray: bitarray;
     lastMove, playMove, moveStore, tempMove: moverec;
-    bit8: bitboard;
 
 (*
-
-{update main boards with current move}
-procedure UpdateMove(var playMove: moverec);
-    var 
-        offset1, offset2, offset3, offset4, qCastleFlag, kCastleFlag, ans: integer;
-    begin
-        qCastleFlag := 0;
-        kCastleFlag := 0;
-
-     {check for castling move}
-        if (gameSide = 0) and (castleFlags and whiteCastleFlag = 0) or
-           (gameSide = 1) and (castleFlags and blackCastleFlag = 0) then
-            begin
-                if  (playMove.id = 40) and (abs(playMove.startSq - playMove.endSq) = 2) then
-                    begin
-                        if playMove.startSq - playMove.endSq > 0 then
-                            qCastleFlag := 1
-                        else
-                            kCastleFlag := 1;
-                    end;
-            end;
-
-     {check if rooks have moved from home square}
-        if (gameSide = 0) and (castleFlags and whiteCastleFlag = 0) and (playMove.id = 8) then
-            begin
-                if (playMove.startSq = 0) and (qCastleFlag = 0) then
-                    castleFlags := castleFlags or whiteRookLeftFlag
-                else
-                    if (playMove.startSq = 7) and (kCastleFlag = 0) then
-                        castleFlags := castleFlags or whiteRookRightFlag;
-            end
-        else
-            if (gameSide = 1) and (castleFlags and blackCastleFlag = 0) and (playMove.id = 8) then
-                begin
-                    if (playMove.startSq = 58) and (qCastleFlag = 0) then
-                        castleFlags := castleFlags or blackRookLeftFlag
-                    else
-                        if (playMove.startSq = 63) and (kCastleFlag = 0) then
-                            castleFlags := castleFlags or blackRookRightFlag;
-                end;
-
-        promFlag := FALSE;
-
-     {check for pawn promotion}
-        if (playMove.id = 0) and ((playMove.endSq in[56..63]) or
-           (playMove.endSq in[0..7])) then
-            begin
-                promFlag := TRUE;
-                
-
-            Check: should be empty anyway?
-
-                if turn = 0 then
-                    offset := WPO
-                else
-                    offset := BPO;
-
-                DataOps(2, startPage, dataSize, offset, bit1);
-                offset1 := PIECELOC + (playMove.endSq * 8);
-                DataOps(2, startPage, dataSize, offset1, bit2);
-                BitNot(bit2, bit2);
-                BitAnd(bit1, bit2, bit1);
-                DataOps(1, startPage, dataSize, offset, bit1);
-                
-            end;
-
-     {erase initial position}
-        offset := PIECELOC + (playMove.startSq * 8);
-        DataOps(2, startPage, dataSize, offset, bit1);
-        offset := APIECES;
-        DataOps(2, startPage, dataSize, offset, bit2);
-        BitNot(bit1, bit1);
-        BitAnd(bit1, bit2, bit2);
-        DataOps(1, startPage, dataSize, offset, bit2);
-
-        if gameSide = 0 then
-            begin
-                offset := WPO + playMove.id;
-                offset1 := WPIECES;
-                offset4 := BPIECES;
-                if qCastleFlag = 1 then
-                    begin
-                        castleFlags := castleFlags or whiteCastleFlag;
-                        offset2 := PIECELOC;
-                        offset3 := WRO;
-                    end
-                else
-                    if kCastleFlag = 1 then
-                        begin
-                            castleFlags := castleFlags or whiteCastleFlag;
-                            offset2 := PIECELOC + 56;
-                            offset3 := WRO;
-                        end;
-            end
-        else
-            begin
-                offset := BPO + playMove.id;
-                offset1 := BPIECES;
-                offset4 := WPIECES;
-                if qCastleFlag = 1 then
-                    begin
-                        castleFlags := castleFlags or blackCastleFlag;
-                        offset2 := PIECELOC + 448;
-                        offset3 := BRO;
-                    end
-                else
-                    if kCastleFlag = 1 then
-                        begin
-                            castleFlags := castleFlags or blackCastleFlag;
-                            offset2 := PIECELOC + 504;
-                            offset3 := BRO;
-                        end;
-            end;
-
-        DataOps(2, startPage, dataSize, offset, bit2);
-        BitAnd(bit1, bit2, bit2);
-        DataOps(1, startPage, dataSize, offset, bit2);
-        DataOps(2, startPage, dataSize, offset1, bit2);
-        BitAnd(bit1, bit2, bit2);
-        DataOps(1, startPage, dataSize, offset1, bit2);
-
-        if (kCastleFlag = 1) or (qCastleFlag = 1) then
-            begin
-                DataOps(2, startPage, dataSize, offset2, bit1);
-                BitNot(bit1, bit1);
-                DataOps(2, startPage, dataSize, offset3, bit2);
-                BitAnd(bit1, bit2, bit2);
-                DataOps(1, startPage, dataSize, offset3, bit2);
-                DataOps(2, startPage, dataSize, offset1, bit2);
-                BitAnd(bit1, bit2, bit2);
-                DataOps(1, startPage, dataSize, offset1, bit2);
-                offset := APIECES;
-                DataOps(2, startPage, dataSize, offset, bit2);
-                BitAnd(bit1, bit2, bit2);
-                DataOps(1, startPage, dataSize, offset, bit2);
-            end;
-
-     {erase any potential captures}
-        offset := PIECELOC + (playMove.endSq * 8);
-        DataOps(2, startPage, dataSize, offset, bit1);
-        bit3 := bit1;
-        BitNot(bit1, bit1);
-
-        if gameSide = 0 then
-            offset := BPO
-        else
-            offset := WPO;
-
-        i := 0;
-        found := 0;
-        repeat
-            offset1 := offset + i;
-            DataOps(2, startPage, dataSize, offset1, bit2);
-            BitAnd(bit3, bit2, bitRes);
-            if not(IsClear(bitRes)) then
-                begin
-                    found := 1;
-                    if (castleFlags and whiteCastleFlag = 0) and (offset1 = WRO) then
-                        begin
-                            if playMove.endSq = 0 then
-                                begin
-                                    castleFlags := castleFlags or whiteRookLeftFlag;
-                                end;
-                            if playMove.endSq = 7 then
-                                begin
-                                    castleFlags := castleFlags or whiteRookRightFlag;
-                                end;
-                        end;
-                    if (castleFlags and blackCastleFlag = 0) and (offset1 = BRO) then
-                        begin
-                            if playMove.endSq = 56 then
-                                begin
-                                    castleFlags := castleFlags or blackRookLeftFlag;
-                                end;
-                            if playMove.endSq = 63 then
-                                begin
-                                    castleFlags := castleFlags or blackRookRightFlag;
-                                end;
-                        end;
-                end;
-            BitAnd(bit1, bit2, bit2);
-            DataOps(1, startPage, dataSize, offset1, bit2);
-            i := i + 8;
-        until i > 40;
-
-     {en passant capture handling}
-        if (found = 0) and (playMove.id = 0) then
-            begin
-                if abs(playMove.startSq - playMove.endSq) in[7, 9] then
-                    begin
-                        if gameSide = 0 then
-                            offset1 := PIECELOC + ((playMove.endSq - 8) * 8)
-                        else
-                            offset1 := PIECELOC + ((playMove.endSq + 8) * 8);
-                        DataOps(2, startPage, dataSize, offset1, bit3);
-                        BitNot(bit3, bit3);
-                        DataOps(2, startPage, dataSize, offset, bit2);
-                        BitAnd(bit3, bit2, bit2);
-                        DataOps(1, startPage, dataSize, offset, bit2);
-                        offset1 := APIECES;
-                        DataOps(2, startPage, dataSize, offset1, bit2);
-                        BitAnd(bit3, bit2, bit2);
-                        DataOps(1, startPage, dataSize, offset1, bit2);
-                        if gameSide = 0 then
-                            offset1 := BPIECES
-                        else
-                            offset1 := WPIECES;
-                        DataOps(2, startPage, dataSize, offset1, bit2);
-                        BitAnd(bit3, bit2, bit2);
-                        DataOps(1, startPage, dataSize, offset1, bit2);
-                    end;
-            end;
-
-        DataOps(2, startPage, dataSize, offset4, bit2);
-        BitAnd(bit1, bit2, bit2);
-        DataOps(1, startPage, dataSize, offset4, bit2);
-
-     {promote pawn if applicable}
-        if (promFlag) and (sPage = 1) then
-            begin
-                ans := GetKeyInt;
-                gotoxy(20, 8);
-                writeln(chr(7),'promote pawn to');
-                gotoxy(22, 9);
-                writeln('1- rook');
-                gotoxy(22, 10);
-                writeln('2- knight');
-                gotoxy(22, 11);
-                writeln('3- bishop');
-                gotoxy(22, 12);
-                writeln('4- queen');
-                repeat
-                    ans := GetKeyInt
-                until ans in[49..52];
-                playMove.id := (ans - 48) * 8;
-            end
-        else
-            if (promFlag) and (sPage = 0) then
-                playMove.id := 32;
-
-     {update new piece position}
-        offset := PIECELOC + (playMove.endSq * 8);
-        DataOps(2, startPage, dataSize, offset, bit1);
-        offset := APIECES;
-        DataOps(2, startPage, dataSize, offset, bit2);
-        BitOr(bit1, bit2, bit2);
-        DataOps(1, startPage, dataSize, offset, bit2);
-
-        if gameSide = 0 then
-            begin
-                offset := WPO + playMove.id;
-                offset1 := WPIECES;
-                if qCastleFlag = 1 then
-                    offset2 := PIECELOC + 24;
-                if kCastleFlag = 1 then
-                    offset2 := PIECELOC + 40;
-            end
-        else
-            begin
-                offset := BPO + playMove.id;
-                offset1 := BPIECES;
-                if qCastleFlag = 1 then
-                    offset2 := PIECELOC + 472;
-                if kCastleFlag = 1 then
-                    offset2 := PIECELOC + 488;
-            end;
-
-        DataOps(2, startPage, dataSize, offset, bit2);
-        BitOr(bit1, bit2, bit2);
-        DataOps(1, startPage, dataSize, offset, bit2);
-        DataOps(2, startPage, dataSize, offset1, bit2);
-        BitOr(bit1, bit2, bit2);
-        DataOps(1, startPage, dataSize, offset1, bit2);
-        if (qCastleFlag = 1) or (kCastleFlag = 1) then
-            begin
-                DataOps(2, startPage, dataSize, offset2, bit1);
-                DataOps(2, startPage, dataSize, offset3, bit2);
-                BitOr(bit1, bit2, bit2);
-                DataOps(1, startPage, dataSize, offset3, bit2);
-                DataOps(2, startPage, dataSize, offset1, bit2);
-                BitOr(bit1, bit2, bit2);
-                DataOps(1, startPage, dataSize, offset1, bit2);
-                offset := APIECES;
-                DataOps(2, startPage, dataSize, offset, bit2);
-                BitOr(bit1, bit2, bit2);
-                DataOps(1, startPage, dataSize, offset, bit2);
-            end;
-    end;
-
 *)
 
 procedure SaveMove;
-    var 
-        offset, offset1, storeBase, storePtr: integer;
     begin
-(*
-     {retrieve the storePtr and storeBase variables}
-        startPage := BASE2;
-        dataSize := 2;
-        offset := 4000;
-        DataOps(2, startPage, dataSize, offset, storePtr);
-        offset := 4002;
-        DataOps(2, startPage, dataSize, offset, storeBase);
-
-        offset1 := WPO;
-        offset := storePtr;
-        if offset > 4079 then
-            begin
-                storeBase := succ(storeBase);
-                storePtr := 0;
-                offset := 0;
-            end;
-        dataSize := 120;
-        startPage := BASE;
-        DataOps(2, startPage, dataSize, offset1, buffer);
-        DataOps(1, storeBase, dataSize, offset, buffer);
-        offset := offset + 120;
-        dataSize := 2;
-
-        DataOps(1, storeBase, dataSize, offset, CastleFlag);
-        offset := offset + 2;
-        DataOps(1, storeBase, dataSize, offset, bCastleFlag);
-        offset := offset + 2;
-        DataOps(1, storeBase, dataSize, offset, wRookLFlag);
-        offset := offset + 2;
-        DataOps(1, storeBase, dataSize, offset, wRookRFlag);
-        offset := offset + 2;
-        DataOps(1, storeBase, dataSize, offset, bRookLFlag);
-        offset := offset + 2;
-        DataOps(1, storeBase, dataSize, offset, bRookRFlag);
-        offset := offset + 2;
-
-        DataOps(1, storeBase, dataSize, offset, cWarning);
-        offset := offset + 2;
-        DataOps(1, storeBase, dataSize, offset, gameMove);
-        offset := offset + 2;
-        storePtr := offset;
-
-     {save the storePtr and storeBase variables}
-        startPage := BASE2;
-        offset := 4000;
-        DataOps(1, startPage, dataSize, offset, storePtr);
-        offset := 4002;
-        DataOps(1, startPage, dataSize, offset, storeBase);
-
-        startPage := BASE;
-        dataSize := 8;
-*)        
     end;
 
-procedure initGame;
+procedure initGame (var mainBoard: TBoardRecord);
     begin
-//        clrscr;
         // Randomize;	// TODO
         turn := 0;
         gameSide := turn;
         gameMove := 1;
-        castleFlags := 0;
 
         lastMove.id := 99;
         lastMove.startSq := 0;
@@ -467,7 +119,7 @@ procedure initGame;
         until ans in[78, 89];
         if ans = 89 then
             begin
-                EnterPos (mainBoard);;
+                EnterPos (mainBoard, turn);
                 gameSide := turn;
                {look for check condition}
                
@@ -572,7 +224,6 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
         kingPos := moveArray [1];
 
         {obtain list of all possible opposite king movement}
-        fillChar (dummyMove, sizeof (dummyMove), 0);
         kingMovement := Trim (1 - gameSide, King, kingPos, playMove, board, epCapDummy);
         BitPos (kingMovement, moveArray);
         
@@ -602,6 +253,7 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
         clearBit (tempBoard.allPieces, kingPos);
         
         {check if attacking piece can be captured}
+        fillChar (dummyMove, sizeof (dummyMove), 0);
         opponentMoves := combineTrimSide (gameSide = 0, dummyMove, tempBoard);
         if getBit (opponentMoves, playMove.endSq) <> 0 then
             exit;
@@ -632,11 +284,15 @@ end;
     
 
 procedure chainMain;
+
+    var mainBoard: TBoardRecord;
+
     begin
-        initGame;
+        mainBoard := getInitPosition;
+        initGame (mainBoard);
 
      {start game}
-        BoardDisplay;
+        BoardDisplay (mainBoard);
         gotoxy(10, 1);
         writeln('move: ', gameMove);
         if gameSide = 0 then
@@ -652,7 +308,6 @@ procedure chainMain;
 
         repeat
             {transfer current board state to temp boards}
-            tempBoard := mainBoard;
             moveNumLo := 0;
             moveNumHi := 0;
 
@@ -669,7 +324,7 @@ procedure chainMain;
         {save current game state}
 // TODO: move to VDP                    SaveMove;
 
-                    playerMove(playMove, lastMove, gameSide);
+                    playerMove(mainBoard, playMove, lastMove, gameSide);
 //                    if humanSide <> gameSide then
 //				TODO: handle side change
                     if pieceCount = -1 then
@@ -766,7 +421,7 @@ procedure chainMain;
                         begin
                             gotoxy(20, 7);
                             write('thinking...');
-                            MoveGen(lastMove, playMove, moveScore, aVal, bVal, 0, gamePly);
+                            MoveGen (mainBoard, lastMove, playMove, moveScore, aVal, bVal, 0, gamePly, turn);
                         end;
                 end;
 
@@ -789,35 +444,8 @@ procedure chainMain;
 //            UpdateMove(playMove);
             enterMoveSimple (gameSide, mainBoard, playMove);
 
-            if (castleFlags and whiteCastleFlag = 0) and (gameSide = 0) then
-                begin
-                    if playMove.id = 40 then
-                        castleFlags := castleFlags or whiteCastleFlag;
-
-                    if playMove.id = 8 then
-                        begin
-                            if playMove.startSq = 0 then
-                                castleFlags := castleFlags or whiteRookLeftFlag;
-                            if playMove.startSq = 7 then
-                                castleFlags := castleFlags or whiteRookRightFlag
-                        end;
-                end;
-            if (castleFlags and blackCastleFlag = 0) and (gameSide = 1) then
-                begin
-                    if playMove.id = 40 then
-                        castleFlags := castleFlags or blackCastleFlag;
-
-                    if playMove.id = 8 then
-                        begin
-                            if playMove.startSq = 56 then
-                                castleFlags := castleFlags or blackRookLeftFlag;
-                            if playMove.startSq = 63 then
-                                castleFlags := castleFlags or blackRookRightFlag
-                        end;
-                end;
-
             {convert move to coordinates}
-            BoardDisplay;
+            BoardDisplay (mainBoard);
 
             {look for check condition}
             checkFlag := isKingChecked (1 - gameSide, mainBoard);

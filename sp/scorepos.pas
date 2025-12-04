@@ -4,7 +4,7 @@ interface
 
 uses globals;
 
-function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove, tempMove: moverec; var board: TBoardRecord): integer;
+function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove, tempMove: moverec; var board: TBoardRecord; turn: integer): integer;
 
 
 implementation
@@ -179,8 +179,9 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
             
         evaluateSide := evalScore
     end;
+    
 
-function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; var lastMove, tempMove: moverec; var board: TBoardRecord): integer;
+function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove, tempMove: moverec; var board: TBoardRecord; turn: integer): integer;
     var
         wScore, bScore, evalScore, endGame: integer;
         locArray: bitarray;
@@ -219,16 +220,16 @@ function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; var lastMove,
 
         {penalty for moving king if castling possible}
         if (tempMove.id = 40) and (cMoveFlag = 0) then
-            if (turn = 0) and (castleFlags and whiteCastleFlag = 0) then
+            if (turn = 0) and (board.castleFlags and whiteCastleFlag = 0) then
                 dec (wScore, 400)
-            else if (turn = 1) and (castleFlags and blackCastleFlag = 0) then
+            else if (turn = 1) and (board.castleFlags and blackCastleFlag = 0) then
                 dec (bScore, 400);
 
         {penalty for moving the rook if castling possible on its side}
         if (tempMove.id = 8) and (gameMove < 13) then
-            if (turn = 0) and (castleFlags and whiteCastleFlag = 0) then
+            if (turn = 0) and (board.castleFlags and whiteCastleFlag = 0) then
                 dec (wScore, 500)
-            else if (turn = 1) and (castleFlags and blackCastleFlag = 0) then
+            else if (turn = 1) and (board.castleFlags and blackCastleFlag = 0) then
                 dec (bScore, 500);
   
         {penalty if moving queen too early in game}
@@ -250,9 +251,9 @@ function evaluate(cMoveFlag, attackFlag, attackId, capId: integer; var lastMove,
             
         if (tempMove.id = Pawn) and (abs(tempMove.startSq - tempMove.endSq) = 16) then
             if turn = 0 then
-                checkEnPassant (false, tempboard.black.pawnBitboard, tempMove.startSq, wScore)
+                checkEnPassant (false, board.black.pawnBitboard, tempMove.startSq, wScore)
             else
-                checkEnPassant (true, tempboard.white.pawnBitboard, tempMove.startSq, bScore);
+                checkEnPassant (true, board.white.pawnBitboard, tempMove.startSq, bScore);
 
         evaluate := wScore + evaluateSide (board.white, board, lastMove, cMoveFlag, 0, endGame) -
                     bScore - evaluateSide (board.black, board, lastMove, cMoveFlag, 1, endGame)

@@ -36,6 +36,7 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
         bitboard_byte = array [0..7] of uint8;
         
     procedure trimRay (var b: bitboard_byte; pos, dy, dxOp, oponent: integer); assembler;
+            mov  @dy, r15
             mov  @pos, r12
             andi r12, 7
             clr  r8
@@ -67,7 +68,7 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
             socb r8, *r13	// capture the piece
             
         trimrayasm_3:
-            a    @dy, r0
+            a    r15, r0
             ci   r0, 7
             jh   trimrayasm_4	// next row and exit when off board
             
