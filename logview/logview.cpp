@@ -121,6 +121,7 @@ void TMainWindow::buildTreeModel (const std::string &fn) {
     std::ifstream f (fn);
     std::string s;    
     std::array<Gtk::TreeModel::iterator, 20> levels;
+    std::int32_t lineCount = 0;
     
     while (getline (f, s)) {
         int level = getLevel (s);
@@ -128,7 +129,7 @@ void TMainWindow::buildTreeModel (const std::string &fn) {
             levels [level] = treeDataModel->append (levels [level - 1]->children ());
         else
             levels [level] = treeDataModel->append ();
-        (*levels [level]) [nameColumn] = s;
+        (*levels [level]) [nameColumn] = s + " (" + std::to_string (++lineCount) + ")";
     }
     
     treeview.append_column ("", nameColumn);
