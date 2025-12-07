@@ -13,6 +13,41 @@ implementation
 
 uses scorepos, trimprocs, utility, resources;
 
+(* encoding of moves on move stack:
+
+   15    $8000    attack flag
+   14-12 $7000    piece type (0 - pawn to 5 - king)
+   11-06 $0FC0    start square
+   05-00 $003f    end square
+*)   
+
+const
+    MoveStackSize = 4095;
+
+var
+    moveStack: array [0..MoveStackSize] of integer absolute $2000;
+    moveStackPointer: integer;
+    
+procedure pushMoveStack (attackFlag: boolean; id, startSq, endSq: integer);
+    begin
+        if moveStackPointer <= moveStackSize then
+            begin
+                moveStack [moveStackPointer] := ord (attackFlag) shl 15 + (id shr 3) shl 12 + startSq shl 6 + endSq;
+                inc (moveStackPointer)
+            end
+    end;
+    
+procedure readMoveStack (index: integer; var attackFlag: boolean; var id, startSq, endSq: integer);
+    var
+        val: integer;
+    begin
+        val := moveStack [index];
+        endSq := val and $3f;
+        startSq := (val shr 6) and $3f;
+        id := (val shr 12) and $7 shl 3;
+        attackFlag := boolean (val shr 15 and 1)
+    end;
+
 procedure indent (ply: integer);
     begin
         write (logFile, ' ' : 4 * (gameply - ply))
@@ -97,33 +132,23 @@ procedure printMove (var move: moverec);
             write (logFile, 'None')
     end;
 
-procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: moverec; attackIndex, tailIndex: listPointer; ply: integer);
+procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: moverec);
     var 
         j, l, n, pLoc, epCapFlag: integer;
         posArray, moveArray: bitArray;
         currentMoveBoard, attackBoard, bit3, bit5, bit8, bit9: bitboard;
         
-    procedure appendMove (var list: listPointer; id, startSq, endSq: integer);
-        begin
-            new (list^.link);
-            list^.id := id;
-            list^.startSq := startSq;
-            list^.endSq := endSq;
-            list := list^.link;
-            list^.link := nil
-        end;
-        
-    procedure createMoveNodes (var list: listPointer; id, startSq: integer; var endSquares: bitboard);
+    procedure createMoveNodes (attackFlag: boolean; id, startSq: integer; var endSquares: bitboard);
         var
             k: integer;
             moveArray: bitArray;
         begin
             BitPos (endSquares, moveArray);
             for k := 1 to moveArray [0] do
-                appendMove (list, id, startSq, moveArray [k])
+                pushMoveStack (attackFlag, id, startSq, moveArray [k])
         end;
         
-    procedure checkCastling (var board: TBoardRecord; var moveList: listPointer);
+    procedure checkCastling (var board: TBoardRecord);
         var castleRights: integer;
         begin
             castleRights := checkCastleRights (board, turn);
@@ -132,21 +157,21 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
             if turn = 0 then
                 begin
                     if castleRights and whiteLeftCastleRight <> 0 then
-                        appendMove (moveList, King, 4, 2);
+                        pushMoveStack (false, King, 4, 2);
                     if castleRights and whiteRightCastleRight <> 0 then
-                        appendMove (moveList, King, 4, 6)
+                        pushMoveStack (false, King, 4, 6)
                 end
             else
                 begin
                     if castleRights and blackLeftCastleRight <> 0 then
-                        appendMove (moveList, King, 60, 58);
+                        pushMoveStack (false, King, 60, 58);
                     if castleRights and blackRightCastleRight <> 0 then
-                        appendMove (moveList, King, 60, 62)
+                        pushMoveStack (false, King, 60, 62)
                 end
         end;
         
     begin
-        checkCastling (board, tailIndex);
+        checkCastling (board);
         j := 0;
         repeat
             if turn = 0 then
@@ -159,27 +184,6 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                     pLoc := posArray[l];
                     epCapFlag := 0;
                     currentMoveBoard := Trim (turn, j, pLoc, lastMove, board, epCapFlag);
-
-(*
-                    {skip king move if no valid move on first ply}
-                    {allows for stalemate detection}
-                    if (j = King) then
-                        begin
-                            CombineTrim(bit3, bit5, lastMove, board);
-
-                            {check if king movement overlaps opposite pieces combined movement}
-                            if turn = 0 then 
-                                BitAnd (currentMoveBoard, bit5, bit8)
-                            else
-                                BitAnd (currentMoveBoard, bit3, bit8);
-                                
-                            BitPos(bit8, moveArray);
-                            n := moveArray[0];
-                            BitPos(currentMoveBoard, moveArray);
-                            if n = moveArray[0] then
-                                exit	// all pieces done - return
-                        end;
-*)                        
 
                     {find potential captures and add to attack list}
                     if turn = 0 then
@@ -198,11 +202,11 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                             BitOr(attackBoard, bit5, attackBoard);
                         end;
 
-                    createMoveNodes (attackIndex, j, pLoc, attackBoard);
+                    createMoveNodes (true, j, pLoc, attackBoard);
 
                     {find non-capture moves and add to move list}
                     BitAndNot (currentMoveBoard, attackBoard, currentMoveBoard);
-                    createMoveNodes (tailIndex, j, pLoc, currentMoveBoard)
+                    createMoveNodes (false, j, pLoc, currentMoveBoard)
                 end;
             inc (j, 8)
         until j > 40;
@@ -213,15 +217,95 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
     var 
         i, attackId, capId, bestScore, validMoveCount: integer;
         switchFlag: integer;
-        attackFlag, evalScore: integer;
-        foundFlag, pruneFlag, ignoreMove: boolean;
+        evalScore: integer;
+        attackFlag, foundFlag: boolean;
         bestMove, tempMove: moverec;
-        moveList, attackList, tailIndex, attackIndex, currentMove: listPointer;
         workBoard: TBoardRecord;
-        heap: pointer;
+        savedMoveStackPointer: integer;
+        
+    procedure iterateMoveList;
+        var
+            attackMoves: boolean;
+            currentMoveindex: integer;
+        begin
+            for attackMoves := true downto false do
+                for currentMoveIndex := savedMoveStackPointer to pred (moveStackPointer) do
+                    begin
+                        readMoveStack (currentMoveIndex, attackFlag, tempMove.id, tempMove.startSq, tempMove.endSq);
+                        if attackFlag = attackMoves then
+                            begin
+                                workBoard := board;
+                                enterMove (turn, ord (attackFlag), attackId, capId, foundFlag, workBoard, tempMove);
+                                // TODO: do not set castle flags for decision tree
+                                workBoard.castleFlags := board.castleFlags;
+                                
+                                {check for castling move}
+                                if (tempMove.id = 40) and (ply = gamePly) and (abs (tempMove.startSq - tempMove.endSq) = 2) then
+                                    cMoveFlag := 1;
+
+                                {check if own king in check after current move}
+                                if not isKingChecked (turn, workBoard) then 
+                                    begin
+                                        inc (validMoveCount);
+                                        if not foundFlag and (ply <= 1) or (ply = -3) then
+                                            {terminal node check}
+                                            begin
+                                                {update number of positions evaluated}
+                                                inc (moveNumLo);
+                                                if (moveNumLo = 1000) then
+                                                    begin
+                                                        moveNumLo := 0;
+                                                        inc (moveNumHi)
+                                                    end;
+                                                evalScore := Evaluate (cMoveFlag, ord (attackFlag), attackId, capId, lastMove, tempMove, workBoard, turn);
+                                                if doLogging then begin   
+                                                    indent (ply - 1); 
+                                                    printMove (tempMove); 
+                                                    writeln (logFile, ': ', evalScore: 6)
+                                                end
+                                            end
+                                        else
+                                            begin
+                                                MoveGen (workBoard, tempMove, finalMove, evalScore, alpha, beta, cMoveFlag, pred (ply), 1 - turn);
+                                                if ply = gamePly then
+                                                    cMoveFlag := 0
+                                            end;
+
+                                        {alpha/beta selection}
+                                        if turn = 0 then
+                                            begin
+                                                if evalScore >= bestScore then
+                                                    begin
+                                                        bestScore := evalScore;
+                                                        bestMove := tempMove
+                                                    end;
+                                                if bestScore > beta then
+                                                    exit
+                                                else
+                                                    if bestScore > alpha then
+                                                        alpha := bestScore;
+                                            end
+                                        else
+                                            begin
+                                                if evalScore <= bestScore then
+                                                    begin
+                                                        bestScore := evalScore;
+                                                        bestMove := tempMove
+                                                    end;
+                                                if bestScore < alpha then
+                                                    exit
+                                                else
+                                                    if bestScore < beta then
+                                                        beta := bestScore;
+                                            end
+                                    end
+                            end
+                    end
+        end;
+        
 
     begin
-        mark (heap);
+        savedMoveStackPointer := moveStackPointer;
 
         if doLogging then begin
             if ply = gamePly then
@@ -239,17 +323,10 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                 end
         end;
 
-        pruneFlag := false;
-        ignoreMove := false;
-
-        new(moveList);
-        new(attackList);
-        moveList^.link := nil;
-        attackList^.link := nil;
-        tailIndex := moveList;
-        attackIndex := attackList;
-
-        loopAllPieces (board, turn, lastMove, attackIndex, tailIndex, ply);
+        loopAllPieces (board, turn, lastMove);
+//        if doLogging then begin
+//            indent (ply); writeln (logFile, 'Move stack: ', moveStackPointer, ' positions')
+//        end;
         bestMove.id := InvalidPiece;
 
         if turn = 0 then
@@ -257,95 +334,8 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
         else
             bestScore := 20000;
 
-        {iterate through move list}
-        currentMove := attackList;
-        attackFlag := 1;
-        if currentMove^.link = nil then
-            begin
-                attackFlag := 0;
-                currentMove := moveList;
-            end;
-
         validMoveCount := 0;
-
-        repeat
-            tempMove := currentMove^;
-            workBoard := board;
-            enterMove (turn, attackFlag, attackId, capId, foundFlag, workBoard, tempMove);
-            // TODO: do not set castle flags for decision tree
-            workBoard.castleFlags := board.castleFlags;
-            
-            {check for castling move}
-            if (currentMove^.id = 40) and (ply = gamePly) and (abs (currentMove^.startSq - currentMove^.endSq) = 2) then
-                cMoveFlag := 1;
-
-            {check if own king in check after current move}
-            ignoreMove := isKingChecked (turn, workBoard);
-
-            if not ignoreMove then 
-                begin
-                    inc (validMoveCount);
-                    if not foundFlag and (ply <= 1) or (ply = -1) then
-                        {terminal node check}
-                        begin
-                            {update number of positions evaluated}
-                            inc (moveNumLo);
-                            if (moveNumLo = 1000) then
-                                begin
-                                    moveNumLo := 0;
-                                    inc (moveNumHi)
-                                end;
-                            evalScore := Evaluate (cMoveFlag, attackFlag, attackId, capId, lastMove, tempMove, workBoard, turn);
-                            if doLogging then begin   
-                                indent (ply - 1); 
-                                printMove (tempMove); 
-                                writeln (logFile, ': ', evalScore: 6)
-                            end
-                        end
-                    else
-                        begin
-                            MoveGen (workBoard, tempMove, finalMove, evalScore, alpha, beta, cMoveFlag, pred (ply), 1 - turn);
-                            if ply = gamePly then
-                                cMoveFlag := 0
-                        end;
-
-                    {alpha/beta selection}
-                    pruneFlag := false;
-                    if turn = 0 then
-                        begin
-                            if evalScore >= bestScore then
-                                begin
-                                    bestScore := evalScore;
-                                    bestMove := tempMove
-                                end;
-                            if bestScore > beta then
-                                pruneFlag := true
-                            else
-                                if bestScore > alpha then
-                                    alpha := bestScore;
-                        end
-                    else
-                        begin
-                            if evalScore <= bestScore then
-                                begin
-                                    bestScore := evalScore;
-                                    bestMove := tempMove
-                                end;
-                            if bestScore < alpha then
-                                pruneFlag := true
-                            else
-                                if bestScore < beta then
-                                    beta := bestScore;
-                        end
-                end;
-
-            currentMove := currentMove^.link;
-            if (currentMove^.link = nil) and (attackFlag = 1) then
-                begin
-                    attackFlag := 0;
-                    currentMove := moveList;
-                end
-        until (currentMove^.link = nil) or pruneFlag;
+        iterateMoveList;
 
         {stalemate condition}
         if (validMoveCount = 0) and not isKingChecked (turn, board) then
@@ -374,7 +364,9 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
             writeln (logfile, ': ', score:6)
         end;
 
-        release (heap)
+        moveStackPointer := savedMoveStackPointer;
     end;
 
+begin
+    moveStackPointer := 0
 end.
