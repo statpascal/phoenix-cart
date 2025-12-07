@@ -3,35 +3,28 @@ unit Move;
 interface
 uses {$U chesslib.code} globals;
 
-procedure MoveGen(lastMove : moverec; var finalMove : moverec;
-                  var score : integer; aVal, bVal, cMoveFlag : integer);
-
+procedure MoveGen(var moveList, attackList, tailIndex, attackIndex :
+                  listPointer; lastMove : moverec);
+                  
 implementation
-uses {$U chesslib.code} scorepos,
-     {$U interface.code} trimprocs, pmove;
+uses {$U interface.code} trimprocs;
 
 procedure MoveGen;
 
 label
- 1, 3, 5;
+ 3;
 
 var
- i, j, k, l, n, offset, initOffset, bestScore : integer;
- pLoc, sideOffset, offset1, offset2, offset3, offset4 : integer;
- wCheckFlag, bCheckFlag, offset7, epCapFlag, switchFlag : integer;
- offset5, offset6, attackFlag, evalScore : integer;
- pruneFlag, sPage2, mateFlag, alpha, beta : integer;
+ j, k, l, n, offset, initOffset : integer;
+ pLoc, sideOffset, offset1, offset2, offset4 : integer;
+ offset7, epCapFlag : integer;
+ alpha, beta : integer;
  foundFlag : boolean;
- bestMove, tempMove : moverec;
+ currentMove : listPointer;
  posArray, moveArray : bitarray;
- moveList, attackList, tailIndex, attackIndex, currentMove : listPointer;
  bit8, bit9 : bitboard;
- buffer : array[0..59] of integer;
 
 begin
- alpha := aVal;
- beta := bVal;
-
  startPage := BASE;
  sPage := BASE1;
 
@@ -198,16 +191,38 @@ begin
 
    {bit2 now has the trimmed move list for the current piece}
 
-   {skip king move if no valid move on first ply}
+   {skip king move if no valid move}
    {allows for stalemate detection}
-   if (j = 40) and (ply = gamePly) then
+   if j = 40 then
     begin
+     {save main boards}
+     dataSize := 120;
+     offset1 := WPO;
+     DataOps(2, startPage, dataSize, offset1, buffer);
+     offset1 := SWPO;
+     sPage := BASE2;
+     DataOps(1, sPage, dataSize, offset1, buffer);
+     {transfer temp boards to main boards}
+     offset1 := TWPO;
+     DataOps(2, startPage, dataSize, offset1, buffer);
+     offset1 := WPO;
+     DataOps(1, startPage, dataSize, offset1, buffer);
      {get the combined trim boards}
      bit8 := bit2;
+     sFlag := 1;
      CombineTrim(bit3, bit5, lastMove);
      bit1 := bit9;
      bit2 := bit8;
-
+     sFlag := 0;
+     {restore the main boards}
+     offset1 := SWPO;
+     sPage := BASE2;
+     dataSize := 120;
+     DataOps(2, sPage, dataSize, offset1, buffer);
+     offset1 := WPO;
+     DataOps(1, startPage, dataSize, offset1, buffer);
+     sPage := BASE1;
+     dataSize := 8;
      {check if king movement overlaps opposite pieces combined movement}
      if turn = 0 then
       BitAnd(bit2, bit5, bit8)
@@ -486,9 +501,7 @@ begin
       moveList := currentMove;
      end;
    end;
-
- {$I move1.text}
 end; (* MoveGen *)
 
-end.
+end. (* Move *)
 

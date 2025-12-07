@@ -94,7 +94,7 @@ const
  SWPIECES = 880;
  SBPIECES = 888;
  PLAYLIST = 896;
- (*OPENLIB = 0; {BASE 3}*)
+ OPENLIB = 0; {BASE 3}
  GAMESTORE = 0; {BASE 4}
  
 type
@@ -123,7 +123,7 @@ var
  startPage, sPage, dataSize, turn, gameSide, gamePointer : integer;
  pieceCount, wCastleFlag, bCastleFlag, ply, cWarning : integer;
  gamePly, wMobility, bMobility, gameMove, humanSide : integer;
- wRAFlag, wLAFlag, bRAFlag, bLAFlag : integer;
+ wRAFlag, wLAFlag, bRAFlag, bLAFlag, sFlag : integer;
  wRookLFlag, wRookRFlag, bRookLFlag, bRookRFlag : integer;
  moveNum : longint;
  bit1, bit2, bit3, bit4, bit5, bit6, bit7, bitRes : bitboard;

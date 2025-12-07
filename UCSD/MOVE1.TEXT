@@ -1,4 +1,40 @@
-(* move1 *)
+unit Move1;
+
+interface
+uses {$U chesslib.code} globals;
+
+procedure ProcessMove(var score : integer; alpha, beta, cMoveFlag : integer;
+                      var finalMove : moverec; lastMove : moverec);
+
+implementation
+uses {$U chesslib.code} move, scorepos,
+     {$U interface.code} trimprocs, pmove;
+ 
+procedure ProcessMove;
+
+label
+ 1, 2, 5;
+ 
+var
+ i, j, l, n, offset, bestScore, switchFlag : integer;
+ offset1, offset2, offset3, offset4, offset5, offset6, offset7 : integer;
+ attackFlag, evalScore, pruneFlag : integer;
+ foundFlag : boolean;
+ bestMove, tempMove : moverec;
+ moveList, attackList, tailIndex, attackIndex, currentMove : listPointer;
+ bit9 : bitboard;
+ 
+begin
+ MoveGen(moveList, attackList, tailIndex, attackIndex, lastMove);
+ 
+ {save ply base bitboards}
+ offset := TWPO;
+ dataSize := 120;
+ DataOps(2, startPage, dataSize, offset, buffer);
+ offset := PLYBOARDS + ((ply + 3) * 120);
+ DataOps(1, sPage, dataSize, offset, buffer);
+ dataSize := 8;
+ 
  if turn = 0 then
   bestScore := -20000
  else
@@ -15,23 +51,24 @@
   end;
 
  {stalemate condition}
- if (currentMove^.link = NIL) and (attackFlag = 0) and (ply = gamePly) then
+ if (currentMove^.link = NIL) and (attackFlag = 0) then
   begin
-   gotoxy(20, 1);
-   write(chr(7), chr(7), 'stalemate!');
-   i := GetKey;
-   readln;
-   Utility(switchFlag);
-   exit(program);
+   if ply = gamePly then
+    begin
+     gotoxy(20, 1);
+     write(chr(7), chr(7), 'stalemate!');
+     i := GetKey;
+     readln;
+     switchFlag := 1;
+     Utility(switchFlag);
+     exit(program);
+    end
+   else
+    begin
+     score := 0;
+     goto 2;
+    end;
   end;
-
- {save ply base bitboards}
- offset := TWPO;
- dataSize := 120;
- DataOps(2, startPage, dataSize, offset, buffer);
- offset := PLYBOARDS + ((ply + 3) * 120);
- DataOps(1, sPage, dataSize, offset, buffer);
- dataSize := 8;
 
  repeat
   foundFlag := FALSE;
@@ -262,7 +299,7 @@
     else
      turn := 0;
 
-    MoveGen(tempMove, finalMove, score, alpha, beta, cMoveFlag);
+    ProcessMove(score, alpha, beta, cMoveFlag, finalMove, lastMove);
 
     if ply = gamePly then
      cMoveFlag := 0;
@@ -307,7 +344,7 @@
   offset := TWPO;
   DataOps(1, startPage, dataSize, offset, buffer);
   dataSize := 8;
-
+    
   currentMove := currentMove^.link;
   if (currentMove^.link = NIL) and (attackFlag = 1) then
    begin
@@ -315,17 +352,18 @@
     currentMove := moveList;
    end;
  until (currentMove^.link = NIL) or (pruneFlag = 1);
-
+ 
  finalMove := bestMove;
  score := bestScore;
  
+ 2:
  {up 1 ply}
  ply := succ(ply);
  if turn = 0 then
   turn := 1
  else
   turn := 0;
-
+  
  {dispose of linked lists}
  repeat
   attackIndex := attackList;
@@ -347,6 +385,8 @@
 
  dispose(moveList);
  dispose(attackList);
+end; (* ProcessMove *)
+end. (* Move1 *)
 
 
   

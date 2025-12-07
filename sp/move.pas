@@ -86,7 +86,7 @@ procedure printMove (var move: moverec);
         end;
     
     begin
-        if move.id <> 99 then
+        if move.id <> InvalidPiece then
             begin
                 write (logFile, pieceName [succ (move.id shr 3)]);
                 writeCoord (move.startSq);
@@ -160,17 +160,18 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                     epCapFlag := 0;
                     currentMoveBoard := Trim (turn, j, pLoc, lastMove, board, epCapFlag);
 
+(*
                     {skip king move if no valid move on first ply}
                     {allows for stalemate detection}
-                    if (j = 40) and (ply = gamePly) then
+                    if (j = King) then
                         begin
                             CombineTrim(bit3, bit5, lastMove, board);
-                            
+
                             {check if king movement overlaps opposite pieces combined movement}
                             if turn = 0 then 
-                                BitAnd(currentMoveBoard, bit5, bit8)
+                                BitAnd (currentMoveBoard, bit5, bit8)
                             else
-                                BitAnd(currentMoveBoard, bit3, bit8);
+                                BitAnd (currentMoveBoard, bit3, bit8);
                                 
                             BitPos(bit8, moveArray);
                             n := moveArray[0];
@@ -178,6 +179,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                             if n = moveArray[0] then
                                 exit	// all pieces done - return
                         end;
+*)                        
 
                     {find potential captures and add to attack list}
                     if turn = 0 then
@@ -209,7 +211,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
     
 procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; cMoveFlag, ply, turn: integer);
     var 
-        i, attackId, capId, bestScore: integer;
+        i, attackId, capId, bestScore, validMoveCount: integer;
         switchFlag: integer;
         attackFlag, evalScore: integer;
         foundFlag, pruneFlag, ignoreMove: boolean;
@@ -248,7 +250,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
         attackIndex := attackList;
 
         loopAllPieces (board, turn, lastMove, attackIndex, tailIndex, ply);
-        bestMove.id := 99;
+        bestMove.id := InvalidPiece;
 
         if turn = 0 then
             bestScore := -20000
@@ -264,17 +266,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                 currentMove := moveList;
             end;
 
-        {stalemate condition}
-        if (currentMove^.link = nil) and (attackFlag = 0) and (ply = gamePly) then
-            begin
-                gotoxy(20, 1);
-                write(chr(7), chr(7), 'stalemate!');
-                i := GetKeyInt;
-                readln;
-                Utility(switchFlag);
-                // TODO: jump control
-                exit;
-            end;
+        validMoveCount := 0;
 
         repeat
             tempMove := currentMove^;
@@ -288,11 +280,11 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                 cMoveFlag := 1;
 
             {check if own king in check after current move}
-//            if (cWarning = 1) and (ply = gamePly) then
             ignoreMove := isKingChecked (turn, workBoard);
 
             if not ignoreMove then 
                 begin
+                    inc (validMoveCount);
                     if not foundFlag and (ply <= 1) or (ply = -1) then
                         {terminal node check}
                         begin
@@ -312,7 +304,6 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                         end
                     else
                         begin
-  //                          turn := 1 - turn;
                             MoveGen (workBoard, tempMove, finalMove, evalScore, alpha, beta, cMoveFlag, pred (ply), 1 - turn);
                             if ply = gamePly then
                                 cMoveFlag := 0
@@ -356,6 +347,23 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                 end
         until (currentMove^.link = nil) or pruneFlag;
 
+        {stalemate condition}
+        if (validMoveCount = 0) and not isKingChecked (turn, board) then
+            begin
+                if ply = gamePly then
+                    begin
+                        gotoxy(20, 1);
+                        write(chr(7), chr(7), 'stalemate!');
+                        i := GetKeyInt;
+                        readln;
+                        Utility(switchFlag);
+                        // TODO: where to go from here
+                    end
+                else
+                    score := 0;
+                exit
+            end;
+
         finalMove := bestMove;
         score := bestScore;
         
@@ -366,8 +374,6 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
             writeln (logfile, ': ', score:6)
         end;
 
-        {up 1 ply}
-//        turn := 1 - turn;
         release (heap)
     end;
 

@@ -199,7 +199,7 @@
    end
   else
    begin
-    if abs(moveScore) = 20000 then
+    if (abs(moveScore) = 20000) and (turn <> humanSide) then
      begin
       gotoxy(20, 1);
       write(chr(7), chr(7), 'resign!');

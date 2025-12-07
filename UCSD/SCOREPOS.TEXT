@@ -15,8 +15,8 @@ label
 
 var
  sPage1, dSize, initOffset, offset, offset1, offset2, i, j, k, l : integer;
- sPage2, side, wScore, bScore, evalScore, pawnCount, bonus : integer;
- endGame, pLoc : integer;
+ sPage2, side, wScore, bScore, evalScore, tempTurn, bonus : integer;
+ endGame, pLoc, kDist, xDist, yDist : integer;
  cRFlag : boolean;
  locArray, moveArray : bitarray;
  bit8, bit9 : bitboard;
@@ -87,22 +87,21 @@ begin
   end;
   
  {endgame determination}
- if turn = 0 then
-  offset1 := TBPIECES
- else
-  offset1 := TWPIECES;
+ offset1 := TAPIECES;
  DataOps(2, startPage, dataSize, offset1, bit1);
  BitPos(bit1, locArray);
- if locArray[0] <= 5 then
-  endGame := 1;
- if locArray[0] <= 3 then
-  endGame := 2;
- 
+ if locArray[0] in [6..8] then
+  endGame := 1
+ else
+  if locArray[0] <=5 then
+   endGame := 2;
+   
  {determine base score for each side}
  for side := 0 to 1 do
   begin
    {en passant capture risk}
-   if (tempMove.id = 0) and (abs(tempMove.startSq - tempMove.endSq) = 16) then
+   if (tempMove.id = 0) and (abs(tempMove.startSq - tempMove.endSq) = 16)
+      and (side = turn) then
     begin
      if side = 0 then
       begin
@@ -123,8 +122,6 @@ begin
       else
        bScore := bScore - 100;
     end;
-
-   sPage1 := BASE2;
 
    if side = 0 then
     initOffset := TWPO
@@ -164,7 +161,7 @@ begin
                   begin
                    for l := 0 to 1 do
                     begin
-                     offset2 := FILEBLANK + (56 * l);;
+                     offset2 := FILEBLANK + (56 * l);
                      DataOps(2, startPage, dataSize, offset2, bit4);
                      BitAnd(bit2, bit4, bit4);
                      if not(IsClear(bit4)) then
@@ -206,15 +203,15 @@ begin
                   begin
                    for l := 0 to 1 do
                     begin
-                     offset2 := FILEBLANK + (56 * l);;
+                     offset2 := FILEBLANK + (56 * l);
                      DataOps(2, startPage, dataSize, offset2, bit4);
                      BitAnd(bit2, bit4, bit4);
                      if not(IsClear(bit4)) then
                       begin
                        if l = 0 then
-                        offset2 := PIECELOC + ((pLoc + 9) * 8)
+                        offset2 := PIECELOC + ((pLoc + 7) * 8)
                        else
-                        offset2 := PIECELOC + ((pLoc + 7) * 8);
+                        offset2 := PIECELOC + ((pLoc + 9) * 8);
                        DataOps(2, startPage, dataSize, offset2, bit4);
                        DataOps(2, startPage, dataSize, initOffset, bit5);
                        BitAnd(bit5, bit4, bit4);
@@ -236,7 +233,7 @@ begin
                 end;
 
                {apply piece square table offset}
-               DataOps(2, sPage1, dSize, offset1, l);
+               DataOps(2, sPage2, dSize, offset1, l);
                evalScore := evalScore + l;
               end;
           8 : begin
@@ -265,12 +262,15 @@ begin
                    dataSize := 8;
                    {trim movement of each rook}
                    bit7 := bit1;
+                   tempTurn := turn;
+                   turn := side;
                    if side = 0 then
                     offset1 := WPIECES
                    else 
                     offset1 := BPIECES;
                    Trim(8, moveArray[1], offset1, LastMove, bit8);
                    Trim(8, moveArray[2], offset1, LastMove, bit9);
+                   turn := tempTurn;
                    {check if there is overlap}
                    BitAnd(bit8, bit9, bitRes);
                    if not(IsClear(bitRes)) then
@@ -289,7 +289,23 @@ begin
                        BitAnd(bit9, bitRes, bit9);
                        BitAnd(bit8, bit9, bitRes);
                        if not(IsClear(bitRes)) then
-                        evalScore := evalScore + 100;
+                        begin
+                         if endGame = 0 then
+                          evalScore := evalScore + 50
+                         else
+                          evalScore := evalScore + 100;
+                        end
+                       else
+                        begin
+                         if (Abs(moveArray[1] - moveArray[2]) = 1) and
+                            (moveArray[1] Div 8 = moveArray[2] Div 8) then
+                          begin
+                           if endGame = 0 then
+                            evalScore := evalScore + 50
+                           else
+                            evalScore := evalScore + 100;
+                          end;
+                        end;
                       end;
                     end;
                    {restore primary boards}
@@ -309,14 +325,14 @@ begin
                evalScore := evalScore + 400;
                {apply piece square table offset}
                offset1 := KNIGHT + (pLoc * 2);
-               DataOps(2, sPage1, dSize, offset1, l);
+               DataOps(2, sPage2, dSize, offset1, l);
                evalScore := evalScore + l;
               end;
           24: begin
                evalScore := evalScore + 400;
                {apply piece square table offset}
                offset1 := BISHOP + (pLoc * 2);
-               DataOps(2, sPage1, dSize, offset1, l);
+               DataOps(2, sPage2, dSize, offset1, l);
                evalScore := evalScore + l;
               end;
           32: begin
@@ -328,11 +344,11 @@ begin
                 offset1 := KINGEND + (pLoc * 2)
                else
                 offset1 := KINGMID + (pLoc * 2);
-               DataOps(2, sPage1, dSize, offset1, l);
+               DataOps(2, sPage2, dSize, offset1, l);
                evalScore := evalScore + l;
                {apply castling bonus}
                if (cMoveFlag = 1) and (side = gameSide) then
-                evalScore := evalScore + 300;
+                evalScore := evalScore + 150;
               end;
          end;
         end;
@@ -356,7 +372,7 @@ begin
        evalScore := evalScore + 50;
 
       {encourage moving opposite king to board edge}
-      if endGame > 0 then
+      if (endGame > 0) and (side = gameSide) then
        begin
         if side = 0 then
          offset := TBKO
@@ -364,21 +380,17 @@ begin
          offset := TWKO;
         DataOps(2, startPage, dataSize, offset, bit1);
         offset := KINGEDGE;
-        DataOps(2, sPage1, dataSize, offset, bit2);
+        DataOps(2, sPage2, dataSize, offset, bit2);
         BitAnd(bit1, bit2, bit3);
         if not(IsClear(bit3)) then
          evalScore := evalScore + 100;
 
-        {move own king toward opposite king when <=4 pieces left}
-        if endGame = 2 then
-         begin
-          BitPos(bit1, locArray);
-          if not(abs(pLoc - locArray[1]) in[2, 15, 16, 17]) then
-           begin
-            evalScore := evalScore + ((8 - (abs(pLoc - locArray[1])
-                         div 2)) * 10);
-           end;
-         end;
+        {move own king toward opposite king when in end game}
+        BitPos(bit1, locArray);
+        yDist := abs((pLoc Div 8) - (locArray[1] Div 8));
+        xDist := abs((pLoc Mod 8) - (locArray[1] Mod 8));
+        kDist := xDist + yDist;
+        evalScore := evalScore + ((15 - kDist) * 15);
        end;
      1:
      end;

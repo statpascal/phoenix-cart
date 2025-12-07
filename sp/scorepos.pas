@@ -86,8 +86,8 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
                 begin
                     {bonus for connected rooks - check if other rook could be caught as opponent}
                     bits := Trim (1 - side, Rook, locArray [1], LastMove, board, epDummy);
-                    if (getBit (bits, locArray [2]) <> 0) and not (abs (locArray [2] - locArray [1]) in [1, 8]) then
-//                        inc (evalScore, 100)
+                    if getBit (bits, locArray [2]) <> 0 then
+                        inc (evalScore, 100)
                 end
         end;
         
@@ -104,6 +104,11 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
     procedure evaluateQueen;
         begin
             inc (evalScore, 973 * bitCount (sideBoards.queenBitboard))
+        end;
+        
+    function distance (p1, p2: integer): integer;
+        begin
+            distance := abs (p1 shr 3 - p2 shr 3) + abs (p1 and 7 - p2 and 7)
         end;
         
     procedure evaluateKing;
@@ -135,9 +140,10 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
             BitPos (ownKing, locArray);
             ownPos := locArray [1];
             
-            if endGame > 0 then
-                inc (evalScore, getPieceScoreValue (KingEndScore, ownPos))
-            else
+//            if endGame > 0 then
+//                inc (evalScore, getPieceScoreValue (KingEndScore, ownPos))
+//            else
+            if endGame = 0 then
                 inc (evalScore, getPieceScoreValue (KingMidScore, ownPos));
                 
             {apply castling bonus}
@@ -147,7 +153,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
             {bonus for checking opposite king}
             if isClear (opponentKing) then
                 inc (evalScore, 50)
-            else
+            else if side = gameSide then
                 begin
                     {encourage moving opposite king to board edge}
                     if endGame > 0 then
@@ -161,8 +167,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
                     if endGame = 2 then
                         begin
                             BitPos (opponentKing, locArray);
-                            if not (abs (ownPos - locArray[1]) in [2, 15, 16, 17]) then
-                                inc (evalScore, (8 - (abs (ownPos - locArray [1]) div 2)) * 10)
+                            inc (evalScore, (15 - distance (ownPos, locArray [1])) * 15);
                            end
                 end
         end;    
@@ -240,14 +245,14 @@ function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove
                 dec (bScore, 300);
                 
         {endgame determination}
-        if turn = 0 then
-            BitPos (board.blackPieces, locArray)
-        else
-            BitPos (board.whitePieces, locArray);
-        if locArray[0] <= 3 then
-            endGame := 2
-        else if locArray[0] <= 5 then
-            endGame := 1;
+        case bitCount (board.allPieces) of
+            2..5: 
+                endGame := 2;
+            6..8:
+                endGame := 1
+            else
+                endGame := 0
+        end;
             
         if (tempMove.id = Pawn) and (abs(tempMove.startSq - tempMove.endSq) = 16) then
             if turn = 0 then

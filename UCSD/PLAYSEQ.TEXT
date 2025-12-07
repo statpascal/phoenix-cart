@@ -94,7 +94,7 @@ if humanSide = gameSide then
      begin
       gotoxy(20, 7);
       write('thinking...');
-      MoveGen(lastMove, playMove, moveScore, aVal, bVal, cFlag);
+      ProcessMove(moveScore, aVal, bVal, cFlag, playMove, lastMove);
      end;
    end;
 

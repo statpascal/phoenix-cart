@@ -446,24 +446,25 @@ procedure chainMain;
                 end;
 
             {look for checkmate or stalemate condition}
-            if checkFlag and isOpponentMate (gameSide, mainBoard, playMove) then
-                begin
-                    gotoxy(20, 1);
-                    write(chr(7), chr(7), 'checkmate!');
-                    ans := GetKeyInt;
-                    readln;
-                    Utility(i);
-                    exit;
-                end;
-            if abs(moveScore) = 20000 then
-                begin
-                    gotoxy(20, 1);
-                    write(chr(7), chr(7), 'resign!');
-                    ans := GetKeyInt;
-                    readln;
-                    Utility(i);
-                    exit;
-                end;
+            if checkFlag then
+                if isOpponentMate (gameSide, mainBoard, playMove) then
+                    begin
+                        gotoxy(20, 1);
+                        write(chr(7), chr(7), 'checkmate!');
+                        ans := GetKeyInt;
+                        readln;
+                        Utility(i);
+                        exit;
+                    end
+                else if abs(moveScore) = 20000 then
+                    begin
+                        gotoxy(20, 1);
+                        write(chr(7), chr(7), 'resign!');
+                        ans := GetKeyInt;
+                        readln;
+                        Utility(i);
+                        exit;
+                    end;
                 
             inc (gameMove, gameSide);	// add 1 if black
             gameSide := 1 - gameSide;

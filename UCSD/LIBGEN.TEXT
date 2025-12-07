@@ -3,6 +3,7 @@ chesslib.code
 globals
 enscorepos
 enmove
+enmove1
 eq
 
 

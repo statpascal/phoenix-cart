@@ -82,23 +82,19 @@ procedure soundBell;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
     var
         dummyMove: moverec;
-        bit1, bit3, bit5: bitboard;
+        opponentMoves, res: bitboard;
     begin
         {ignore en passant - cannot affect king}
         fillchar (dummyMove, sizeof (dummyMove), 0);
-        CombineTrim(bit3, bit5, dummyMove, board);
         
         {check if own king attacked by opposite trim board}
+        opponentMoves := combineTrimSide (turn = 0, dummyMove, board);
         if turn = 0 then
-            bit1 := board.white.kingBitboard
+            BitAnd (opponentMoves, board.white.kingBitboard, res)
         else
-            bit1 := board.black.kingBitboard;
-        
-        if turn = 0 then
-            BitAnd(bit1, bit5, bit1)
-        else
-            BitAnd(bit1, bit3, bit1);
-        isKingChecked := not isClear (bit1)
+            BitAnd (opponentMoves, board.black.kingBitboard, res);
+            
+        isKingChecked := not isClear (res)
     end;
     
 
