@@ -51,6 +51,7 @@ var
     pieceCount, cWarning: integer;
     gamePly, gameMove, humanSide: integer;
     moveNumHi, moveNumLo: integer;
+    plyQS: integer;
     
     doLogging: boolean;
     logFile: text;

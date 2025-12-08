@@ -366,8 +366,8 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
         readln(gameMove)
     end;
 
-var
-    rs232: text;
+//var
+//    rs232: text;
 
 procedure MoveCoord(score, iLoc, eLoc : integer; flag : boolean);
 
@@ -406,11 +406,11 @@ begin
             else
                 writeln (moveNumLo);
             write('position score: ', score);
-            writeln (rs232, iLocString, eLocString)
+//            writeln (rs232, iLocString, eLocString)
         end;
 end; {MoveCoord}
 
 begin
-    assign (rs232, 'RS232');
-    rewrite (rs232)
+//    assign (rs232, 'RS232');
+//    rewrite (rs232)
 end.

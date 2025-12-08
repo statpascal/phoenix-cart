@@ -149,6 +149,17 @@ procedure initGame (var mainBoard: TBoardRecord);
                 rewrite (logFile)
             end;
             
+        writeln;
+        write ('QS deepening (0-9/u)');
+        repeat
+            ans := getKeyInt
+        until ans in [48..57, 85];
+        if ans = 85 then 
+            plyQS := -Maxint
+        else 
+            plyQS := 1 - (ans - 48)
+        
+            
     end;
 
 

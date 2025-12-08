@@ -247,7 +247,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                                 if not isKingChecked (turn, workBoard) then 
                                     begin
                                         inc (validMoveCount);
-                                        if not foundFlag and (ply <= 1) or (ply = -3) then
+                                        if not foundFlag and (ply <= 1) or (ply = plyQS) then
                                             {terminal node check}
                                             begin
                                                 {update number of positions evaluated}
