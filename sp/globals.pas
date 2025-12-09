@@ -54,6 +54,7 @@ var
     plyQS: integer;
     
     doLogging: boolean;
+    dummyVar: boolean;
     logFile: text;
     
 
@@ -180,6 +181,7 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
                 if (move.id = King) or (board.castleFlags and (blackRookLeftFlag or blackRookRightFlag) = (blackRookLeftFlag or blackRookRightFlag)) then
                     board.castleFlags := board.castleFlags or blackCastleFlag;
             end
+
     end;    
     
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: moverec);

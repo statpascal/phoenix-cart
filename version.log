@@ -6,3 +6,7 @@
 
 - added option for QS level
 - removed RS232 output for UCI handler
+
+2025-12-09-11-00
+
+- fixed logging bug on hardware

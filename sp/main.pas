@@ -147,6 +147,12 @@ procedure initGame (var mainBoard: TBoardRecord);
                 doLogging := true;
                 assign (logFile, 'DSK0.phoenix.log');
                 rewrite (logFile)
+            end
+        else
+            begin
+                doLogging := false;
+                assign (logFile, '');
+                rewrite (logFile)
             end;
             
         writeln;
