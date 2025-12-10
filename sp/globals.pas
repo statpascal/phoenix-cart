@@ -54,7 +54,6 @@ var
     plyQS: integer;
     
     doLogging: boolean;
-    dummyVar: boolean;
     logFile: text;
     
 

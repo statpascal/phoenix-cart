@@ -10,3 +10,7 @@
 2025-12-09-11-00
 
 - fixed logging bug on hardware
+
+2025-12-10-14-30
+
+- fixed uninitialized variable on repeated run from cart

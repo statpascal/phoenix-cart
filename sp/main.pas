@@ -71,6 +71,7 @@ procedure SaveMove;
 procedure initGame (var mainBoard: TBoardRecord);
     begin
         // Randomize;	// TODO
+        pieceCount := 0;
         gameSide := 0;
         gameMove := 1;
 
@@ -154,6 +155,8 @@ procedure initGame (var mainBoard: TBoardRecord);
                 assign (logFile, '');
                 rewrite (logFile)
             end;
+        writeln;
+        writeln ('doLogging: ', doLogging);
             
         writeln;
         write ('QS deepening (0-9/u)');
@@ -337,7 +340,10 @@ procedure chainMain;
 //                    if humanSide <> gameSide then
 //				TODO: handle side change
                     if pieceCount = -1 then
-                        exit
+                        begin
+                            writeln ('pieceCount = 1, exiting');
+                            exit
+                        end
                 end
             else
                 begin
