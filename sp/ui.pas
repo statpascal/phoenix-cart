@@ -7,7 +7,7 @@ uses {$U chesslib.code} globals;
 procedure PrintGame;
 procedure BoardDisplay (var board: TBoardRecord);
 procedure EnterPos (var board: TBoardRecord; var turn: integer);
-procedure MoveCoord (score, iLoc, eLoc: integer; flag: boolean);
+procedure showMove (score, iLoc, eLoc: integer; isHumanMove: boolean);
 
 implementation
 
@@ -369,46 +369,45 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
 //var
 //    rs232: text;
 
-procedure MoveCoord(score, iLoc, eLoc : integer; flag : boolean);
+procedure showMove (score, iLoc, eLoc: integer; isHumanMove: boolean);
+    var 
+        iLocString, eLocString : string;
 
-var 
-    iLocString, eLocString : string;
-
-begin
-    iLocString := '  ';
-    eLocString := '  ';
-    iLocString[1] := chr(65 + (iLoc mod 8));
-    iLocString[2] := chr(49 + (iLoc div 8));
-    eLocString[1] := chr(65 + (eLoc mod 8));
-    eLocString[2] := chr(49 + (eLoc div 8));
-    gotoxy(20, 4);
-    writeln('last move: ', iLocString, ' to ', eLocString);
-    if not(flag) then
-        begin
-            gotoxy(30, 16);
-            writeln('        ');
-            gotoxy(15, 17);
-            writeln('            ');
-            gotoxy(0, 16);
-            write('number of positions evaluated: ');
-            if moveNumHi > 0 then
-                begin
-                    write (moveNumHi);
-                    write ('000');
-                    if moveNumLo >= 100 then
-                        gotoxy (wherex - 3, wherey)
-                    else if moveNumLo >= 10 then
-                        gotoxy (wherex - 2, wherey)
-                    else
-                        gotoxy (wherex - 1, wherey);
-                    writeln (moveNumLo)
-                end
-            else
-                writeln (moveNumLo);
-            write('position score: ', score);
-//            writeln (rs232, iLocString, eLocString)
-        end;
-end; {MoveCoord}
+    begin
+        iLocString := '  ';
+        eLocString := '  ';
+        iLocString[1] := chr(65 + (iLoc mod 8));
+        iLocString[2] := chr(49 + (iLoc div 8));
+        eLocString[1] := chr(65 + (eLoc mod 8));
+        eLocString[2] := chr(49 + (eLoc div 8));
+        gotoxy(20, 4);
+        writeln('last move: ', iLocString, ' to ', eLocString);
+        if not isHumanMove then
+            begin
+                gotoxy(30, 16);
+                writeln('        ');
+                gotoxy(15, 17);
+                writeln('            ');
+                gotoxy(0, 16);
+                write('number of positions evaluated: ');
+                if moveNumHi > 0 then
+                    begin
+                        write (moveNumHi);
+                        write ('000');
+                        if moveNumLo >= 100 then
+                            gotoxy (wherex - 3, wherey)
+                        else if moveNumLo >= 10 then
+                            gotoxy (wherex - 2, wherey)
+                        else
+                            gotoxy (wherex - 1, wherey);
+                        writeln (moveNumLo)
+                    end
+                else
+                    writeln (moveNumLo);
+                write('position score: ', score);
+    //            writeln (rs232, iLocString, eLocString)
+            end;
+    end;
 
 begin
 //    assign (rs232, 'RS232');

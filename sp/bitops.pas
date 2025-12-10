@@ -38,11 +38,11 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
     procedure trimRay (var b: bitboard_byte; pos, dy, dxOp, oponent: integer); assembler;
             mov  @dy, r15
             mov  @pos, r12
+            mov  r12, r0
             andi r12, 7
             clr  r8
             movb @bitmasks(r12), r8	// bitval in high byte of r8
             
-            mov  @pos, r0
             srl  r0, 3		// r0: row
             clr	 r12		// clearing = false
             
@@ -72,10 +72,7 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
             ci   r0, 7
             jh   trimrayasm_4	// next row and exit when off board
             
-            mov  @dxOp, r14
-            jeq  trimrayasm_1	// dx is 0, continue with next row
-            
-            x    r14		// execute left or right shift of R8
+            x    @dxOp		// execute left/right shift of R8 or jump to trimrayasm_1
             movb r8, r8		// check if high byte is zero
             jne  trimrayasm_1   // continue with next row if bitval is in board
             
@@ -83,8 +80,10 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
     end;
 
     const
-        LeftVal = $0A18;	// sla r8, 1
-        RightVal = $0918;	// srl r9, 1
+        LeftVal =  $0A18;	// sla r8, 1
+        RightVal = $0918;	// srl r8, 1
+        ZeroVal =  $10EC;	// jmp trimrayasm_1
+        
         
     procedure trimRayPascal (var b: bitboard_byte; pos, dy, dx, oponent: integer);
         var row, bitval: integer;
@@ -124,9 +123,9 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
         if ptype <> Bishop then 
             begin
                 if pos < 56 then
-                    trimRay (bitboard_byte (b1), pos + 8, 1, 0, opponent);		// up
+                    trimRay (bitboard_byte (b1), pos + 8, 1, ZeroVal, opponent);		// up
                 if pos > 7 then
-                    trimRay (bitboard_byte (b1), pos - 8, -1, 0, opponent);		// down
+                    trimRay (bitboard_byte (b1), pos - 8, -1, ZeroVal, opponent);		// down
                 if pos and 7 <> 0 then
                     trimRay (bitboard_byte (b1), pos - 1, 0, LeftVal, opponent);	// left
                 if succ (pos) and 7 <> 0 then

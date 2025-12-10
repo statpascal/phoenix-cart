@@ -10,7 +10,6 @@ implementation
 
 uses trimprocs, ui, utility;
 
-
 function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
 
     function search (var sideBoards: TSideRecord): integer;
@@ -45,8 +44,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; lastMove: 
     label 
         l_1, l_2;
     var 
-        i, j, k, iLoc, eLoc, initOffset, offset, offset1, ans: integer;
-        sideOffset, offset2, offset3, offset4, switchState: integer;
+        i, j, k, iLoc, eLoc, switchState, ans: integer;
         validSq, foundFlag: boolean;
         fn: string [20];
         castleRights, epCapDummy: integer;
@@ -168,6 +166,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; lastMove: 
                 {king in check. undo move}
                 validSq := FALSE;
                 clearEntryField;
+                workBoard := board;
                 goto l_2;
             end;
     end; {playerMove}

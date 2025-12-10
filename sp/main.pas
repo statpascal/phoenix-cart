@@ -60,7 +60,7 @@ uses
     globals, move, trimprocs, ui, pmove, utility, resources;
 
 var 
-    i, j, moveScore, aVal, bVal, ans: integer;
+    i, j, moveScore, aVal, bVal: integer;
     lastMove, playMove, moveStore: moverec;
 
 
@@ -69,6 +69,8 @@ procedure SaveMove;
     end;
 
 procedure initGame (var mainBoard: TBoardRecord);
+    var
+        ans: integer;
     begin
         // Randomize;	// TODO
         pieceCount := 0;
@@ -296,7 +298,7 @@ end;
 procedure chainMain;
 
     var mainBoard: TBoardRecord;
-        checkFlag, humanFlag: boolean;
+        checkFlag: boolean;
 
     begin
         mainBoard := getInitPosition;
@@ -309,7 +311,6 @@ procedure chainMain;
                 gotoxy(20, 1);
                 write(chr(7), chr(7), 'check!');
             end;
-        ans := GetKeyInt;
 
         repeat
         
@@ -327,11 +328,9 @@ procedure chainMain;
             bVal := 20000;
             moveScore := 0;
 
-            humanFlag := FALSE;
 
             if humanSide = gameSide then
                 begin
-                    humanFlag := TRUE;
 
         {save current game state}
 // TODO: move to VDP                    SaveMove;
@@ -341,7 +340,8 @@ procedure chainMain;
 //				TODO: handle side change
                     if pieceCount = -1 then
                         begin
-                            writeln ('pieceCount = 1, exiting');
+                            writeln;
+                            writeln ('pieceCount = -11, exiting');
                             exit
                         end
                 end
@@ -474,7 +474,6 @@ procedure chainMain;
                     begin
                         gotoxy(20, 1);
                         write(chr(7), chr(7), 'checkmate!');
-                        ans := GetKeyInt;
                         readln;
                         Utility(i);
                         exit;
@@ -483,18 +482,17 @@ procedure chainMain;
                     begin
                         gotoxy(20, 1);
                         write(chr(7), chr(7), 'resign!');
-                        ans := GetKeyInt;
                         readln;
                         Utility(i);
                         exit;
                     end;
                 
             inc (gameMove, gameSide);	// add 1 if black
+            showMove (moveScore, playMove.startSq, playMove.endSq, gameSide = humanSide);
             gameSide := 1 - gameSide;
 
 //            check3Rep;
 
-            MoveCoord(moveScore, playMove.startSq, playMove.endSq, humanFlag);
         until FALSE;
     end;
 
