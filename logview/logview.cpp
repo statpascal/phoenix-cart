@@ -120,7 +120,7 @@ void TMainWindow::buildTreeModel (const std::string &fn) {
     
     std::ifstream f (fn);
     std::string s;    
-    std::array<Gtk::TreeModel::iterator, 20> levels;
+    std::array<Gtk::TreeModel::iterator, 100> levels;
     std::int32_t lineCount = 0;
     
     while (getline (f, s)) {
