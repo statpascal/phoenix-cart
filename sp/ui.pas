@@ -115,8 +115,8 @@ var
 
 begin
     clrscr;
-    writeln('Phoenix Chess');
-    writeln('ply : ', gamePly);
+    writeln('Phoenix Chess ', versionString);
+    writeln('ply : ', gamePly, '-', succ (gamePly - plyQS));
     writeln;
     y := 4;
     row := 8;

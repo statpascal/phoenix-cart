@@ -25,6 +25,8 @@ const
     blackLeftCastleRight = 4;
     blackRightCastleRight = 8;
     
+    versionString = '2025-12-12-16-00';
+    
 type 
     listPointer = ^moverec;
     moverec = record

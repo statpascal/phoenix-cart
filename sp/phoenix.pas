@@ -5,7 +5,7 @@ uses globals, main, resources, vdp;
 begin
     clrscr;
     setBackColor (white);
-    writeln('Phoenix Chess SP - 2025-12-10-14-30');
+    writeln('Phoenix Chess ', versionString);
     chainMain;
 
     writeln;
