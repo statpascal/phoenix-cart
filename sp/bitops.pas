@@ -3,7 +3,11 @@ unit bitops;
 interface
 
 type 
-    bitboard = array [0..3] of integer;
+    bitboard = record
+                   case boolean of
+                       false: (b: array [0..7] of uint8);
+                       true:  (w: array [0..3] of integer)
+               end;
     bitarray = array [0..64] of integer;
 
 
@@ -11,12 +15,10 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
 procedure BitPos (var b1: bitboard; var posarray: bitarray);
 function BitCount (var b: bitboard): integer;
 
-procedure BitNot (var b1, br: bitboard);
+// procedure BitNot (var b1, br: bitboard);
 procedure BitAnd (var b1, b2, br: bitboard);
 procedure BitAndNot (var b1, b2, br: bitboard); assembler;
 procedure BitOr (var b1, b2, br: bitboard);
-procedure RShift (var b1, br: bitboard; n: integer);
-procedure LShift (var b1, br: bitboard; n: integer);
 
 procedure clearBit (var b: bitboard; n: integer);
 procedure setBit (var b: bitboard; n: integer);
@@ -218,11 +220,8 @@ function BitCount (var b: bitboard): integer; assembler;
         mov  *r10, r12		// store result
         mov  r13, *r12
 end;
-        
 
-
-// complements a bitboard
-// the complement of bitboard1 will be stored in bitboard2
+// br := not b1
 
 procedure BitNot(var b1, br : bitboard); assembler;
         lwpi    >8320
@@ -276,35 +275,14 @@ procedure BitAnd(var b1, b2, br : bitboard); assembler;
         inv	r12
         szc	r12, r0
         mov	r0, *r15
-(*        
-        mov 	*r13+, *r15
-        mov	*r14+, r12
-        inv	r12
-        szc	r12, *r15+
-        
-        mov 	*r13+, *r15
-        mov	*r14+, r12
-        inv	r12
-        szc	r12, *r15+
-        
-        mov 	*r13+, *r15
-        mov	*r14+, r12
-        inv	r12
-        szc	r12, *r15+
-        
-        mov 	*r13, *r15
-        mov	*r14, r12
-        inv	r12
-        szc	r12, *r15
-*)
 end;
 
 // br := b1 and not b2
 
-procedure BitAndNot (var b1, b2, br : bitboard); assembler;
-        mov     @br, r15        //get pointer to bitboard3
-        mov     @b2, r14        //get pointer to bitboard2
-        mov     @b1, r13        //get pointer to bitboard1
+procedure BitAndNot (var b1, b2, br: bitboard); assembler;
+        mov     @br, r15
+        mov     @b2, r14
+        mov     @b1, r13
         
         mov 	*r13+, r0
         szc	*r14+, r0
@@ -323,109 +301,28 @@ procedure BitAndNot (var b1, b2, br : bitboard); assembler;
         mov	r0, *r15
 end;
 
-//logicaly OR two bitboards
-//bitboard1 and bitboard2 are ORed and the result placed in bitboard3
+// br := br or b2
 
 procedure BitOr(var b1, b2, br : bitboard); assembler;
-        lwpi    >8320
-        mov     @>8314, r10      // copy stack pointer from Pascal runtime workspace
+        mov     @br, r15
+        mov     @b2, r14
+        mov     @b1, r13
+        
+        mov 	*r13+, r0
+        soc	*r14+, r0
+        mov	r0, *r15+
+        
+        mov 	*r13+, r0
+        soc	*r14+, r0
+        mov	r0, *r15+
+        
+        mov 	*r13+, r0
+        soc	*r14+, r0
+        mov	r0, *r15+
 
-        mov     @br,r7          //get pointer to bitboard3
-        mov     @b2,r6          //get pointer to bitboard2
-        mov     @b1,r5          //get pointer to bitboard1
-        mov     *r6+,r3         //protect contents of bitboard2
-        soc     *r5+,r3         //or bitboard1 and bitboard2
-        mov     r3,*r7+         //store result in bitboard3
-        mov     *r6+,r3
-        soc     *r5+,r3
-        mov     r3,*r7+
-        mov     *r6+,r3
-        soc     *r5+,r3
-        mov     r3,*r7+
-        mov     *r6,r3
-        soc     *r5,r3
-        mov     r3,*r7
-
-        lwpi    >8300
-end;
-
-
-//logically right shift a bitboard
-//bitboard1 is logically right shifted intnum times
-//the result is placed in bitboard2
-
-procedure RShift(var b1, br : bitboard; n : integer); assembler;
-        lwpi    >8320
-        mov     @>8314, r10      // copy stack pointer from Pascal runtime workspace
-
-        mov     @n,r5           //get number of shifts
-        mov     @br,r7          //get pointer to bitboard2
-        mov     @b1,r6          //get pointer to bitboard1
-        mov     *r6+,r4         //transfer bitboard1 to regs 4-1
-        mov     *r6+,r3
-        mov     *r6+,r2
-        mov     *r6,r1
-    nxtshft 
-        srl     r1,1            //right shift r1-r4 sequentially 1 position
-        srl     r2,1
-        jnc     notset1         //transfer carry bit to previous register if set
-        ori     r1,>8000
-    notset1 
-        srl     r3,1
-        jnc     notset2
-        ori     r2,>8000
-    notset2 
-        srl     r4,1
-        jnc     notset3
-        ori     r3,>8000
-    notset3 	
-        dec     r5              //done with shifts?
-        jne     nxtshft
-        mov     r4,*r7+         //save shifted bitboard1 to bitboard2
-        mov     r3,*r7+
-        mov     r2,*r7+
-        mov     r1,*r7
-
-        lwpi    >8300
-end;
-
-//logically left shift a bitboard
-//bitboard1 is logically left shifted intnum times
-//the result is placed in bitboard2
-
-procedure LShift(var b1, br : bitboard; n : integer); assembler;
-        lwpi    >8320
-        mov     @>8314, r10      // copy stack pointer from Pascal runtime workspace
-
-        mov     @n,r5           //get number of shifts
-        mov     @br,r7          //get pointer to bitboard2
-        mov     @b1,r6          //get pointer to bitboard1
-        mov     *r6+,r4         //transfer bitboard1 to r4-r1
-        mov     *r6+,r3
-        mov     *r6+,r2
-        mov     *r6,r1
-    newshft 
-        sla     r4,1            //left shift r4-r1 in sequence 1 position
-        sla     r3,1
-        jnc     nocar1          //transfer carry bit to next register if set
-        ori     r4,>0001
-    nocar1  
-        sla     r2,1
-        jnc     nocar2
-        ori     r3,>0001
-    nocar2  
-        sla     r1,1
-        jnc     nocar3
-        ori     r2,>0001
-    nocar3  
-        dec     r5              //done with shifts?
-        jne     newshft
-        mov     r4,*r7+         //save shifted bitboard1 to bitboard2
-        mov     r3,*r7+
-        mov     r2,*r7+
-        mov     r1,*r7
-
-        lwpi    >8300
+        mov 	*r13, r0
+        soc	*r14, r0
+        mov	r0, *r15
 end;
 
 procedure clearBit (var b: bitboard; n: integer); assembler;

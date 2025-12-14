@@ -57,7 +57,7 @@ implementation
 // uses random,
 
 uses 
-    globals, move, trimprocs, ui, pmove, utility, resources;
+    globals, move, trimprocs, ui, pmove, utility, resources, fen,  logger;
 
 var 
     i, j, moveScore, aVal, bVal: integer;
@@ -74,8 +74,8 @@ procedure initGame (var mainBoard: TBoardRecord);
     begin
         // Randomize;	// TODO
         pieceCount := 0;
-        gameSide := 0;
-        gameMove := 1;
+//        gameSide := 0;
+//        gameMove := 1;
 
         lastMove.id := 99;
         lastMove.startSq := 0;
@@ -146,19 +146,7 @@ procedure initGame (var mainBoard: TBoardRecord);
             ans := GetKeyInt;
         until ans in[78, 89];
         if ans = 89 then
-            begin
-                doLogging := true;
-                assign (logFile, 'DSK0.phoenix.log');
-                rewrite (logFile)
-            end
-        else
-            begin
-                doLogging := false;
-                assign (logFile, '');
-                rewrite (logFile)
-            end;
-        writeln;
-        writeln ('doLogging: ', doLogging);
+            startLogging ('DSK0.phoenix.log');
             
         writeln;
         write ('QS deepening (0-9/u)');
@@ -169,8 +157,6 @@ procedure initGame (var mainBoard: TBoardRecord);
             plyQS := -Maxint
         else 
             plyQS := 1 - (ans - 48)
-        
-            
     end;
 
 
@@ -301,7 +287,8 @@ procedure chainMain;
         checkFlag: boolean;
 
     begin
-        mainBoard := getInitPosition;
+//        mainBoard := getInitPosition;
+        setFENPosition (mainBoard, gameSide, gameMove, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
         initGame (mainBoard);
 
      {start game}

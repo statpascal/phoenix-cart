@@ -30,16 +30,6 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                 BitAndNot (result, board.allPieces, result);
                 
                 row := iLoc shr 3;
-(*                
-                if (row = 1) or (row = 6) then
-                    begin
-                        bitMask := 128 shr (iLoc and 7);
-                        if (row = 1) and (result [1] and (bitmask shl 8) = 0) then
-                            result [1] := result [1] and not bitmask
-                        else if (row = 6) and (result [2] and bitmask = 0) then
-                            result [2] := result [2] and not (bitmask shl 8)
-                    end;
-*)
                 if (turn = 0) and (row = 1) and (getBit (result, iLoc + 8) = 0) then
                     clearBit (result, iLoc + 16);
                 if (turn = 1) and (row = 6) and (getBit (result, iLoc - 8) = 0) then
@@ -137,7 +127,6 @@ function combineTrimSide (isBlack: boolean; var lastMove: moverec; var board: TB
             end
     end;        
         
-
 procedure CombineTrim (var whiteTrim, blackTrim: bitboard; var lastMove: moverec; var board: TBoardRecord);
     begin
         whiteTrim := combineTrimSide (false, lastmove, board);

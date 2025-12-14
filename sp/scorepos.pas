@@ -87,7 +87,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
                     {bonus for connected rooks - check if other rook could be caught as opponent}
                     bits := Trim (1 - side, Rook, locArray [1], LastMove, board, epDummy);
                     if getBit (bits, locArray [2]) <> 0 then
-                        inc (evalScore, 100)
+//                        inc (evalScore, 100)
                 end
         end;
         
@@ -113,7 +113,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
         
     procedure evaluateKing;
         const
-            KingEdge: bitboard = ($ff81, $8181, $8181, $81ff);
+            KingEdge: array [0..7] of uint8 = ($ff, $81, $81, $81, $81, $81, $81, $ff);
         var
             ownKing, opponentKing, bits: bitboard;
             locArray: bitarray;
@@ -140,9 +140,9 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
             BitPos (ownKing, locArray);
             ownPos := locArray [1];
             
-//            if endGame > 0 then
-//                inc (evalScore, getPieceScoreValue (KingEndScore, ownPos))
-//            else
+            if endGame > 0 then
+                inc (evalScore, getPieceScoreValue (KingEndScore, ownPos))
+            else
             if endGame = 0 then
                 inc (evalScore, getPieceScoreValue (KingMidScore, ownPos));
                 
@@ -158,7 +158,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
                     {encourage moving opposite king to board edge}
                     if endGame > 0 then
                         begin
-                            BitAnd (opponentKing, KingEdge, bits);
+                            BitAnd (opponentKing, bitboard (KingEdge), bits);
                             if not isClear (bits) then
                                 inc (evalScore, 100)
                     end;

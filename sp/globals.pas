@@ -25,7 +25,12 @@ const
     blackLeftCastleRight = 4;
     blackRightCastleRight = 8;
     
-    versionString = '2025-12-12-16-00';
+    versionString = '2025-12-14-19-00';
+    
+    const 
+        Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
+                                              ('p', 'r', 'n', 'b', 'q', 'k'));
+    
     
 type 
     listPointer = ^moverec;
@@ -55,11 +60,7 @@ var
     moveNumHi, moveNumLo: integer;
     plyQS: integer;
     
-    doLogging: boolean;
-    logFile: text;
-    
-
-procedure ClearBitboard (var bit1: bitboard);
+procedure ClearBitboard (var b: bitboard);
 function IsClear (var b: bitboard): boolean;
 
 function GetKeyInt: integer;
@@ -206,16 +207,16 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
         {check back row interposing pieces}
         if turn = 0 then 
             begin
-                if (board.castleFlags and whiteRookLeftFlag = 0) and (board.allPieces [0] and $7000 = 0) then
+                if (board.castleFlags and whiteRookLeftFlag = 0) and (board.allPieces.b [0] and $70 = 0) then
                     result := whiteLeftCastleRight;
-                if (board.castleFlags and whiteRookRightFlag = 0) and (board.allPieces [0] and $0600 = 0) then
+                if (board.castleFlags and whiteRookRightFlag = 0) and (board.allPieces.b [0] and $06 = 0) then
                     result := result or whiteRightCastleRight
             end
         else
             begin
-                if (board.castleFlags and blackRookLeftFlag = 0) and (board.allPieces [3] and $0007 = 0) then
+                if (board.castleFlags and blackRookLeftFlag = 0) and (board.allPieces.b [7] and $07 = 0) then
                     result := blackLeftCastleRight;
-                if (board.castleFlags and blackRookRightFlag = 0) and (board.allPieces [3] and $0006 = 0) then
+                if (board.castleFlags and blackRookRightFlag = 0) and (board.allPieces.b [7] and $06 = 0) then
                     result := result or blackRightCastleRight
             end;
         if result = 0 then
@@ -226,16 +227,16 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
         bits := combineTrimSide (turn = 0, dummyMove, board);
         if turn = 0 then
             begin
-                if bits [0] and $f000 <> 0 then		// not correct - rook may be attacked
+                if bits.b [0] and $f0 <> 0 then		// not correct - rook may be attacked
                     result := result and not whiteLeftCastleRight;
-                if bits [0] and $0f00 <> 0 then
+                if bits.b [0] and $0f <> 0 then
                     result := result and not whiteRightCastleRight
             end
         else
             begin
-                if bits [3] and $00f0 <> 0 then
+                if bits.b [7] and $f0 <> 0 then
                     result := result and not blackLeftCastleRight;
-                if bits [3] and $000f <> 0 then
+                if bits.b [7] and $0f <> 0 then
                     result := result and not blackRightCastleRight
             end
     end;        
@@ -246,12 +247,9 @@ function getKeyInt: integer;
         getKeyInt := ord (upcase (getkey ()))
     end;
 
-procedure ClearBitboard(var bit1: bitboard);
-    var 
-        i: integer;
+procedure ClearBitboard (var b: bitboard);
     begin
-        for i := 0 to 3 do
-            bit1[i] := 0;
+        fillChar (b, sizeof (b), 0)
     end; 
 
 function IsClear(var b: bitboard): boolean; assembler;
@@ -267,12 +265,5 @@ function IsClear(var b: bitboard): boolean; assembler;
         mov  *r10, r12
         movb r14, *r12
 end;        
-
-(*
-    begin
-        IsClear := b [0] or b [1] or b [2] or b [3] = 0
-    end;
-*)    
-
 
 end.
