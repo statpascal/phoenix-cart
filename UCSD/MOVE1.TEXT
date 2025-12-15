@@ -18,7 +18,7 @@ label
 var
  i, j, l, n, offset, bestScore, switchFlag : integer;
  offset1, offset2, offset3, offset4, offset5, offset6, offset7 : integer;
- attackFlag, evalScore, pruneFlag : integer;
+ attackFlag, evalScore, pruneFlag, qsFlag : integer;
  foundFlag : boolean;
  bestMove, tempMove : moverec;
  moveList, attackList, tailIndex, attackIndex, currentMove : listPointer;
@@ -39,6 +39,8 @@ begin
   bestScore := -20000
  else
   bestScore := 20000;
+
+ qsFlag := 0;
 
  ClearBitboard(bit9);
  {iterate through move list}
@@ -124,6 +126,7 @@ begin
        foundFlag := TRUE;
        l := currentMove^.id;
        n := j;
+       qsFlag := 1;
       end;
      BitAnd(bit1, bit2, bit1);
      DataOps(1, startPage, dataSize, offset2, bit1);
@@ -253,8 +256,9 @@ begin
    end;
 
   {terminal node check}
-  if ((not(foundFlag)) and (ply <= 1)) or (ply = -1) then
+  if (qsFlag = 0) or (ply = -1) then
    begin
+    qsFlag := 0;
     {update number of positions evaluated}
     moveNum := moveNum + 1;
 

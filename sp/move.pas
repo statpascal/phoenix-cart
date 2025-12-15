@@ -140,9 +140,10 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
         
     procedure iterateMoveList;
         var
-            attackMoves: boolean;
+            attackMoves, haveAttackMove: boolean;
             currentMoveindex: integer;
         begin
+            haveAttackMove := false;
             for attackMoves := true downto false do
                 for currentMoveIndex := savedMoveStackPointer to pred (moveStackPointer) do
                     begin
@@ -154,15 +155,20 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                                 // TODO: do not set castle flags for decision tree
                                 workBoard.castleFlags := board.castleFlags;
                                 
+                                // alternative: activate QS if any capturing move is possbible
+//                                if attackMoves then
+//                                    haveAttackMove := true;
+                                haveAttackMove := foundFlag;
+                                
                                 {check for castling move}
-                                if (tempMove.id = 40) and (ply = gamePly) and (abs (tempMove.startSq - tempMove.endSq) = 2) then
+                                if (tempMove.id = King) and (ply = gamePly) and (abs (tempMove.startSq - tempMove.endSq) = 2) then
                                     cMoveFlag := 1;
 
                                 {check if own king in check after current move}
                                 if not isKingChecked (turn, workBoard) then 
                                     begin
                                         inc (validMoveCount);
-                                        if not foundFlag and (ply <= 1) or (ply = plyQS) then
+                                        if not haveAttackMove and (ply <= 1) or (ply = plyQS) then
                                             {terminal node check}
                                             begin
                                                 {update number of positions evaluated}

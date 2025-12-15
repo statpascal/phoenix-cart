@@ -25,7 +25,7 @@ const
     blackLeftCastleRight = 4;
     blackRightCastleRight = 8;
     
-    versionString = '2025-12-14-19-00';
+    versionString = '2025-12-15-18-30';
     
     const 
         Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
