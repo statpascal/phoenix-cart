@@ -224,21 +224,21 @@ function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove
                 inc (bScore, captureBonus [attackId shr 3, capId shr 3]);
 
         {penalty for moving king if castling possible}
-        if (tempMove.id = 40) and (cMoveFlag = 0) then
+        if (tempMove.id = King) and (cMoveFlag = 0) then
             if (turn = 0) and (board.castleFlags and whiteCastleFlag = 0) then
                 dec (wScore, 400)
             else if (turn = 1) and (board.castleFlags and blackCastleFlag = 0) then
                 dec (bScore, 400);
 
         {penalty for moving the rook if castling possible on its side}
-        if (tempMove.id = 8) and (gameMove < 13) then
+        if (tempMove.id = Rook) and (gameMove < 13) then
             if (turn = 0) and (board.castleFlags and whiteCastleFlag = 0) then
                 dec (wScore, 500)
             else if (turn = 1) and (board.castleFlags and blackCastleFlag = 0) then
                 dec (bScore, 500);
   
         {penalty if moving queen too early in game}
-        if (tempMove.id = 32) and (gameMove < 5) then
+        if (tempMove.id = Queen) and (gameMove < 5) then
             if turn = 0 then
                 dec (wScore, 300)
             else

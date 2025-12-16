@@ -130,10 +130,10 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
                                 clearBit (opponentPieces, endSq)
                             end;
                         j := j + 8;
-                    until (foundFlag) or (j > 40);
+                    until (foundFlag) or (j > King);
 
                     {en passant capture handling}
-                    if not foundFlag and (id = 0) and (abs (startSq - endSq) in [7, 9]) then
+                    if not foundFlag and (id = Pawn) and (abs (startSq - endSq) in [7, 9]) then
                         begin
                             if turn = 0 then
                                 epSquare := endSq - 8

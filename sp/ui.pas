@@ -148,14 +148,7 @@ procedure BoardDisplay (var board: TBoardRecord);
                             y := 11 - (pLoc div 8);
                             x := ((pLoc mod 8) * 2) + 2;
                             gotoxy(x, y);
-                            case piece of 
-                                0: write(chr(80 + (side * 32)));
-                                1: write(chr(82 + (side * 32)));
-                                2: write(chr(78 + (side * 32)));
-                                3: write(chr(66 + (side * 32)));
-                                4: write(chr(81 + (side * 32)));
-                                5: write(chr(75 + (side * 32)));
-                            end
+                            write (Figure [side, piece])
                         end
                 end
         end;

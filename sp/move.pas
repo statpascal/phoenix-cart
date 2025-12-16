@@ -87,7 +87,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
         
     begin
         checkCastling (board);
-        j := 0;
+        j := Pawn;
         repeat
             if turn = 0 then
                 BitPos (board.white.bitboards [j shr 3], posArray)
@@ -124,7 +124,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                     createMoveNodes (false, j, pLoc, currentMoveBoard)
                 end;
             inc (j, 8)
-        until j > 40;
+        until j > King;
         
     end;
     
