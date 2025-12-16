@@ -92,9 +92,9 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; lastMove: 
 
             {validate square}
             if turn = 0 then
-                playerPieces := workBoard.whitePieces
+                playerPieces := workBoard.white.pieces
             else
-                playerPieces := workBoard.blackPieces;
+                playerPieces := workBoard.black.pieces;
             validSq := getBit (playerPieces, iLoc) <> 0;
             if not validSq then
                 clearEntryField

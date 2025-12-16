@@ -292,12 +292,12 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
                     if side = 0 then
                         begin
                             setBit (board.white.bitboards [pieceType shr 3], pLoc, bitval);
-                            setBit (board.whitePieces, pLoc, bitval)
+                            setBit (board.white.pieces, pLoc, bitval)
                         end
                     else
                         begin
                             setBit (board.black.bitboards [pieceType shr 3], pLoc, bitval);
-                            setBit (board.blackPieces, pLoc, bitval)
+                            setBit (board.black.pieces, pLoc, bitval)
                         end;
                     setBit (board.allPieces, pLoc, bitval);
                     

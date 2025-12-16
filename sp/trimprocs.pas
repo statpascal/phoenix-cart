@@ -39,12 +39,12 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                 if turn = 0 then
                     begin
                         bit1 := getMovementBitboard (WhitePawnCapture, iLoc);
-                        BitAnd (bit1, board.blackPieces, bit1)
+                        BitAnd (bit1, board.black.pieces, bit1)
                     end
                 else
                     begin
                         bit1 := getMovementBitboard (BlackPawnCapture, iLoc);
-                        BitAnd (bit1, board.whitePieces, bit1)
+                        BitAnd (bit1, board.white.pieces, bit1)
                     end;
                 
                 BitOr (result, bit1, result);
@@ -79,21 +79,24 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
             begin
                 bit1 := getMovementBitboard (TBitboardType ((piece - 8) shr 3), iLoc);
                 if (piece = Knight) or (piece = King) then
+                    BitAndNot (bit1, board.side [turn].pieces, result)
+(*                    
                     begin
                         if turn = 0 then 
-                            BitAndNot (bit1, board.whitePieces, result)
+                            BitAndNot (bit1, board.white.pieces, result)
                         else
-                            BitAndNot (bit1, board.blackPieces, result)
+                            BitAndNot (bit1, board.black.pieces, result)
                     end
+*)                    
                 else
                     {trim sliding pieces movement rays past blocking pieces}
                     begin
                         {trim to white pieces - turn indicates if this is opponent/own}
-                        BitAndNot (bit1, board.whitePieces, bit2);
+                        BitAndNot (bit1, board.white.pieces, bit2);
                         BitTrim (bit2, iLoc, piece, turn);
 
                         {trim to black pieces pieces, with turn inverted}
-                        BitAndNot (bit1, board.blackPieces, bit3);
+                        BitAndNot (bit1, board.black.pieces, bit3);
                         BitTrim (bit3, iLoc, piece, 1 - turn);
 
                         {merge both trimmed boards}

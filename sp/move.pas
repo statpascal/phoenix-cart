@@ -89,10 +89,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
         checkCastling (board);
         j := Pawn;
         repeat
-            if turn = 0 then
-                BitPos (board.white.bitboards [j shr 3], posArray)
-            else
-                BitPos (board.black.bitboards [j shr 3], posArray);
+            BitPos (board.side [turn].bitboards [j shr 3], posArray);
             for l := 1 to posArray [0] do
                 begin
                     {loop through all existing pieces of current type}
@@ -101,10 +98,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                     currentMoveBoard := Trim (turn, j, pLoc, lastMove, board, epCapFlag);
 
                     {find potential captures and add to attack list}
-                    if turn = 0 then
-                        BitAnd (currentMoveBoard, board.blackPieces, attackBoard)
-                    else
-                        BitAnd (currentMoveBoard, board.whitePieces, attackBoard);
+                    BitAnd (currentMoveBoard, board.side [1 - turn].pieces, attackBoard);
 
                     {re-add any en passant capture squares}
                     if epCapFlag = 1 then

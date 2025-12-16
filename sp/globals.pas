@@ -25,7 +25,7 @@ const
     blackLeftCastleRight = 4;
     blackRightCastleRight = 8;
     
-    versionString = '2025-12-15-18-30';
+    versionString = '2025-12-16-14-00';
     
     const 
         Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
@@ -33,24 +33,24 @@ const
     
     
 type 
-    listPointer = ^moverec;
     moverec = record
         id: integer;
         startSq: integer;
-        endSq: integer;
-        link: listPointer;
+        endSq: integer
     end;
 
     TSideRecord = record
         case boolean of
-            false: (pawnBitboard, rookBitboard, knightBitboard, bishopBitboard, queenBitboard, kingBitboard: bitboard);
-            true:  (bitboards: array [0..5] of bitboard)
-        end;
+            false: (pawnBitboard, rookBitboard, knightBitboard, bishopBitboard, queenBitboard, kingBitboard, pieces: bitboard);
+            true:  (bitboards: array [0..6] of bitboard)
+    end;
     
     TBoardRecord = record
-        white, black: TSideRecord;
-        allPieces, whitePieces, blackPieces: bitboard;
         castleFlags: integer;
+        allPieces: bitboard;
+        case boolean of
+            false: (white, black: TSideRecord);
+            true:  (side: array [0..1] of TSideRecord)
     end;
     
 var
@@ -157,11 +157,11 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
     begin
         if turn = 0 then
             begin
-                updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces, move.id, move.startsq, move.endsq);
+                updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, move.id, move.startsq, move.endsq);
                 if (move.id = King) and (move.startSq = 4) and (move.endSq = 6) then
-                    updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces, Rook, 7, 5);
+                    updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 7, 5);
                 if (move.id = King) and (move.startSq = 4) and (move.endSq = 2) then
-                    updateBitboards (board.white, board.black, board.whitePieces, board.blackPieces, Rook, 0, 3);
+                    updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 0, 3);
                 if getBit (board.white.rookBitBoard, 0) = 0 then
                     board.castleFlags := board.castleFlags or whiteRookLeftFlag;
                 if getBit (board.white.rookBitboard, 7) = 0 then
@@ -171,11 +171,11 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
             end
         else
             begin
-                updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces, move.id, move.startsq, move.endsq);
+                updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, move.id, move.startsq, move.endsq);
                 if (move.id = King) and (move.startSq = 60) and (move.endSq = 58) then
-                    updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces, Rook, 56, 59);
+                    updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 56, 59);
                 if (move.id = King) and (move.startSq = 60) and (move.endSq = 62) then
-                    updateBitboards (board.black, board.white, board.blackPieces, board.whitePieces, Rook, 63, 61);
+                    updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 63, 61);
                 if getBit (board.black.rookBitBoard, 56) = 0 then
                     board.castleFlags := board.castleFlags or blackRookLeftFlag;
                 if getBit (board.black.rookBitboard, 63) = 0 then

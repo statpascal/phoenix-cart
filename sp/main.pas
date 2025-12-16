@@ -80,7 +80,6 @@ procedure initGame (var mainBoard: TBoardRecord);
         lastMove.id := 99;
         lastMove.startSq := 0;
         lastMove.endSq := 0;
-        lastMove.link := nil;
         moveStore.id := 99;
         moveStore.startSq := 99;
         moveStore.endSq := 99;
@@ -241,12 +240,12 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
         if gameSide = 0 then
             begin
                 clearBit (tempBoard.black.kingBitboard, kingPos);
-                clearBit (tempBoard.blackPieces, kingPos);
+                clearBit (tempBoard.black.pieces, kingPos);
             end
         else
             begin
                 clearBit (tempBoard.white.kingBitboard, kingPos);
-                clearBit (tempBoard.whitePieces, kingPos);
+                clearBit (tempBoard.white.pieces, kingPos);
             end;
         clearBit (tempBoard.allPieces, kingPos);
         
@@ -266,9 +265,9 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
         // TODO: could we use opponentMoves directly to block all movevemnt?
         BitOr (bits, tempBoard.allPieces, tempBoard.allPieces);
         if gameside = 0 then
-            BitOr (bits, tempBoard.blackPieces, tempBoard.blackPieces)
+            BitOr (bits, tempBoard.black.pieces, tempBoard.black.pieces)
         else
-            BitOr (bits, tempBoard.whitePieces, tempBoard.whitePieces);
+            BitOr (bits, tempBoard.white.pieces, tempBoard.white.pieces);
 
         {regenerate Trim board for attacking piece}
         bits := Trim (gameSide, playMove.id, playMove.endSq, dummyMove, tempBoard, epCapDummy);

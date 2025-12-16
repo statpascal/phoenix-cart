@@ -11,15 +11,12 @@ implementation
 
 procedure placePiece (var board: TBoardRecord; row, col: integer; piece: char);
     var
-        side, pieceType: integer;
+        s, pieceType: integer;
     begin
-        for side := 0 to 1 do
+        for s := 0 to 1 do
             for pieceType := 0 to 5 do
-                if piece = Figure [side, pieceType] then
-                    if side = 0 then
-                        setBit (board.white.bitboards [pieceType], row * 8 + col)
-                    else
-                        setBit (board.black.bitboards [pieceType], row * 8 + col)
+                if piece = Figure [s, pieceType] then
+                    setBit (board.side [s].bitboards [pieceType], row * 8 + col)
    end;
     
 procedure combineBoards (var side: TSideRecord; var res: bitboard);
@@ -66,9 +63,9 @@ procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integ
                 end;
                 inc (index)
             end;
-        combineBoards (board.white, board.whitePieces);
-        combineBoards (board.black, board.blackPieces);
-        BitOr (board.whitePieces, board.blackPieces, board.allPieces);
+        combineBoards (board.white, board.white.pieces);
+        combineBoards (board.black, board.black.pieces);
+        BitOr (board.white.pieces, board.black.pieces, board.allpieces);
         
         skipBlank;
         gameSide := ord (s [index] = 'b');
