@@ -158,42 +158,42 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
 //starting at index 1 and board position 
 
 procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
-        mov    	@posarray, r13  
-        inct   	r13		// R13: data pointer
-        mov    	@b1, r14	// R14: pointer to bitboard
+        mov     @posarray, r13  
+        inct    r13             // R13: data pointer
+        mov     @b1, r14        // R14: pointer to bitboard
         
-        clr	r0		// R0: piece positition (0-63)
-        li     	r15, 4		// R0: loop counter over bitboard words
+        clr     r0              // R0: piece positition (0-63)
+        li      r15, 4          // R0: loop counter over bitboard words
         
     bitpos_1:
-        mov	*r14+, r8	// R8: content of bitboard block
-        jeq	bitpos_4	// skip if 0
-        li	r12, 16		// loop over 16 bits
+        mov     *r14+, r8       // R8: content of bitboard block
+        jeq     bitpos_4        // skip if 0
+        li      r12, 16         // loop over 16 bits
         
     bitpos_2:
-        sla	r8, 1
+        sla     r8, 1
         jnc     bitpos_3
         
-        mov	r0, *r13+
+        mov     r0, *r13+
         
     bitpos_3:
-        inc	r0
-        dec 	r12		// bit bounter
-        jne	bitpos_2
-        jmp	bitpos_5
+        inc     r0
+        dec     r12             // bit bounter
+        jne     bitpos_2
+        jmp     bitpos_5
         
     bitpos_4:
-        ai	r0, 16
+        ai      r0, 16
 
     bitpos_5:
-        dec	r15		// word counter
-        jne	bitpos_1
+        dec     r15             // word counter
+        jne     bitpos_1
         
-        mov    	@posarray, r12  // r12: pointer to posarray
-        s	r12, r13
-        dect	r13
-        srl	r13, 1		// calculate number of pieces
-        mov	r13, *r12	// store number of pieces at begin of posarray
+        mov     @posarray, r12  // r12: pointer to posarray
+        s       r12, r13
+        dect    r13
+        srl     r13, 1          // calculate number of pieces
+        mov     r13, *r12       // store number of pieces at begin of posarray
 end;
 
 function BitCount (var b: bitboard): integer; assembler;

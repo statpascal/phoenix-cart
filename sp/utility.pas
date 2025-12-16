@@ -158,7 +158,7 @@ procedure Utility(var switch: integer);
         gamefile: file of integer;
 
     begin
-        tempGPointer := gamePointer;
+//        tempGPointer := gamePointer;
         utilFlag := FALSE;
         switch := 0;
 //        startPage := BASE2;
@@ -425,7 +425,7 @@ procedure Utility(var switch: integer);
 *)                    
                     utilFlag := TRUE;
 //	 TODO:                    turn := gameSide;
-                    gamePointer := tempGPointer;
+//                    gamePointer := tempGPointer;
                     tempStore.id := 99;
 (*                    
                     startPage := BASE2;

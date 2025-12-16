@@ -132,63 +132,46 @@ begin
     writeln('  A B C D E F G H');
 end; {NewBoard}
 
-procedure BoardDisplay (var board: TBoardRecord);
+procedure showSquare (row, col: integer; ch: char);
+    const 
+        orgX = 2;
+        orgY = 11;
+    begin
+        gotoxy (orgX + 2 * col, orgY - row);
+        write (ch)
+    end;
 
-    procedure displaySide (side: integer; var sideBoard: TSideRecord);
-        var 
-            piece, i, pLoc, x, y: integer;
-            posArray : bitarray;
-        begin
-            for piece := 0 to 5 do
-                begin
-                    BitPos (sideBoard.bitboards [piece], posArray);
-                    for i := 1 to posArray [0] do
-                        begin
-                            pLoc := posArray[i];
-                            y := 11 - (pLoc div 8);
-                            x := ((pLoc mod 8) * 2) + 2;
-                            gotoxy(x, y);
-                            write (Figure [side, piece])
-                        end
-                end
-        end;
-            
+procedure BoardDisplay (var board: TBoardRecord);
+    var 
+        s, piece, i: integer;
+        posArray: bitarray;
     begin
         NewBoard;
-        displaySide (0, board.white);
-        displaySide (1, board.black);
-        gotoxy(0, 14);
+        for s := 0 to 1 do
+            for piece := 0 to 5 do
+                begin
+                    BitPos (board.side [s].bitboards [piece], posArray);
+                    for i := 1 to posArray [0] do
+                        showSquare (posArray [i] div 8, posArray [i] mod 8, figure [s, piece])
+                end;
+        gotoxy(0, 14)
     end;
 
 
-procedure ClearPrompts;
-    var 
-        y : integer;
-    begin
-        for y := 14 to 20 do
-            begin
-                gotoxy(0, y);
-                write('                                    ');
-            end;
-        gotoxy(0, 14);
-    end; 
-
 procedure EnterPos (var board: TBoardRecord; var turn: integer);
     var 
-        x, y, orgX, orgY, row, column, sideKey, pieceKey, offset : integer;
+        row, column, sideKey, pieceKey, offset : integer;
         ans, pLoc : integer;
         pname : string;
         pieceType, bitval, side: integer;
 
     begin
         NewBoard;
-        orgX := 2;
-        orgY := 11;
 
         fillChar (board, sizeof (board), 0);
 
-        gotoxy(0, 14);
         repeat
+            gotoxy(0, 14);
             writeln(chr(7), 'select side: [w]hite/[b]black');
             write('[q] to exit  ');
             repeat
@@ -241,67 +224,50 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
                     writeln('*** ', pname, ' selected ***');
                     writeln(chr(7), 'enter board square [column|row]');
                     repeat
+                        showHChar (0, 19, 32, 2 * screenWidth);
                         gotoxy(0, 19);
-                        write('                       ');
-                        gotoxy(0, 20);
-                        write('                                    ');
-                        gotoxy(0, 19);
+                        
                         repeat
                             column := GetKeyInt
                         until column in[65..72];
                         write(chr(column));
+                        dec (column, 65);
+                        
                         repeat
                             row := GetKeyInt
                         until row in[49..56];
                         writeln(chr(row));
+                        dec (row, 49);
+                        
                         write('[c]onfirm [r]edo [d]elete piece');
                         repeat
                             ans := GetKeyInt
-                        until ans in[67, 68, 82]
+                        until ans in[67, 68, 82];
                     until ans <> 82;
-                    pLoc := ((row - 49) * 8) + (column - 65);
-                    x := ((column - 65) * 2) + orgX;
-                    y := orgY - (row - 49);
-                    gotoxy(x, y);
+                    
                     if ans = 67 then
-                        begin
-                            if side = 0 then
-                                write(chr(pieceKey))
-                            else
-                                write(chr(pieceKey + 32));
-                        end
-                    else
-                        begin
-                            if odd(row) then
-                                begin
-                                    if odd(column) then
-                                        write('=')
-                                    else
-                                        write(' ');
-                                end
-                            else
-                                begin
-                                    if odd(column) then
-                                        write(' ')
-                                    else
-                                        write('=');
-                                end;
-                        end;
-                        
+                        showSquare (row, column, Figure [side, pieceType])
+                    else 
+                        if odd (row) = odd (column) then
+                            showSquare (row, column, '=')
+                        else
+                            showSquare (row, column,' ');
+                    
+                    pLoc := 8 * row + column;
                     bitval := ord (ans = 67);
                     if side = 0 then
                         begin
-                            setBit (board.white.bitboards [pieceType shr 3], pLoc, bitval);
+                            setBit (board.white.bitboards [pieceType], pLoc, bitval);
                             setBit (board.white.pieces, pLoc, bitval)
                         end
                     else
                         begin
-                            setBit (board.black.bitboards [pieceType shr 3], pLoc, bitval);
+                            setBit (board.black.bitboards [pieceType], pLoc, bitval);
                             setBit (board.black.pieces, pLoc, bitval)
                         end;
                     setBit (board.allPieces, pLoc, bitval);
                     
-                    ClearPrompts;
+                    showHChar (0, 14, 32, 7 * screenWidth)
                 end;
         until sideKey = 81;
 
@@ -364,23 +330,20 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
 
 procedure showMove (score, iLoc, eLoc: integer; isHumanMove: boolean);
     var 
-        iLocString, eLocString : string;
+        iLocString, eLocString: string [2];
 
     begin
-        iLocString := '  ';
-        eLocString := '  ';
-        iLocString[1] := chr(65 + (iLoc mod 8));
-        iLocString[2] := chr(49 + (iLoc div 8));
-        eLocString[1] := chr(65 + (eLoc mod 8));
-        eLocString[2] := chr(49 + (eLoc div 8));
+        iLocString [0] := #2;
+        eLocString [0] := #2;
+        iLocString [1] := chr (65 + (iLoc mod 8));
+        iLocString [2] := chr (49 + (iLoc div 8));
+        eLocString [1] := chr (65 + (eLoc mod 8));
+        eLocString [2] := chr (49 + (eLoc div 8));
         gotoxy(20, 4);
         writeln('last move: ', iLocString, ' to ', eLocString);
         if not isHumanMove then
             begin
-                gotoxy(30, 16);
-                writeln('        ');
-                gotoxy(15, 17);
-                writeln('            ');
+                showHChar (0, 16, 32, 2 * screenWidth);
                 gotoxy(0, 16);
                 write('number of positions evaluated: ');
                 if moveNumHi > 0 then

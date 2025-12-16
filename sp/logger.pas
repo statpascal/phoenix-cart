@@ -101,7 +101,7 @@ procedure printMove (var f: text; var move: moverec);
     begin
         if move.id <> InvalidPiece then
             begin
-                write (f, pieceName [succ (move.id shr 3)]);
+                write (f, pieceName [succ (move.id)]);
                 writeCoord (move.startSq);
                 write (f, '-');
                 writecoord (move.endSq)

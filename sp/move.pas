@@ -31,7 +31,7 @@ procedure pushMoveStack (attackFlag: boolean; id, startSq, endSq: integer);
     begin
         if moveStackPointer <= moveStackSize then
             begin
-                moveStack [moveStackPointer] := ord (attackFlag) shl 15 + (id shr 3) shl 12 + startSq shl 6 + endSq;
+                moveStack [moveStackPointer] := ord (attackFlag) shl 15 + id shl 12 + startSq shl 6 + endSq;
                 inc (moveStackPointer)
             end
     end;
@@ -43,7 +43,7 @@ procedure readMoveStack (index: integer; var attackFlag: boolean; var id, startS
         val := moveStack [index];
         endSq := val and $3f;
         startSq := (val shr 6) and $3f;
-        id := (val shr 12) and $7 shl 3;
+        id := (val shr 12) and $7;
         attackFlag := boolean (val shr 15 and 1)
     end;
 
@@ -89,7 +89,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
         checkCastling (board);
         j := Pawn;
         repeat
-            BitPos (board.side [turn].bitboards [j shr 3], posArray);
+            BitPos (board.side [turn].bitboards [j], posArray);
             for l := 1 to posArray [0] do
                 begin
                     {loop through all existing pieces of current type}
@@ -117,7 +117,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                     BitAndNot (currentMoveBoard, attackBoard, currentMoveBoard);
                     createMoveNodes (false, j, pLoc, currentMoveBoard)
                 end;
-            inc (j, 8)
+            inc (j)
         until j > King;
         
     end;

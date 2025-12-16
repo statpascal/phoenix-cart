@@ -1,52 +1,3 @@
-(* version 10-30-25 v1.7 *)
-(* MinMax, no iterative deepening, capture evaluation bonus *)
-(* fixed castling when rook has moved bug *)
-
-(* adjustments to scorepos
-   - modified the mobility bonus
-   - decreased opposite check to 100
-   - modified the capture bonus table
-   - removed the pawn count factor for bishops
-   - increased the castling bonus to 500
-   - increased pawn support bonus to 20
-   - reduced pawn en-passant capture penalty to 20
-   - added doubled pawns penalty *)
-(* cMoveFlag set only on initial ply *)
-(* reset the castling obstruction flags with every turn *)
-(* lastMove variable now local only *)
-(* capture flags only set on topmost ply *)
-(* fixed castling at ply > 2 *)
-(* fixed impending mate detection *)
-(* removed randomization of bestScore in MinMax *)
-(* replaced bitgen with direct file load *)
-(* fixed checkmate bug when attacking piece can be captured *)
-(* fixed bug in the BitTrim routine *)
-(* added pawn promotion piece choice for human side *)
-(* fixed discovery check bug *)
-(* moved Update routine to an Include file *)
-(* added mating move check during move generation *)
-(* reduced maximum ply to 5 *)
-(* fixed bugs with the GetBoards, matecheck and matechk routines *)
-(* removed move skipping when king in check during move generation *)
-(* added game moves saving to SAMS card *)
-(* added penalty for moving king when castling possible *)
-(* fixed bug in board update after en passant capture *)
-(* fixed bug in queen movement trimming *)
-(* fixed back row threat detection during castling *)
-(* added 3-fold repetition draw detection *)
-(* added game status storage to SAMS card *)
-(* fixed en-passant capture risk detection *)
-(* fixed stalemate function and added the resign function *)
-(* added the utility menu *)
-(* fixed bug in opening move *)
-(* Added rook move penalty before castling *)
-(* adjusted end game conditions *)
-(* added check condition evaluation to position setup *)
-(* ignored moves that did not eliminate own check *)
-(* 10-19-25: Fixed castling when rook not present *)
-(* 10-19-25: Adjusted the resign parameters *)
-(* 10-30-25: Added capture bonus in scorepos *)
-
 unit Main;
 
 interface
@@ -61,7 +12,7 @@ uses
 
 var 
     i, j, moveScore, aVal, bVal: integer;
-    lastMove, playMove, moveStore: moverec;
+    lastMove, playMove: moverec;
 
 
 procedure SaveMove;
@@ -80,10 +31,6 @@ procedure initGame (var mainBoard: TBoardRecord);
         lastMove.id := 99;
         lastMove.startSq := 0;
         lastMove.endSq := 0;
-        moveStore.id := 99;
-        moveStore.startSq := 99;
-        moveStore.endSq := 99;
-        gamePointer := 0;
 
         write(chr(7), 'enter ply: [1-6] ');
         repeat

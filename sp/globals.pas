@@ -6,12 +6,12 @@ uses samsutil, vdp, bitops;
 
 const
     Pawn = 0;
-    Rook = 8;
-    Knight = 16;
-    Bishop = 24;
-    Queen = 32;
-    King = 40;
-    InvalidPiece = 99;
+    Rook = 1;
+    Knight = 2;
+    Bishop = 3;
+    Queen = 4;
+    King = 5;
+    InvalidPiece = 6;
 
     whiteCastleFlag = 1;
     blackCastleFlag = 2;    
@@ -54,7 +54,7 @@ type
     end;
     
 var
-    gameSide, gamePointer: integer;
+    gameSide: integer;
     pieceCount, cWarning: integer;
     gamePly, gameMove, humanSide: integer;
     moveNumHi, moveNumLo: integer;
@@ -113,23 +113,23 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
             {erase piece at starting position}
             clearBit (board.allPieces, startSq);
             clearBit (ownPieces, startSq);
-            clearBit (own.bitboards [id shr 3], startSq);
+            clearBit (own.bitboards [id], startSq);
             
             {remove attacked piece from opponent's bitboards}
             foundFlag := false;
             if attackFlag = 1 then
                 begin
-                    j := 0;
+                    j := Pawn;
                     repeat
-                        if getBit (opponent.bitboards [j shr 3], endSq) <> 0 then
+                        if getBit (opponent.bitboards [j], endSq) <> 0 then
                             begin
                                 foundFlag := true;
                                 attackId := id;
                                 capId := j;
-                                clearBit (opponent.bitboards [j shr 3], endSq);
+                                clearBit (opponent.bitboards [j], endSq);
                                 clearBit (opponentPieces, endSq)
                             end;
-                        j := j + 8;
+                        inc (j)
                     until (foundFlag) or (j > King);
 
                     {en passant capture handling}
@@ -148,10 +148,10 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
             {place piece at end position}
             setBit (board.allPieces, endSq);
             setBit (ownPieces, endSq);
-            if (id = 0) and (endSq in [0..7, 56..63]) then
+            if (id = Pawn) and (endSq in [0..7, 56..63]) then
                 setBit (own.queenBitboard, endSq)
             else
-                setBit (own.bitboards [id shr 3], endSq)
+                setBit (own.bitboards [id], endSq)
         end;
     
     begin

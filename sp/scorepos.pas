@@ -219,9 +219,9 @@ function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove
         {capture bonus}
         if attackFlag = 1 then
             if turn = 0 then
-                inc (wScore, captureBonus [attackId shr 3, capId shr 3])
+                inc (wScore, captureBonus [attackId, capId])
             else
-                inc (bScore, captureBonus [attackId shr 3, capId shr 3]);
+                inc (bScore, captureBonus [attackId, capId]);
 
         {penalty for moving king if castling possible}
         if (tempMove.id = King) and (cMoveFlag = 0) then

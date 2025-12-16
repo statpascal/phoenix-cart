@@ -20,7 +20,7 @@ function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
             for pieceType := 0 to 5 do
                 if getBit (sideBoards.bitboards [pieceType], pos) <> 0 then
                     begin
-                        search := pieceType shl 3;
+                        search := pieceType;
                         exit
                     end
         end;
