@@ -154,6 +154,16 @@ procedure BoardDisplay (var board: TBoardRecord);
                     for i := 1 to posArray [0] do
                         showSquare (posArray [i] div 8, posArray [i] mod 8, figure [s, piece])
                 end;
+        gotoxy (0, 16);
+        write ('castle rights: ');
+        if board.castleFlags and whiteRightCastle <> 0 then
+            write ('K');
+        if board.castleFlags and whiteLeftCastle <> 0 then
+            write ('Q');
+        if board.castleFlags and blackRightCastle <> 0 then
+            write ('k');
+        if board.castleFlags and blackLeftCastle <> 0 then
+            write ('q');
         gotoxy(0, 14)
     end;
 
@@ -278,32 +288,24 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
         repeat
             ans := GetKeyInt;
         until ans in[78, 89];
-        if ans = 78 then
-            board.castleFlags := board.castleFlags or whiteCastleFlag
-        else
+        if ans = 89 then
             begin
-                if getBit (board.white.rookBitboard, 0) = 0 then
-                    board.castleFlags := board.castleFlags or whiteRookLeftFlag;
-                if getBit (board.white.rookBitboard, 7) = 0 then
-                    board.castleFlags := board.castleFlags or whiteRookRightFlag;
-                if board.castleFlags and (whiteRookLeftFlag or whiteRookRightFlag) = (whiteRookLeftFlag or whiteRookRightFlag) then
-                    board.castleFlags := board.castleFlags or whiteCastleFlag
+                if getBit (board.white.rookBitboard, 0) = 1 then
+                    board.castleFlags := board.castleFlags or whiteLeftCastle;
+                if getBit (board.white.rookBitboard, 7) = 1 then
+                    board.castleFlags := board.castleFlags or whiteRightCastle
             end;
 
         writeln(chr(7), 'allow black castling? (y/n)');
         repeat
             ans := GetKeyInt;
         until ans in[78, 89];
-        if ans = 78 then
-            board.castleFlags := board.castleFlags or blackCastleFlag
-        else
+        if ans = 89 then
             begin
-                if getBit (board.black.rookBitboard, 56) = 0 then
-                    board.castleFlags := board.castleFlags or blackRookLeftFlag;
-                if getBit (board.black.rookBitboard, 63) = 0 then
-                    board.castleFlags := board.castleFlags or blackRookRightFlag;
-                if board.castleFlags and (blackRookLeftFlag or blackRookRightFlag) = (blackRookLeftFlag or blackRookRightFlag) then
-                    board.castleFlags := board.castleFlags or blackCastleFlag
+                if getBit (board.black.rookBitboard, 56) = 1 then
+                    board.castleFlags := board.castleFlags or blackLeftCastle;
+                if getBit (board.black.rookBitboard, 63) = 1 then
+                    board.castleFlags := board.castleFlags or blackRightCastle
             end;
 
         writeln(chr(7), 'side to start? [w]hite/[b]lack');
@@ -343,8 +345,8 @@ procedure showMove (score, iLoc, eLoc: integer; isHumanMove: boolean);
         writeln('last move: ', iLocString, ' to ', eLocString);
         if not isHumanMove then
             begin
-                showHChar (0, 16, 32, 2 * screenWidth);
-                gotoxy(0, 16);
+                showHChar (0, 17, 32, 2 * screenWidth);
+                gotoxy(0, 17);
                 write('number of positions evaluated: ');
                 if moveNumHi > 0 then
                     begin

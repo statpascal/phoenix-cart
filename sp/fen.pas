@@ -72,18 +72,17 @@ procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integ
         inc (index);
         
         skipBlank;
-        board.castleFlags := whiteRookLeftFlag + whiteRookRightFlag + blackRookLeftFlag + blackRookRightFlag + whiteCastleFlag + blackCastleFlag;
         while s [index] <> ' ' do
             begin
                 case s [index] of 
                     'Q':
-                        board.castleFlags := board.castleFlags and not (whiteRookLeftFlag + whiteCastleFlag);
+                        board.castleFlags := board.castleFlags or whiteLeftCastle;
                     'K':
-                        board.castleFlags := board.castleFlags and not (whiteRookRightFlag + whiteCastleFlag);
+                        board.castleFlags := board.castleFlags or whiteRightCastle;
                     'q':
-                        board.castleFlags := board.castleFlags and not (blackRookLeftFlag + blackCastleFlag);
+                        board.castleFlags := board.castleFlags or blackLeftCastle;
                     'k':
-                        board.castleFlags := board.castleFlags and not (blackRookRightFlag + blackCastleFlag)
+                        board.castleFlags := board.castleFlags or blackRightCastle
                 end;
                 inc (index);
             end;

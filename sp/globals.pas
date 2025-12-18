@@ -13,19 +13,12 @@ const
     King = 5;
     InvalidPiece = 6;
 
-    whiteCastleFlag = 1;
-    blackCastleFlag = 2;    
-    whiteRookLeftFlag = 4;
-    whiteRookRightFlag = 8;
-    blackRookLeftFlag = 16;
-    blackRookRightFlag = 32;
+    whiteLeftCastle = 1;
+    whiteRightCastle = 2;
+    blackLeftCastle = 4;
+    blackRightCastle = 8;
     
-    whiteLeftCastleRight = 1;
-    whiteRightCastleRight = 2;
-    blackLeftCastleRight = 4;
-    blackRightCastleRight = 8;
-    
-    versionString = '2025-12-17-13-30';
+    versionString = '2025-12-18-13-30';
     
     const 
         Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
@@ -162,12 +155,8 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
                     updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 7, 5);
                 if (move.id = King) and (move.startSq = 4) and (move.endSq = 2) then
                     updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 0, 3);
-                if getBit (board.white.rookBitBoard, 0) = 0 then
-                    board.castleFlags := board.castleFlags or whiteRookLeftFlag;
-                if getBit (board.white.rookBitboard, 7) = 0 then
-                    board.castleFlags := board.castleFlags or whiteRookRightFlag;
-                if (move.id = King) or (board.castleFlags and (whiteRookLeftFlag or whiteRookRightFlag) = (whiteRookLeftFlag or whiteRookRightFlag)) then
-                    board.castleFlags := board.castleFlags or whiteCastleFlag;
+                if move.id = King then
+                    board.castleFlags := board.castleFlags and not (whiteLeftCastle or whiteRightCastle)
             end
         else
             begin
@@ -176,14 +165,17 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
                     updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 56, 59);
                 if (move.id = King) and (move.startSq = 60) and (move.endSq = 62) then
                     updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 63, 61);
-                if getBit (board.black.rookBitBoard, 56) = 0 then
-                    board.castleFlags := board.castleFlags or blackRookLeftFlag;
-                if getBit (board.black.rookBitboard, 63) = 0 then
-                    board.castleFlags := board.castleFlags or blackRookRightFlag;
-                if (move.id = King) or (board.castleFlags and (blackRookLeftFlag or blackRookRightFlag) = (blackRookLeftFlag or blackRookRightFlag)) then
-                    board.castleFlags := board.castleFlags or blackCastleFlag;
-            end
-
+                if move.id = King then
+                    board.castleFlags := board.castleFlags and not (blackLeftCastle or blackRightCastle)
+            end;
+        if getBit (board.white.rookBitBoard, 0) = 0 then
+            board.castleFlags := board.castleFlags and not whiteLeftCastle;
+        if getBit (board.white.rookBitboard, 7) = 0 then
+            board.castleFlags := board.castleFlags and not whiteRightCastle;
+        if getBit (board.black.rookBitBoard, 56) = 0 then
+            board.castleFlags := board.castleFlags and not blackLeftCastle;
+        if getBit (board.black.rookBitboard, 63) = 0 then
+            board.castleFlags := board.castleFlags and not blackRightCastle
     end;    
     
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: moverec);
@@ -199,45 +191,44 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
         bits: bitboard;
         dummyMove: moverec;
     begin
-        result := 0;
-        if (turn = 0) and (board.castleFlags and whiteCastleFlag = 1) or
-           (turn = 1) and (board.castleFlags and blackCastleFlag = 2) then
-            exit;
+        result := board.castleFlags;
             
         {check back row interposing pieces}
         if turn = 0 then 
             begin
-                if (board.castleFlags and whiteRookLeftFlag = 0) and (board.allPieces.b [0] and $70 = 0) then
-                    result := whiteLeftCastleRight;
-                if (board.castleFlags and whiteRookRightFlag = 0) and (board.allPieces.b [0] and $06 = 0) then
-                    result := result or whiteRightCastleRight
+                if board.allPieces.b [0] and $70 <> 0 then
+                    result := result and not whiteLeftCastle;
+                if board.allPieces.b [0] and $06 <> 0 then
+                    result := result and not whiteRightCastle;
+                if result and (whiteLeftCastle or whiteRightCastle) = 0 then
+                   exit
             end
         else
             begin
-                if (board.castleFlags and blackRookLeftFlag = 0) and (board.allPieces.b [7] and $07 = 0) then
-                    result := blackLeftCastleRight;
-                if (board.castleFlags and blackRookRightFlag = 0) and (board.allPieces.b [7] and $06 = 0) then
-                    result := result or blackRightCastleRight
+                if board.allPieces.b [7] and $07 <> 0 then
+                    result := result and not blackLeftCastle;
+                if board.allPieces.b [7] and $06 <> 0 then
+                    result := result and not blackRightCastle;
+                if result and (blackLeftCastle or blackRightCastle) = 0 then
+                    exit
             end;
-        if result = 0 then
-            exit;
             
         {check for back row attack and remove affected rights}
         fillChar (dummyMove, sizeof (dummyMove), 0);
         bits := combineTrimSide (turn = 0, dummyMove, board);
         if turn = 0 then
             begin
-                if bits.b [0] and $f0 <> 0 then		// not correct - rook may be attacked
-                    result := result and not whiteLeftCastleRight;
-                if bits.b [0] and $0f <> 0 then
-                    result := result and not whiteRightCastleRight
+                if bits.b [0] and $38 <> 0 then		// not correct - rook may be attacked
+                    result := result and not whiteLeftCastle;
+                if bits.b [0] and $0e <> 0 then
+                    result := result and not whiteRightCastle
             end
         else
             begin
-                if bits.b [7] and $f0 <> 0 then
-                    result := result and not blackLeftCastleRight;
-                if bits.b [7] and $0f <> 0 then
-                    result := result and not blackRightCastleRight
+                if bits.b [7] and $38 <> 0 then
+                    result := result and not blackLeftCastle;
+                if bits.b [7] and $0e <> 0 then
+                    result := result and not blackRightCastle
             end
     end;        
            

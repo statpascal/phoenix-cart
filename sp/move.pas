@@ -71,16 +71,16 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                 exit;
             if turn = 0 then
                 begin
-                    if castleRights and whiteLeftCastleRight <> 0 then
+                    if castleRights and whiteLeftCastle <> 0 then
                         pushMoveStack (false, King, 4, 2);
-                    if castleRights and whiteRightCastleRight <> 0 then
+                    if castleRights and whiteRightCastle <> 0 then
                         pushMoveStack (false, King, 4, 6)
                 end
             else
                 begin
-                    if castleRights and blackLeftCastleRight <> 0 then
+                    if castleRights and blackLeftCastle <> 0 then
                         pushMoveStack (false, King, 60, 58);
-                    if castleRights and blackRightCastleRight <> 0 then
+                    if castleRights and blackRightCastle <> 0 then
                         pushMoveStack (false, King, 60, 62)
                 end
         end;
@@ -146,8 +146,6 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                             begin
                                 workBoard := board;
                                 enterMove (turn, ord (attackFlag), attackId, capId, foundFlag, workBoard, tempMove);
-                                // TODO: do not set castle flags for decision tree
-                                workBoard.castleFlags := board.castleFlags;
                                 
                                 // alternative: activate QS if any capturing move is possbible
 //                                if attackMoves then

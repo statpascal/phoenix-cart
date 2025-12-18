@@ -128,19 +128,19 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; lastMove: 
             if getBit (playerPieces, eLoc) = 0 then
                 begin
                     {check if castling move}
-                    if (playMove.id = 40) and (abs(iLoc - eLoc) = 2) then
+                    if (playMove.id = King) and (abs(iLoc - eLoc) = 2) then
                         begin
                             castleRights := checkCastleRights (workBoard, turn);
                             if turn = 0 then
                                 begin
-                                    if (((iLoc - eLoc) > 0) and (castleRights and whiteLeftCastleRight <> 0)) or
-                                       (((iLoc - eLoc) < 0) and (castleRights and whiteRightCastleRight <> 0)) then
+                                    if (((iLoc - eLoc) > 0) and (castleRights and whiteLeftCastle <> 0)) or
+                                       (((iLoc - eLoc) < 0) and (castleRights and whiteRightCastle <> 0)) then
                                         validSq := true
                                 end
                             else
                                 begin
-                                    if (((iLoc - eLoc) > 0) and (castleRights and blackLeftCastleRight <> 0)) or
-                                       (((iLoc - eLoc) < 0) and (castleRights and blackRightCastleRight <> 0)) then
+                                    if (((iLoc - eLoc) > 0) and (castleRights and blackLeftCastle <> 0)) or
+                                       (((iLoc - eLoc) < 0) and (castleRights and blackRightCastle <> 0)) then
                                         validSq := true
                                 end
 
