@@ -1,4 +1,4 @@
-(* version 12-6-25 v2.4)
+(* version 12-19-25 v2.4)
 (* MinMax, no iterative deepening, capture evaluation bonus *)
 (* fixed castling when rook has moved bug *)
 (* adjustments to scorepos
@@ -65,7 +65,8 @@
 (* 12-4-25: broke up MoveGen into 2 units *)
 (* 12-5-25: added stalemate detection to deeper plys *)
 (* 12-6-25: fixed distance function between kings in end game *)
- 
+(* 12-18-25: move various score modifiers from Scorepos to Move1 *)
+
 Program Main;
 uses random,
 {$U chesslib.code} globals, move1,
@@ -76,7 +77,7 @@ label
 
 var
  i, j, moveScore, offset, found, aVal, bVal, ans :integer;
- sideOffset, offset1, offset2, cFlag, tempPointer : integer;
+ sideOffset, offset1, offset2, tempPointer : integer;
  humanFlag, cmFlag, checkFlag, promFlag, repFlag : boolean;
  moveArray : bitarray;
  lastMove, playMove, moveStore, tempMove : moverec;
@@ -192,10 +193,7 @@ begin (* main *)
  moveStore.id := 99;
  moveStore.startSq := 99;
  moveStore.endSq := 99;
- wMobility := 0;
- bMobility := 0;
  gamePointer := 0;
- sFlag := 0;
 
  {initialize the game storage pointers}
  startPage := BASE2;
@@ -294,7 +292,6 @@ begin (* main *)
   wRAFlag := 0;
   bLAFlag := 0;
   bRAFlag := 0;
-  cFlag := 0;
 
   {transfer current board state to temp boards}
   dataSize := 120;

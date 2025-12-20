@@ -4,14 +4,53 @@ interface
 
 uses globals;
 
-function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove, tempMove: moverec; var board: TBoardRecord; turn: integer): integer;
+function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: moverec; capId: integer): integer;
+function evaluatePosition (turn: integer; var board: TBoardRecord; var move: moverec): integer;
 
 
 implementation
 
 uses trimprocs, resources;
 
-function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var lastMove: moverec; cMoveFlag, side, endGame: integer): integer;
+function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: moverec; capId: integer): integer;
+    const
+        captureBonus: array [0..5, 0..5] of uint8 = (
+        //     P    R    N    B    Q    K
+            ( 10, 100, 100, 100, 100, 100),         // pawn
+            (  0,  50,   0,   0,  50,   0),         // rook
+            (  0,  50,  25,  25,  50,   0),         // knight
+            (  0, 100,  50,  50, 100,   0),         // bishop
+            (  0,   0,   0,   0,  75,   0),         // queen
+            (  0,   0,   0,   0,   0,   0));   	    // king
+
+    begin
+        result := 0;
+        
+        {capture bonus}
+        if attackFlag then
+            inc (result, captureBonus [move.id, capId]);
+
+        {bonus for castling/penalty for moving king if castling possible}
+        if move.id = King then
+            if abs (move.startSq - move.endSq) = 2 then
+                inc (result, 150)
+            else 
+                if (turn = 0) and (prevBoard.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) or
+                   (turn = 1) and (prevBoard.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
+                    dec (result, 200);
+
+        {penalty for moving the rook if castling possible on its side}
+        if (move.id = Rook) and (gameMove < 13) then
+            if (turn = 0) and (prevBoard.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) or
+               (turn = 1) and (prevBoard.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
+            dec (result, 200);
+  
+        {penalty if moving queen too early in game}
+        if (move.id = Queen) and (gameMove < 5) then
+            dec (result, 100)
+    end;
+    
+function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; side, endGame: integer): integer;
     var
         evalScore: integer;
         
@@ -78,6 +117,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
         var
             locArray: bitarray;
             epDummy: integer;
+            dummyMove: moverec;
             bits: bitboard;
         begin
             BitPos (sideBoards.rookBitboard, locArray);
@@ -85,9 +125,9 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
             if locArray [0] = 2 then
                 begin
                     {bonus for connected rooks - check if other rook could be caught as opponent}
-                    bits := Trim (1 - side, Rook, locArray [1], LastMove, board, epDummy);
+                    bits := Trim (1 - side, Rook, locArray [1], dummyMove, board, epDummy);
                     if getBit (bits, locArray [2]) <> 0 then
-//                        inc (evalScore, 100)
+                        inc (evalScore, 100)
                 end
         end;
         
@@ -146,10 +186,6 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
             if endGame = 0 then
                 inc (evalScore, getPieceScoreValue (KingMidScore, ownPos));
                 
-            {apply castling bonus}
-            if (cMoveFlag = 1) and (side = gameSide) then
-                 evalScore := evalScore + 150;
-                    
             {bonus for checking opposite king}
             if isClear (opponentKing) then
                 inc (evalScore, 50)
@@ -186,11 +222,12 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; var
     end;
     
 
-function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove, tempMove: moverec; var board: TBoardRecord; turn: integer): integer;
+function evaluatePosition (turn: integer; var board: TBoardRecord; var move: moverec): integer;
     var
         wScore, bScore, evalScore, endGame: integer;
         locArray: bitarray;
         
+(*
     procedure checkEnPassant (isBlack: boolean; var pawnBitboard: bitboard; startSq: integer; var score: integer);
             var
                 bits: bitboard;
@@ -200,50 +237,13 @@ function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove
                 if not isClear (bits) then
                     dec (score, 100)
             end;
+*)            
         
-    const
-        captureBonus: array [0..5, 0..5] of uint8 = (
-        //     P    R    N    B    Q    K
-            ( 10, 100, 100, 100, 100, 100),         // pawn
-            (  0, 100,   0,   0, 100,   0),         // rook
-            (  0, 100,  50,  50, 100,   0),         // knight
-            (  0, 100,  50,  50, 100,   0),         // bishop
-            (  0,   0,   0,   0,  75,   0),         // queen
-            (  0,   0,   0,   0,   0,   0));   	    // king
-
     begin
         wScore := 0;
         bScore := 0;
         endGame := 0;
 
-        {capture bonus}
-        if attackFlag = 1 then
-            if turn = 0 then
-                inc (wScore, captureBonus [attackId, capId])
-            else
-                inc (bScore, captureBonus [attackId, capId]);
-
-        {penalty for moving king if castling possible}
-        if (tempMove.id = King) and (cMoveFlag = 0) then
-            if (turn = 0) and (board.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) then
-                dec (wScore, 400)
-            else if (turn = 1) and (board.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
-                dec (bScore, 400);
-
-        {penalty for moving the rook if castling possible on its side}
-        if (tempMove.id = Rook) and (gameMove < 13) then
-            if (turn = 0) and (board.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) then
-                dec (wScore, 500)
-            else if (turn = 1) and (board.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
-                dec (bScore, 500);
-  
-        {penalty if moving queen too early in game}
-        if (tempMove.id = Queen) and (gameMove < 5) then
-            if turn = 0 then
-                dec (wScore, 300)
-            else
-                dec (bScore, 300);
-                
         {endgame determination}
         case bitCount (board.allPieces) of
             2..5: 
@@ -253,15 +253,16 @@ function evaluate (cMoveFlag, attackFlag, attackId, capId: integer; var lastMove
             else
                 endGame := 0
         end;
-            
+(*            
         if (tempMove.id = Pawn) and (abs(tempMove.startSq - tempMove.endSq) = 16) then
             if turn = 0 then
                 checkEnPassant (false, board.black.pawnBitboard, tempMove.startSq, wScore)
             else
                 checkEnPassant (true, board.white.pawnBitboard, tempMove.startSq, bScore);
-
-        evaluate := wScore + evaluateSide (board.white, board, lastMove, cMoveFlag, 0, endGame) -
-                    bScore - evaluateSide (board.black, board, lastMove, cMoveFlag, 1, endGame)
+*)
+        evaluatePosition := wScore - bScore
+                      + evaluateSide (board.white, board, 0, endGame) 
+                      - evaluateSide (board.black, board, 1, endGame)
     end;
     
 end.

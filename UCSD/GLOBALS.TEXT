@@ -6,7 +6,7 @@ const
  BASE = 20;
  BASE1 = 21;
  BASE2 = 22;
- {BASE3 = 23;}
+ BASE3 = 23;
  BASE4 = 24;
  WPO = 0; {BASE}
  WRO = 8;
@@ -95,6 +95,7 @@ const
  SBPIECES = 888;
  PLAYLIST = 896;
  OPENLIB = 0; {BASE 3}
+ OPENTEMP = 2000;
  GAMESTORE = 0; {BASE 4}
  
 type
@@ -122,8 +123,8 @@ type
 var
  startPage, sPage, dataSize, turn, gameSide, gamePointer : integer;
  pieceCount, wCastleFlag, bCastleFlag, ply, cWarning : integer;
- gamePly, wMobility, bMobility, gameMove, humanSide : integer;
- wRAFlag, wLAFlag, bRAFlag, bLAFlag, sFlag : integer;
+ gamePly, gameMove, humanSide : integer;
+ wRAFlag, wLAFlag, bRAFlag, bLAFlag : integer;
  wRookLFlag, wRookRFlag, bRookLFlag, bRookRFlag : integer;
  moveNum : longint;
  bit1, bit2, bit3, bit4, bit5, bit6, bit7, bitRes : bitboard;

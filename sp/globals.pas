@@ -18,11 +18,10 @@ const
     blackLeftCastle = 4;
     blackRightCastle = 8;
     
-    versionString = '2025-12-18-13-30';
+    versionString = '2025-12-20-15-00';
     
-    const 
-        Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
-                                              ('p', 'r', 'n', 'b', 'q', 'k'));
+    Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
+                                          ('p', 'r', 'n', 'b', 'q', 'k'));
     
     
 type 

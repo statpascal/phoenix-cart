@@ -48,9 +48,7 @@ begin
  if j = 0 then
   begin
    {trim forward movement to any piece}
-   {if sFlag is set then trim all forward movement}
-   if sFlag = 0 then
-    offset1 := APIECES;
+   offset1 := APIECES;
    DataOps(2, startPage, dataSize, offset1, bit3);
    BitNot(bit3, bit3);
    BitAnd(bit2, bit3, bit2);

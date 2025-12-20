@@ -155,7 +155,7 @@ procedure BoardDisplay (var board: TBoardRecord);
                         showSquare (posArray [i] div 8, posArray [i] mod 8, figure [s, piece])
                 end;
         gotoxy (0, 16);
-        write ('castle rights: ');
+        write ('castling rights: ');
         if board.castleFlags and whiteRightCastle <> 0 then
             write ('K');
         if board.castleFlags and whiteLeftCastle <> 0 then

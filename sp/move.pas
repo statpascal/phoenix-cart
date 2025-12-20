@@ -5,7 +5,7 @@ interface
 uses globals;
 
 procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec;
-                   var score: integer; alpha, beta: integer; cMoveFlag, ply, turn: integer);
+                   var score: integer; alpha, beta: integer; ply, turn: integer);
 
 
 implementation
@@ -122,11 +122,11 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
         
     end;
     
-procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; cMoveFlag, ply, turn: integer);
+procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; ply, turn: integer);
     var 
         i, attackId, capId, bestScore, validMoveCount: integer;
         switchFlag: integer;
-        evalScore: integer;
+        evalScore, moveScore: integer;
         attackFlag, foundFlag: boolean;
         bestMove, tempMove: moverec;
         workBoard: TBoardRecord;
@@ -147,18 +147,16 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                                 workBoard := board;
                                 enterMove (turn, ord (attackFlag), attackId, capId, foundFlag, workBoard, tempMove);
                                 
+                                
                                 // alternative: activate QS if any capturing move is possbible
 //                                if attackMoves then
 //                                    haveAttackMove := true;
                                 haveAttackMove := foundFlag;
                                 
-                                {check for castling move}
-                                if (tempMove.id = King) and (ply = gamePly) and (abs (tempMove.startSq - tempMove.endSq) = 2) then
-                                    cMoveFlag := 1;
-
                                 {check if own king in check after current move}
                                 if not isKingChecked (turn, workBoard) then 
                                     begin
+                                        moveScore := evaluateMove (turn, board, attackMoves, tempMove, capId);
                                         inc (validMoveCount);
                                         if not haveAttackMove and (ply <= 1) or (ply = plyQS) then
                                             {terminal node check}
@@ -170,23 +168,26 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                                                         moveNumLo := 0;
                                                         inc (moveNumHi)
                                                     end;
-                                                evalScore := Evaluate (cMoveFlag, ord (attackFlag), attackId, capId, lastMove, tempMove, workBoard, turn);
+//                                                evalScore := EvaluatePosition (cMoveFlag, ord (attackFlag), attackId, capId, lastMove, tempMove, workBoard, turn);
+                                                evalScore := EvaluatePosition (turn, workBoard, tempMove);
                                                 if doLogging then begin   
                                                     indent (ply - 1); 
                                                     printMove (logFile, tempMove); 
-                                                    writeln (logFile, ': ', evalScore: 6)
+                                                    if turn = 0 then
+                                                        writeln (logFile, ': ', evalScore + moveScore: 6)
+                                                    else
+                                                        writeln (logFile, ': ', evalScore - moveScore: 6)
                                                 end
                                             end
                                         else
                                             begin
-                                                MoveGen (workBoard, tempMove, finalMove, evalScore, alpha, beta, cMoveFlag, pred (ply), 1 - turn);
-                                                if ply = gamePly then
-                                                    cMoveFlag := 0
+                                                MoveGen (workBoard, tempMove, finalMove, evalScore, alpha, beta, pred (ply), 1 - turn);
                                             end;
 
                                         {alpha/beta selection}
                                         if turn = 0 then
                                             begin
+                                                inc (evalScore, moveScore);
                                                 if evalScore >= bestScore then
                                                     begin
                                                         bestScore := evalScore;
@@ -200,6 +201,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                                             end
                                         else
                                             begin
+                                                dec (evalScore, moveScore);
                                                 if evalScore <= bestScore then
                                                     begin
                                                         bestScore := evalScore;

@@ -21,7 +21,7 @@ procedure testPosition (fenStr, logfn: string; ply, qsdeepening: integer);
         
         startLogging (logfn);
         writeln ('Analyzing: ', fenStr);
-        MoveGen (mainBoard, lastMove, playMove, moveScore, alpha, beta, 0, gamePly, gameSide);
+        MoveGen (mainBoard, lastMove, playMove, moveScore, alpha, beta, gamePly, gameSide);
         printMove (output, playMove);
         writeln (' ', moveScore);
         writeln;
@@ -34,7 +34,8 @@ begin
 //    testPosition ('4k3/8/8/8/8/8/1B2P3/R3K3 b Q - 0 40', 'DSK0.castle-ply3.log', 3, 2);
 //    testPosition ('rnb1kb1r/ppp1pppp/4qn2/8/3P4/2N5/PPP1BPPP/R1BQK1NR w KQkq - 0 40', 'DSK0.knight-lost-ply4.log', 4, 2);
 //    testPosition ('6k1/8/8/6p1/4Q3/8/5KRq/7N b - - 0 40', 'DSK0.queen-lost-ply3.log', 3, 2);;
-    testPosition ('4k3/8/1b6/8/4p2p/7K/3P4/8 w - - 0 40', 'DSK0.ep-ply3.log', 3, 2);
+//    testPosition ('4k3/8/1b6/8/4p2p/7K/3P4/8 w - - 0 40', 'DSK0.ep-ply3.log', 3, 2);
+      testPosition ('1k1r4/pp1b1R2/3q2pp/4p3/2B5/4Q3/PPP2B2/2K5 b - - 0 40', 'DSK0.Kopec1.log', 5, 3);
     
     writeln;
     writeln ('** DONE **');

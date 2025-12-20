@@ -3,8 +3,7 @@ unit scorepos;
 interface
 uses {$U chesslib.code} globals;
 
-function evaluate(cMoveFlag, attackFlag, attackId, capId : integer;
-                  lastMove, tempMove : moverec) : integer;
+function evaluate(lastMove, tempMove : moverec) : integer;
 
 implementation
 uses {$U interface.code} trimprocs;
@@ -15,7 +14,7 @@ label
 
 var
  sPage1, dSize, initOffset, offset, offset1, offset2, i, j, k, l : integer;
- sPage2, side, wScore, bScore, evalScore, tempTurn, bonus : integer;
+ sPage2, side, wScore, bScore, evalScore, tempTurn : integer;
  endGame, pLoc, kDist, xDist, yDist : integer;
  cRFlag : boolean;
  locArray, moveArray : bitarray;
@@ -32,62 +31,8 @@ begin
  startPage := BASE;
  dataSize := 8;
 
- {capture bonus}
- if attackFlag = 1 then
-  begin
-   bonus := 0;
-   case attackId of
-    0 : if capId = 0 then
-         bonus := 10
-        else
-         bonus := 100;
-    8 : if capId in [8, 32] then
-         bonus := 100;
-    16, 24 : if capId in [8, 32] then
-              bonus := 100
-             else
-              if capId in [16, 24] then
-               bonus := 50;
-    32 : if capId = 32 then
-          bonus := 75;
-   end;
-   if turn = 0 then
-    wScore := wScore + bonus
-   else
-    bScore := bScore + bonus;
-  end;
-
- {penalty for moving king if castling possible}
- if (tempMove.id = 40) and (cMoveFlag = 0) then
-  begin
-   if (turn = 0) and (wCastleFlag = 0) then
-    wScore := wScore - 400
-   else
-    if (turn = 1) and (bCastleFlag = 0) then
-     bScore := bScore - 400;
-  end;
-
- {penalty for moving the rook if castling possible on its side}
- if (tempMove.id = 8) and (gameMove < 13) then
-  begin
-   if (turn = 0) and (wCastleFlag = 0) then
-    wScore := wScore - 500
-   else
-    if (turn = 1) and (bCastleFlag = 0) then
-     bScore := bScore - 500;
-  end;
-  
- {penalty if moving queen too early in game}
- if (tempMove.id = 32) and (gameMove < 5) then
-  begin
-   if turn = 0 then
-    wScore := wScore - 300
-   else
-    bScore := bScore - 300;
-  end;
-  
  {endgame determination}
- offset1 := TAPIECES;
+ offset1 := APIECES;
  DataOps(2, startPage, dataSize, offset1, bit1);
  BitPos(bit1, locArray);
  if locArray[0] in [6..8] then
@@ -95,34 +40,34 @@ begin
  else
   if locArray[0] <=5 then
    endGame := 2;
-   
+
+ {en passant capture risk}
+ if (tempMove.id = 0) and (abs(tempMove.startSq - tempMove.endSq) = 16)
+    then
+  begin
+   if turn = 0 then
+    begin
+     offset1 := WEP + ((tempMove.startSq - 8) * 8);
+     offset2 := TBPO;
+    end
+   else
+    begin
+     offset1 := BEP + ((tempMove.startSq - 48) * 8);
+     offset2 := TWPO;
+    end;
+   DataOps(2, sPage1, dataSize, offset1, bit2);
+   DataOps(2, startPage, dataSize, offset2, bit3);
+   BitAnd(bit2, bit3, bit2);
+   if not(IsClear(bit2)) then
+    if turn = 0 then
+     wScore := wScore - 50
+    else
+     bScore := bScore - 50;
+  end;
+
  {determine base score for each side}
  for side := 0 to 1 do
   begin
-   {en passant capture risk}
-   if (tempMove.id = 0) and (abs(tempMove.startSq - tempMove.endSq) = 16)
-      and (side = turn) then
-    begin
-     if side = 0 then
-      begin
-       offset1 := WEP + ((tempMove.startSq - 8) * 8);
-       offset2 := TBPO;
-      end
-     else
-      begin
-       offset1 := BEP + ((tempMove.startSq - 48) * 8);
-       offset2 := TWPO;
-      end;
-     DataOps(2, sPage1, dataSize, offset1, bit2);
-     DataOps(2, startPage, dataSize, offset2, bit3);
-     BitAnd(bit2, bit3, bit2);
-     if not(IsClear(bit2)) then
-      if side = 0 then
-       wScore := wScore - 100
-      else
-       bScore := bScore - 100;
-    end;
-
    if side = 0 then
     initOffset := TWPO
    else
@@ -346,9 +291,6 @@ begin
                 offset1 := KINGMID + (pLoc * 2);
                DataOps(2, sPage2, dSize, offset1, l);
                evalScore := evalScore + l;
-               {apply castling bonus}
-               if (cMoveFlag = 1) and (side = gameSide) then
-                evalScore := evalScore + 150;
               end;
          end;
         end;
@@ -390,7 +332,7 @@ begin
         yDist := abs((pLoc Div 8) - (locArray[1] Div 8));
         xDist := abs((pLoc Mod 8) - (locArray[1] Mod 8));
         kDist := xDist + yDist;
-        evalScore := evalScore + ((15 - kDist) * 15);
+        evalScore := evalScore + 15 - (kDist * 15);
        end;
      1:
      end;

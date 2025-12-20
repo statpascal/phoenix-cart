@@ -369,7 +369,7 @@ procedure chainMain;
                         begin
                             gotoxy(20, 7);
                             write('thinking...');
-                            MoveGen (mainBoard, lastMove, playMove, moveScore, aVal, bVal, 0, gamePly, gameSide);
+                            MoveGen (mainBoard, lastMove, playMove, moveScore, aVal, bVal, gamePly, gameSide);
                         end;
                 end;
 

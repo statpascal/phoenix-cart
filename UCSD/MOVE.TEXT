@@ -209,11 +209,9 @@ begin
      DataOps(1, startPage, dataSize, offset1, buffer);
      {get the combined trim boards}
      bit8 := bit2;
-     sFlag := 1;
      CombineTrim(bit3, bit5, lastMove);
      bit1 := bit9;
      bit2 := bit8;
-     sFlag := 0;
      {restore the main boards}
      offset1 := SWPO;
      sPage := BASE2;

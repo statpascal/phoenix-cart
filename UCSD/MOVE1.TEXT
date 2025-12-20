@@ -3,7 +3,7 @@ unit Move1;
 interface
 uses {$U chesslib.code} globals;
 
-procedure ProcessMove(var score : integer; alpha, beta, cMoveFlag : integer;
+procedure ProcessMove(var score : integer; alpha, beta : integer;
                       var finalMove : moverec; lastMove : moverec);
 
 implementation
@@ -16,9 +16,9 @@ label
  1, 2, 5;
  
 var
- i, j, l, n, offset, bestScore, switchFlag : integer;
+ i, j, l, n, offset, bestScore, switchFlag, bonus, sPage1 : integer;
  offset1, offset2, offset3, offset4, offset5, offset6, offset7 : integer;
- attackFlag, evalScore, pruneFlag, qsFlag : integer;
+ attackFlag, evalScore, pruneFlag, attackId, capId, cMoveFlag : integer;
  foundFlag : boolean;
  bestMove, tempMove : moverec;
  moveList, attackList, tailIndex, attackIndex, currentMove : listPointer;
@@ -26,6 +26,8 @@ var
  
 begin
  MoveGen(moveList, attackList, tailIndex, attackIndex, lastMove);
+ 
+ sPage1 := BASE1;
  
  {save ply base bitboards}
  offset := TWPO;
@@ -39,8 +41,6 @@ begin
   bestScore := -20000
  else
   bestScore := 20000;
-
- qsFlag := 0;
 
  ClearBitboard(bit9);
  {iterate through move list}
@@ -124,9 +124,8 @@ begin
      if not(IsClear(bitRes)) then
       begin
        foundFlag := TRUE;
-       l := currentMove^.id;
-       n := j;
-       qsFlag := 1;
+       attackId := currentMove^.id;
+       capId := j;
       end;
      BitAnd(bit1, bit2, bit1);
      DataOps(1, startPage, dataSize, offset2, bit1);
@@ -189,12 +188,12 @@ begin
   DataOps(1, startPage, dataSize, offset4, bit1);
 
   {check for castling move}
+  cMoveFlag := 0;
   if (attackFlag = 0) and (currentMove^.id = 40) then
    begin
     if abs(currentMove^.startSq - currentMove^.endSq) = 2 then
      begin
-      if ply = gamePly then
-       cMoveFlag := 1;
+      cMoveFlag := 1;
       tempMove.id := currentMove^.id;
       tempMove.startSq := currentMove^.startSq;
       tempMove.endSq := currentMove^.endSq;
@@ -256,14 +255,21 @@ begin
    end;
 
   {terminal node check}
-  if (qsFlag = 0) or (ply = -1) then
+  if ((not(foundFlag)) and (ply <= 1)) or (ply = -1) then
    begin
-    qsFlag := 0;
     {update number of positions evaluated}
     moveNum := moveNum + 1;
 
     {evaluate position}
-    evalScore := Evaluate(cMoveFlag,attackFlag, l, n, lastMove, tempMove);
+    evalScore := Evaluate(lastMove, tempMove);
+    
+    {$I bonuscalc.text}
+    
+    if turn = 0 then
+     evalScore := evalScore + bonus
+    else
+     evalScore := evalScore - bonus;
+
     pruneFlag := 0;
     if turn = 0 then
      begin
@@ -303,10 +309,14 @@ begin
     else
      turn := 0;
 
-    ProcessMove(score, alpha, beta, cMoveFlag, finalMove, lastMove);
+    ProcessMove(score, alpha, beta, finalMove, lastMove);
 
-    if ply = gamePly then
-     cMoveFlag := 0;
+    {$I bonuscalc.text}
+
+    if turn = 0 then
+     score := score + bonus
+    else
+     score := score - bonus;
 
     {alpha/beta selection}
     pruneFlag := 0;
