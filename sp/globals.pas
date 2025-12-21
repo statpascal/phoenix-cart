@@ -65,8 +65,8 @@ procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: mov
 
 procedure soundBell;
 
-implementation
 
+implementation
 
 uses trimprocs;
 

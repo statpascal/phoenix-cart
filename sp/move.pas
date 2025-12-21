@@ -49,7 +49,7 @@ procedure readMoveStack (index: integer; var attackFlag: boolean; var id, startS
 
 procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: moverec);
     var 
-        j, l, n, pLoc, epCapFlag: integer;
+        piece, l, n, pLoc, epCapFlag: integer;
         posArray, moveArray: bitArray;
         currentMoveBoard, attackBoard, bits: bitboard;
         
@@ -85,48 +85,34 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                 end
         end;
         
+    const
+        EPBitboard: array [0..1] of TBitboardType = (WhitePawnCapture, BlackPawnCapture);
+        
     begin
         checkCastling (board);
-        j := Pawn;
-        repeat
-            BitPos (board.side [turn].bitboards [j], posArray);
-            for l := 1 to posArray [0] do
-                begin
-                    {loop through all existing pieces of current type}
-                    pLoc := posArray[l];
-                    epCapFlag := 0;
-                    currentMoveBoard := Trim (turn, j, pLoc, lastMove, board, epCapFlag);
+        for piece := Pawn to King do
+            begin
+                BitPos (board.side [turn].bitboards [piece], posArray);
+                for l := 1 to posArray [0] do
+                    begin
+                        pLoc := posArray[l];
+                        epCapFlag := 0;
+                        currentMoveBoard := Trim (turn, piece, pLoc, lastMove, board, epCapFlag);
+                        attackBoard := currentMoveBoard and board.side [1 - turn].pieces;
 
-                    {find potential captures and add to attack list}
-                    attackBoard := currentMoveBoard and board.side [1 - turn].pieces;
-//                    BitAnd (currentMoveBoard, board.side [1 - turn].pieces, attackBoard);
-
-                    {re-add any en passant capture squares}
-                    if epCapFlag = 1 then
-                        begin
-                            if turn = 0 then
-                                bits := getMovementBitboard (WhitePawnCapture, pLoc)
-                            else
-                                bits := getMovementBitboard (BlackPawnCapture, pLoc);
-                            BitAnd(currentMoveBoard, bits, bits);
-                            BitOr(attackBoard, bits, attackBoard);
-                        end;
-
-                    createMoveNodes (true, j, pLoc, attackBoard);
-
-                    {find non-capture moves and add to move list}
-//                    currentMoveBoard := currentMoveBoard and not attackBoard;
-//                    BitAndNot (currentMoveBoard, attackBoard, currentMoveBoard);
-                    createMoveNodes (false, j, pLoc, currentMoveBoard and not attackBoard)
-                end;
-            inc (j)
-        until j > King;
-        
+                        {re-add any en passant capture squares}
+                        if epCapFlag = 1 then
+                            attackBoard := attackBoard or currentMoveBoard and getMovementBitboard (EPBitboard [turn], pLoc);
+                            
+                        createMoveNodes (true, piece, pLoc, attackBoard);
+                        createMoveNodes (false, piece, pLoc, currentMoveBoard and not attackBoard)
+                    end
+            end
     end;
     
 procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; ply, turn: integer);
     var 
-        i, attackId, capId, bestScore, validMoveCount: integer;
+        attackId, capId, bestScore, validMoveCount: integer;
         switchFlag: integer;
         evalScore, moveScore: integer;
         attackFlag, foundFlag: boolean;
@@ -261,7 +247,6 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                     begin
                         gotoxy(20, 1);
                         write(chr(7), chr(7), 'stalemate!');
-                        i := GetKeyInt;
                         readln;
                         Utility(switchFlag);
                         // TODO: where to go from here
