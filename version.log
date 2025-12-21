@@ -27,6 +27,10 @@
 
 - Corrected castling bug
 
-2025-12-12-15-00
+2025-12-20-15-00
 
 - Updated score routines
+
+2025-12-21-18-30
+
+- uint64 type introduced
