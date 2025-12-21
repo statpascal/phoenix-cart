@@ -21,13 +21,13 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
     begin
         if piece = Pawn then
             begin
-                if turn = 0 then
-                    result := getMovementBitboard (WhitePawnMove, iLoc)
-                else
-                    result := getMovementBitboard (BlackPawnMove, iLoc);
-                    
                 {trim forward movement to any piece}
-                BitAndNot (result, board.allPieces, result);
+                if turn = 0 then
+                    result := getMovementBitboard (WhitePawnMove, iLoc) and not board.allPieces
+                else
+                    result := getMovementBitboard (BlackPawnMove, iLoc) and not board.allPieces;
+                    
+//                BitAndNot (result, board.allPieces, result);
                 
                 row := iLoc shr 3;
                 if (turn = 0) and (row = 1) and (getBit (result, iLoc + 8) = 0) then
@@ -36,6 +36,12 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                     clearBit (result, iLoc - 16);
                     
                 {trim diagonal movement if no opposite piece to capture}
+                
+                if turn = 0 then
+                    result := result or getMovementBitboard (WhitePawnCapture, iLoc) and board.black.pieces
+                else
+                    result := result or getMovementBitboard (BlackPawnCapture, iLoc) and board.white.pieces;
+(*                
                 if turn = 0 then
                     begin
                         bit1 := getMovementBitboard (WhitePawnCapture, iLoc);
@@ -48,6 +54,7 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                     end;
                 
                 BitOr (result, bit1, result);
+*)                
 
                 { check for en passant capture }
                 if (lastMove.id = Pawn) and (abs (lastMove.endSq - lastMove.startSq) = 16) and (row = 4 - turn) then
@@ -75,7 +82,8 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
             begin
                 bit1 := getMovementBitboard (TBitboardType (pred (piece)), iLoc);
                 if (piece = Knight) or (piece = King) then
-                    BitAndNot (bit1, board.side [turn].pieces, result)
+//                    BitAndNot (bit1, board.side [turn].pieces, result)
+                    result := bit1 and not board.side [turn].pieces
 (*                    
                     begin
                         if turn = 0 then 
@@ -88,15 +96,17 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                     {trim sliding pieces movement rays past blocking pieces}
                     begin
                         {trim to white pieces - turn indicates if this is opponent/own}
-                        BitAndNot (bit1, board.white.pieces, bit2);
+                        bit2 := bit1 and not board.white.pieces;
+//                        BitAndNot (bit1, board.white.pieces, bit2);
                         BitTrim (bit2, iLoc, piece, turn);
 
                         {trim to black pieces pieces, with turn inverted}
-                        BitAndNot (bit1, board.black.pieces, bit3);
+//                        BitAndNot (bit1, board.black.pieces, bit3);
+                        bit3 := bit1 and not board.black.pieces;
                         BitTrim (bit3, iLoc, piece, 1 - turn);
 
                         {merge both trimmed boards}
-                        BitAnd (bit2, bit3, result)
+                        result := bit2 and bit3
                     end
             end;
     end;
@@ -113,10 +123,13 @@ function combineTrimSide (isBlack: boolean; var lastMove: moverec; var board: TB
             begin
                 BitPos (board.side [ord (isBlack)].bitboards [pieceType], posArray);
                 for j := 1 to posArray [0] do
+                    result := result or Trim (ord (isBlack), pieceType, posArray [j], lastMove, board, epCapDummy);
+(*                    
                     begin
                         bit := Trim (ord (isBlack), pieceType, posArray [j], lastMove, board, epCapDummy);
                         BitOr (result, bit, result)
                     end
+*)                    
             end
     end;        
         

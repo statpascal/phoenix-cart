@@ -18,7 +18,7 @@ const
     blackLeftCastle = 4;
     blackRightCastle = 8;
     
-    versionString = '2025-12-20-15-00';
+    versionString = '2025-12-21-18-30';
     
     Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
                                           ('p', 'r', 'n', 'b', 'q', 'k'));
@@ -195,18 +195,18 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
         {check back row interposing pieces}
         if turn = 0 then 
             begin
-                if board.allPieces.b [0] and $70 <> 0 then
+                if bytearray (board.allPieces) [0] and $70 <> 0 then
                     result := result and not whiteLeftCastle;
-                if board.allPieces.b [0] and $06 <> 0 then
+                if bytearray (board.allPieces) [0] and $06 <> 0 then
                     result := result and not whiteRightCastle;
                 if result and (whiteLeftCastle or whiteRightCastle) = 0 then
                    exit
             end
         else
             begin
-                if board.allPieces.b [7] and $07 <> 0 then
+                if bytearray (board.allPieces) [7] and $07 <> 0 then
                     result := result and not blackLeftCastle;
-                if board.allPieces.b [7] and $06 <> 0 then
+                if bytearray (board.allPieces) [7] and $06 <> 0 then
                     result := result and not blackRightCastle;
                 if result and (blackLeftCastle or blackRightCastle) = 0 then
                     exit
@@ -217,16 +217,16 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
         bits := combineTrimSide (turn = 0, dummyMove, board);
         if turn = 0 then
             begin
-                if bits.b [0] and $38 <> 0 then		// not correct - rook may be attacked
+                if bytearray (bits) [0] and $38 <> 0 then		// not correct - rook may be attacked
                     result := result and not whiteLeftCastle;
-                if bits.b [0] and $0e <> 0 then
+                if bytearray (bits) [0] and $0e <> 0 then
                     result := result and not whiteRightCastle
             end
         else
             begin
-                if bits.b [7] and $38 <> 0 then
+                if bytearray (bits) [7] and $38 <> 0 then
                     result := result and not blackLeftCastle;
-                if bits.b [7] and $0e <> 0 then
+                if bytearray (bits) [7] and $0e <> 0 then
                     result := result and not blackRightCastle
             end
     end;        

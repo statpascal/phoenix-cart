@@ -48,7 +48,7 @@ procedure dumpBitBoard (var b: bitboard);
     begin
         for i := 7 downto 0 do
             for k := 0 to 7 do
-                write (logFile, ord (b.b [i] and (1 shl (7 - k)) <> 0));
+                write (logFile, ord (bytearray (b) [i] and (1 shl (7 - k)) <> 0));
             writeln (logFile);
     end;
 

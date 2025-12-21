@@ -194,7 +194,8 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                     {encourage moving opposite king to board edge}
                     if endGame > 0 then
                         begin
-                            BitAnd (opponentKing, bitboard (KingEdge), bits);
+                            bits := opponentKing and bitboard (KingEdge);
+//                            BitAnd (opponentKing, bitboard (KingEdge), bits);
                             if not isClear (bits) then
                                 inc (evalScore, 100)
                     end;

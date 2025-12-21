@@ -53,7 +53,7 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
         posArray, moveArray: bitArray;
         currentMoveBoard, attackBoard, bits: bitboard;
         
-    procedure createMoveNodes (attackFlag: boolean; id, startSq: integer; var endSquares: bitboard);
+    procedure createMoveNodes (attackFlag: boolean; id, startSq: integer; endSquares: bitboard);
         var
             k: integer;
             moveArray: bitArray;
@@ -98,7 +98,8 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                     currentMoveBoard := Trim (turn, j, pLoc, lastMove, board, epCapFlag);
 
                     {find potential captures and add to attack list}
-                    BitAnd (currentMoveBoard, board.side [1 - turn].pieces, attackBoard);
+                    attackBoard := currentMoveBoard and board.side [1 - turn].pieces;
+//                    BitAnd (currentMoveBoard, board.side [1 - turn].pieces, attackBoard);
 
                     {re-add any en passant capture squares}
                     if epCapFlag = 1 then
@@ -114,8 +115,9 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                     createMoveNodes (true, j, pLoc, attackBoard);
 
                     {find non-capture moves and add to move list}
-                    BitAndNot (currentMoveBoard, attackBoard, currentMoveBoard);
-                    createMoveNodes (false, j, pLoc, currentMoveBoard)
+//                    currentMoveBoard := currentMoveBoard and not attackBoard;
+//                    BitAndNot (currentMoveBoard, attackBoard, currentMoveBoard);
+                    createMoveNodes (false, j, pLoc, currentMoveBoard and not attackBoard)
                 end;
             inc (j)
         until j > King;

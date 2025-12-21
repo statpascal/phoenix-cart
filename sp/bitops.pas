@@ -3,15 +3,13 @@ unit bitops;
 interface
 
 type 
-    bitboard = record
-                   case boolean of
-                       false: (b: array [0..7] of uint8);
-                       true:  (w: array [0..3] of integer)
-               end;
+    bitboard = uint64;
+    bytearray = array [0..7] of uint8;
+    
     bitarray = array [0..64] of integer;
 
 
-procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
+procedure BitTrim (var b: bitboard; pos, ptype, opponent: integer);
 procedure BitPos (var b1: bitboard; var posarray: bitarray);
 function BitCount (var b: bitboard): integer;
 
@@ -32,7 +30,7 @@ uses globals;
 const
     bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
 
-procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
+procedure BitTrim (var b: bitboard; pos, ptype, opponent: integer);
 
     type 
         bitboard_byte = array [0..7] of uint8;
@@ -125,29 +123,29 @@ procedure BitTrim (var b1: bitboard;  pos, ptype, opponent: integer);
         if ptype <> Bishop then 
             begin
                 if pos < 56 then
-                    trimRay (bitboard_byte (b1), pos + 8, 1, ZeroVal, opponent);		// up
+                    trimRay (bitboard_byte (b), pos + 8, 1, ZeroVal, opponent);		// up
                 if pos > 7 then
-                    trimRay (bitboard_byte (b1), pos - 8, -1, ZeroVal, opponent);		// down
+                    trimRay (bitboard_byte (b), pos - 8, -1, ZeroVal, opponent);		// down
                 if pos and 7 <> 0 then
-                    trimRay (bitboard_byte (b1), pos - 1, 0, LeftVal, opponent);	// left
+                    trimRay (bitboard_byte (b), pos - 1, 0, LeftVal, opponent);	// left
                 if succ (pos) and 7 <> 0 then
-                    trimRay (bitboard_byte (b1), pos + 1, 0, RightVal, opponent)	// right
+                    trimRay (bitboard_byte (b), pos + 1, 0, RightVal, opponent)	// right
             end;
         if ptype <> Rook then
             begin
                 if pos and 7 <> 0 then
                     begin
                         if pos < 56 then
-                            trimRay (bitboard_byte (b1), pos + 7, 1, LeftVal, opponent);	// left up
+                            trimRay (bitboard_byte (b), pos + 7, 1, LeftVal, opponent);	// left up
                         if pos > 7 then
-                            trimRay (bitboard_byte (b1), pos - 9, -1, LeftVal, opponent)	// left down
+                            trimRay (bitboard_byte (b), pos - 9, -1, LeftVal, opponent)	// left down
                     end;
                 if succ (pos) and 7 <> 0 then
                     begin
                         if pos < 56 then
-                            trimRay (bitboard_byte (b1), pos + 9, 1, RightVal, opponent);	// right up
+                            trimRay (bitboard_byte (b), pos + 9, 1, RightVal, opponent);	// right up
                         if pos > 7 then
-                            trimRay (bitboard_byte (b1), pos - 7, -1, RightVal, opponent)	// right down
+                            trimRay (bitboard_byte (b), pos - 7, -1, RightVal, opponent)	// right down
                     end
             end
     end;
@@ -168,7 +166,6 @@ procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
     bitpos_1:
         mov     *r14+, r8       // R8: content of bitboard block
         jeq     bitpos_4        // skip if 0
-        li      r12, 16         // loop over 16 bits
         
     bitpos_2:
         sla     r8, 1
@@ -177,13 +174,15 @@ procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
         mov     r0, *r13+
         
     bitpos_3:
+        mov     r8, r8		// check if all bits handled
+        jeq     bitpos_4
+        
         inc     r0
-        dec     r12             // bit bounter
-        jne     bitpos_2
-        jmp     bitpos_5
+        jmp	bitpos_2
         
     bitpos_4:
         ai      r0, 16
+        andi	r0, >FFF0	// start of next double row
 
     bitpos_5:
         dec     r15             // word counter
