@@ -28,7 +28,7 @@ procedure initGame (var mainBoard: TBoardRecord);
 //        gameSide := 0;
 //        gameMove := 1;
 
-        lastMove.id := 99;
+        lastMove.id := InvalidPiece;
         lastMove.startSq := 0;
         lastMove.endSq := 0;
 

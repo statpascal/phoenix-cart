@@ -148,7 +148,7 @@ procedure BoardDisplay (var board: TBoardRecord);
     begin
         NewBoard;
         for s := 0 to 1 do
-            for piece := 0 to 5 do
+            for piece := Pawn to King do
                 begin
                     BitPos (board.side [s].bitboards [piece], posArray);
                     for i := 1 to posArray [0] do

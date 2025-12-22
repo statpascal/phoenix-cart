@@ -19,7 +19,7 @@ function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: b
             ( 10, 100, 100, 100, 100, 100),         // pawn
             (  0,  50,   0,   0,  50,   0),         // rook
             (  0,  50,  25,  25,  50,   0),         // knight
-            (  0, 100,  50,  50, 100,   0),         // bishop
+            (  0,  50,  25,  25,  50,   0),         // bishop
             (  0,   0,   0,   0,  75,   0),         // queen
             (  0,   0,   0,   0,   0,   0));   	    // king
 
@@ -195,7 +195,6 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                     if endGame > 0 then
                         begin
                             bits := opponentKing and bitboard (KingEdge);
-//                            BitAnd (opponentKing, bitboard (KingEdge), bits);
                             if not isClear (bits) then
                                 inc (evalScore, 100)
                     end;

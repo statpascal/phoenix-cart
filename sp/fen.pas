@@ -25,7 +25,7 @@ procedure combineBoards (var side: TSideRecord; var res: bitboard);
     begin
         res := side.bitboards [0];
         for i := 1 to 5 do
-            BitOr (res, side.bitboards [i], res)
+            res := res or side.bitboards [i]
     end;
 
 procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integer; s: string);
@@ -65,7 +65,7 @@ procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integ
             end;
         combineBoards (board.white, board.white.pieces);
         combineBoards (board.black, board.black.pieces);
-        BitOr (board.white.pieces, board.black.pieces, board.allpieces);
+        board.allpieces := board.white.pieces or board.black.pieces;
         
         skipBlank;
         gameSide := ord (s [index] = 'b');

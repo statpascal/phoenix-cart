@@ -18,7 +18,7 @@ const
     blackLeftCastle = 4;
     blackRightCastle = 8;
     
-    versionString = '2025-12-21-18-30';
+    versionString = '2025-12-22-11-00';
     
     Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
                                           ('p', 'r', 'n', 'b', 'q', 'k'));
@@ -78,18 +78,13 @@ procedure soundBell;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
     var
         dummyMove: moverec;
-        opponentMoves, res: bitboard;
+        res: bitboard;
     begin
         {ignore en passant - cannot affect king}
         fillchar (dummyMove, sizeof (dummyMove), 0);
         
         {check if own king attacked by opposite trim board}
-        opponentMoves := combineTrimSide (turn = 0, dummyMove, board);
-        if turn = 0 then
-            BitAnd (opponentMoves, board.white.kingBitboard, res)
-        else
-            BitAnd (opponentMoves, board.black.kingBitboard, res);
-            
+        res := board.side [turn].kingBitboard and combineTrimSide (turn = 0, dummyMove, board);
         isKingChecked := not isClear (res)
     end;
     

@@ -16,24 +16,35 @@ uses resources;
 
 function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBoardRecord; var epCapFlag: integer): bitboard;
     var 
-        row, col, bitmask, epCapSquare: integer;
+        row, epCapSquare: integer;
         bit1, bit2, bit3: bitboard;
     begin
         if piece = Pawn then
             begin
                 {trim forward movement to any piece}
+                row := iLoc shr 3;
                 if turn = 0 then
-                    result := getMovementBitboard (WhitePawnMove, iLoc) and not board.allPieces or
-                              getMovementBitboard (WhitePawnCapture, iLoc) and board.black.pieces
+                    begin
+                        result := getMovementBitboard (WhitePawnMove, iLoc) and not board.allPieces or
+                                  getMovementBitboard (WhitePawnCapture, iLoc) and board.black.pieces;
+                        if (row = 1) and (getBit (result, iLoc + 8) = 0) then
+                            clearBit (result, iLoc + 16)
+                    end
                 else
-                    result := getMovementBitboard (BlackPawnMove, iLoc) and not board.allPieces or 
-                              getMovementBitboard (BlackPawnCapture, iLoc) and board.white.pieces;
-                    
+                    begin
+                        result := getMovementBitboard (BlackPawnMove, iLoc) and not board.allPieces or 
+                                  getMovementBitboard (BlackPawnCapture, iLoc) and board.white.pieces;
+                        if (row = 6) and (getBit (result, iLoc - 8) = 0) then
+                            clearBit (result, iLoc - 16)
+                    end;
+
+(*                    
                 row := iLoc shr 3;
                 if (turn = 0) and (row = 1) and (getBit (result, iLoc + 8) = 0) then
                     clearBit (result, iLoc + 16);
                 if (turn = 1) and (row = 6) and (getBit (result, iLoc - 8) = 0) then
                     clearBit (result, iLoc - 16);
+*)                    
                     
                 { check for en passant capture }
                 if (lastMove.id = Pawn) and (abs (lastMove.endSq - lastMove.startSq) = 16) and (row = 4 - turn) then

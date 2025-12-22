@@ -64,7 +64,7 @@ procedure printBoard (var board: TBoardRecord);
             else
                 s [i] := '= = = = ';
         for side := 0 to 1 do
-            for piece := 0 to 5 do
+            for piece := Pawn to King do
                 begin
                     if side = 0 then
                         BitPos (board.white.bitboards [piece], pos)
@@ -89,8 +89,6 @@ procedure printBoard (var board: TBoardRecord);
     end;
                     
 procedure printMove (var f: text; var move: moverec);
-    const
-        pieceName: string = 'PRNBQK';
     
     procedure writeCoord (sq: integer);
         begin
@@ -101,7 +99,7 @@ procedure printMove (var f: text; var move: moverec);
     begin
         if move.id <> InvalidPiece then
             begin
-                write (f, pieceName [succ (move.id)]);
+                write (f, Figure [0, move.id]);
                 writeCoord (move.startSq);
                 write (f, '-');
                 writecoord (move.endSq)
