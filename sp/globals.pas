@@ -18,11 +18,13 @@ const
     blackLeftCastle = 4;
     blackRightCastle = 8;
     
-    versionString = '2025-12-22-11-00';
+    versionString = '2025-12-22-19-00';
     
     Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
                                           ('p', 'r', 'n', 'b', 'q', 'k'));
     
+    bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
+
     
 type 
     moverec = record

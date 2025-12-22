@@ -224,8 +224,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
 
 function evaluatePosition (turn: integer; var board: TBoardRecord; var move: moverec): integer;
     var
-        wScore, bScore, evalScore, endGame: integer;
-        locArray: bitarray;
+        wScore, bScore, endGame: integer;
         
 (*
     procedure checkEnPassant (isBlack: boolean; var pawnBitboard: bitboard; startSq: integer; var score: integer);
@@ -242,7 +241,6 @@ function evaluatePosition (turn: integer; var board: TBoardRecord; var move: mov
     begin
         wScore := 0;
         bScore := 0;
-        endGame := 0;
 
         {endgame determination}
         case bitCount (board.allPieces) of

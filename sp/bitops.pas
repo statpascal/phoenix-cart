@@ -27,9 +27,6 @@ implementation
 
 uses globals;
 
-const
-    bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
-
 procedure BitTrim (var b: bitboard; pos, ptype, opponent: integer);
 
     type 
