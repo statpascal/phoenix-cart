@@ -109,103 +109,94 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
             end
     end;
     
+procedure iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIndex, alpha, beta: integer; var validMoveCount, bestScore: integer; var bestMove: moverec);
+    var
+        attackFlag, foundFlag: boolean;
+        attackMoves: boolean;
+        attackId, capId, currentMoveindex: integer;
+        evalScore, moveScore: integer;
+        resultMove, tempMove: moverec;
+        workBoard: TBoardRecord;
+    begin
+        for attackMoves := true downto false do
+            for currentMoveIndex := startIndex to endIndex do
+                begin
+                    readMoveStack (currentMoveIndex, attackFlag, tempMove.id, tempMove.startSq, tempMove.endSq);
+                    if attackFlag = attackMoves then
+                        begin
+                            workBoard := board;
+                            enterMove (turn, ord (attackFlag), attackId, capId, foundFlag, workBoard, tempMove);
+                            
+                            {check if own king in check after current move}
+                            if not isKingChecked (turn, workBoard) then 
+                                begin
+                                    moveScore := evaluateMove (turn, board, attackFlag, tempMove, capId);
+                                    inc (validMoveCount);
+                                    if not foundFlag and (ply <= 1) or (ply = plyQS) then
+                                        {terminal node check}
+                                        begin
+                                            {update number of positions evaluated}
+                                            inc (moveNumLo);
+                                            if (moveNumLo = 1000) then
+                                                begin
+                                                    moveNumLo := 0;
+                                                    inc (moveNumHi)
+                                                end;
+                                            evalScore := EvaluatePosition (turn, workBoard, tempMove);
+                                            if doLogging then begin   
+                                                indent (ply - 1); 
+                                                printMove (logFile, tempMove); 
+                                                if turn = 0 then
+                                                    writeln (logFile, ': ', evalScore + moveScore: 6)
+                                                else
+                                                    writeln (logFile, ': ', evalScore - moveScore: 6)
+                                            end
+                                        end
+                                    else
+                                        begin
+                                            MoveGen (workBoard, tempMove, resultMove, evalScore, alpha, beta, pred (ply), 1 - turn);
+                                        end;
+
+                                    {alpha/beta selection}
+                                    if turn = 0 then
+                                        begin
+                                            inc (evalScore, moveScore);
+                                            if evalScore >= bestScore then
+                                                begin
+                                                    bestScore := evalScore;
+                                                    bestMove := tempMove
+                                                end;
+                                            if not disableAlphaBetaPruning and (bestScore > beta) then
+                                                exit
+                                            else
+                                                if bestScore > alpha then
+                                                    alpha := bestScore;
+                                        end
+                                    else
+                                        begin
+                                            dec (evalScore, moveScore);
+                                            if evalScore <= bestScore then
+                                                begin
+                                                    bestScore := evalScore;
+                                                    bestMove := tempMove
+                                                end;
+                                            if not disableAlphaBetaPruning and (bestScore < alpha) then
+                                                exit
+                                            else
+                                                if bestScore < beta then
+                                                    beta := bestScore;
+                                        end
+                                end
+                        end
+                end
+    end;
+    
 procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; ply, turn: integer);
     var 
-        attackId, capId, bestScore, validMoveCount: integer;
+        bestScore, validMoveCount: integer;
         switchFlag: integer;
-        evalScore, moveScore: integer;
-        attackFlag, foundFlag: boolean;
-        bestMove, tempMove: moverec;
-        workBoard: TBoardRecord;
+        bestMove: moverec;
         savedMoveStackPointer: integer;
-        
-    procedure iterateMoveList;
-        var
-            attackMoves, haveAttackMove: boolean;
-            currentMoveindex: integer;
-        begin
-            haveAttackMove := false;
-            for attackMoves := true downto false do
-                for currentMoveIndex := savedMoveStackPointer to pred (moveStackPointer) do
-                    begin
-                        readMoveStack (currentMoveIndex, attackFlag, tempMove.id, tempMove.startSq, tempMove.endSq);
-                        if attackFlag = attackMoves then
-                            begin
-                                workBoard := board;
-                                enterMove (turn, ord (attackFlag), attackId, capId, foundFlag, workBoard, tempMove);
-                                
-                                
-                                // alternative: activate QS if any capturing move is possbible
-//                                if attackMoves then
-//                                    haveAttackMove := true;
-                                haveAttackMove := foundFlag;
-                                
-                                {check if own king in check after current move}
-                                if not isKingChecked (turn, workBoard) then 
-                                    begin
-                                        moveScore := evaluateMove (turn, board, attackMoves, tempMove, capId);
-                                        inc (validMoveCount);
-                                        if not haveAttackMove and (ply <= 1) or (ply = plyQS) then
-                                            {terminal node check}
-                                            begin
-                                                {update number of positions evaluated}
-                                                inc (moveNumLo);
-                                                if (moveNumLo = 1000) then
-                                                    begin
-                                                        moveNumLo := 0;
-                                                        inc (moveNumHi)
-                                                    end;
-//                                                evalScore := EvaluatePosition (cMoveFlag, ord (attackFlag), attackId, capId, lastMove, tempMove, workBoard, turn);
-                                                evalScore := EvaluatePosition (turn, workBoard, tempMove);
-                                                if doLogging then begin   
-                                                    indent (ply - 1); 
-                                                    printMove (logFile, tempMove); 
-                                                    if turn = 0 then
-                                                        writeln (logFile, ': ', evalScore + moveScore: 6)
-                                                    else
-                                                        writeln (logFile, ': ', evalScore - moveScore: 6)
-                                                end
-                                            end
-                                        else
-                                            begin
-                                                MoveGen (workBoard, tempMove, finalMove, evalScore, alpha, beta, pred (ply), 1 - turn);
-                                            end;
-
-                                        {alpha/beta selection}
-                                        if turn = 0 then
-                                            begin
-                                                inc (evalScore, moveScore);
-                                                if evalScore >= bestScore then
-                                                    begin
-                                                        bestScore := evalScore;
-                                                        bestMove := tempMove
-                                                    end;
-                                                if not disableAlphaBetaPruning and (bestScore > beta) then
-                                                    exit
-                                                else
-                                                    if bestScore > alpha then
-                                                        alpha := bestScore;
-                                            end
-                                        else
-                                            begin
-                                                dec (evalScore, moveScore);
-                                                if evalScore <= bestScore then
-                                                    begin
-                                                        bestScore := evalScore;
-                                                        bestMove := tempMove
-                                                    end;
-                                                if not disableAlphaBetaPruning and (bestScore < alpha) then
-                                                    exit
-                                                else
-                                                    if bestScore < beta then
-                                                        beta := bestScore;
-                                            end
-                                    end
-                            end
-                    end
-        end;
-        
-
     begin
         savedMoveStackPointer := moveStackPointer;
 
@@ -226,9 +217,6 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
         end;
 
         loopAllPieces (board, turn, lastMove);
-//        if doLogging then begin
-//            indent (ply); writeln (logFile, 'Move stack: ', moveStackPointer, ' positions')
-//        end;
         bestMove.id := InvalidPiece;
 
         if turn = 0 then
@@ -237,7 +225,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
             bestScore := 20000;
 
         validMoveCount := 0;
-        iterateMoveList;
+        iterateMoveList (board, turn, ply, savedMoveStackPointer, pred (moveStackPointer), alpha, beta, validMoveCount,  bestScore, bestMove);
 
         {stalemate condition}
         if (validMoveCount = 0) and not isKingChecked (turn, board) then

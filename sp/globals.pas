@@ -132,6 +132,8 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
                             clearBit (opponent.pawnBitboard, epSquare);
                             clearBit (opponentPieces, epSquare);
                             clearBit (board.allPieces, epSquare);
+                            attackId := pawn;
+                            capId := pawn
                         end
                 end;
 
