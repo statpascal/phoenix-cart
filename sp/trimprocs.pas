@@ -4,8 +4,8 @@ interface
 
 uses globals;
 
-function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBoardRecord; var epCapFlag: integer): bitboard;
-function combineTrimSide (isBlack: boolean; var lastMove: moverec; var board: TBoardRecord): bitboard;
+function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSquare: integer): bitboard;
+function combineTrimSide (isBlack: boolean; var board: TBoardRecord): bitboard;
 
 // procedure CombineTrim (var whiteTrim, blackTrim: bitboard; var lastMove: moverec; var board: TBoardRecord);
 
@@ -124,11 +124,12 @@ function makeMovementBitboard (pos, ptype: integer; var ownPieces, opponentPiece
     end;
     
 
-function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBoardRecord; var epCapFlag: integer): bitboard;
+function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSquare: integer): bitboard;
     var 
-        row, epCapSquare: integer;
-        bit1, bit2, bit3: bitboard;
+        row: integer;
+        bits: bitboard;
     begin
+        epCapSquare := -1;
         if piece = Pawn then
             begin
                 {trim forward movement to any piece}
@@ -149,6 +150,16 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                     end;
 
                 { check for en passant capture }
+                if (board.castleFlags and epMoveFlag <> 0) and (row = 4 - turn) then
+                    begin
+                        bits := getEnpassantBitboard (turn = 0, board.castleFlags and epColBitmask);
+                        epCapSquare := 16 + board.castleFlags and epColBitmask + 24 * ord (board.castleFlags and epWhiteFlag = 0);
+                        if getBit (bits, iLoc) <> 0 then
+                            setBit (result, epCapSquare)
+                        else
+                            epCapSquare := -1
+                    end
+(*                
                 if (lastMove.id = Pawn) and (abs (lastMove.endSq - lastMove.startSq) = 16) and (row = 4 - turn) then
                     begin
                         if turn = 0 then
@@ -168,6 +179,7 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
                                 setBit (result, epCapSquare)
                             end
                     end
+*)                    
                 end
         else 
             begin
@@ -178,7 +190,7 @@ function Trim (turn, piece, iLoc: integer; var lastMove: moverec; var board: TBo
             end;
     end;
     
-function combineTrimSide (isBlack: boolean; var lastMove: moverec; var board: TBoardRecord): bitboard;
+function combineTrimSide (isBlack: boolean; var board: TBoardRecord): bitboard;
     var
         pieceType, j: integer;
         posArray: bitarray;
@@ -190,7 +202,7 @@ function combineTrimSide (isBlack: boolean; var lastMove: moverec; var board: TB
             begin
                 BitPos (board.side [ord (isBlack)].bitboards [pieceType], posArray);
                 for j := 1 to posArray [0] do
-                    result := result or Trim (ord (isBlack), pieceType, posArray [j], lastMove, board, epCapDummy)
+                    result := result or Trim (ord (isBlack), pieceType, posArray [j], board, epCapDummy)
             end
     end;        
 

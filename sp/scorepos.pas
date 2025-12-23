@@ -117,7 +117,6 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
         var
             locArray: bitarray;
             epDummy: integer;
-            dummyMove: moverec;
             bits: bitboard;
         begin
             BitPos (sideBoards.rookBitboard, locArray);
@@ -125,7 +124,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             if locArray [0] = 2 then
                 begin
                     {bonus for connected rooks - check if other rook could be caught as opponent}
-                    bits := Trim (1 - side, Rook, locArray [1], dummyMove, board, epDummy);
+                    bits := Trim (1 - side, Rook, locArray [1], board, epDummy);
                     if getBit (bits, locArray [2]) <> 0 then
                         inc (evalScore, 100)
                 end

@@ -49,7 +49,7 @@ procedure readMoveStack (index: integer; var attackFlag: boolean; var id, startS
 
 procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: moverec);
     var 
-        piece, l, n, pLoc, epCapFlag: integer;
+        piece, l, n, pLoc, epCapSquare: integer;
         posArray, moveArray: bitArray;
         currentMoveBoard, attackBoard, bits: bitboard;
         
@@ -96,13 +96,12 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                 for l := 1 to posArray [0] do
                     begin
                         pLoc := posArray[l];
-                        epCapFlag := 0;
-                        currentMoveBoard := Trim (turn, piece, pLoc, lastMove, board, epCapFlag);
+                        currentMoveBoard := Trim (turn, piece, pLoc, board, epCapSquare);
                         attackBoard := currentMoveBoard and board.side [1 - turn].pieces;
-
-                        {re-add any en passant capture squares}
-                        if epCapFlag = 1 then
-                            attackBoard := attackBoard or currentMoveBoard and getMovementBitboard (EPBitboard [turn], pLoc);
+                        {re-add en passant capture squares}
+                        if epCapSquare <> -1 then
+                            setBit (attackBoard, epCapSquare);
+//                            attackBoard := attackBoard or currentMoveBoard and getMovementBitboard (EPBitboard [turn], pLoc);
                             
                         createMoveNodes (true, piece, pLoc, attackBoard);
                         createMoveNodes (false, piece, pLoc, currentMoveBoard and not attackBoard)

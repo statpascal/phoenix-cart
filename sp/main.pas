@@ -155,7 +155,7 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
         moveArray: bitarray;
         bits, kingMovement, opponentMoves: bitboard;
         kingPos, epCapDummy: integer;
-        dummyMove, move: moverec;
+        move: moverec;
         tempBoard: TBoardRecord;
     begin
         isOpponentMate := false;
@@ -168,7 +168,7 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
         kingPos := moveArray [1];
 
         {obtain list of all possible opposite king movement}
-        kingMovement := Trim (1 - gameSide, King, kingPos, playMove, board, epCapDummy);
+        kingMovement := Trim (1 - gameSide, King, kingPos, board, epCapDummy);
         BitPos (kingMovement, moveArray);
         
         move.id := King;
@@ -197,13 +197,12 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
         clearBit (tempBoard.allPieces, kingPos);
         
         {check if attacking piece can be captured}
-        fillChar (dummyMove, sizeof (dummyMove), 0);
-        opponentMoves := combineTrimSide (gameSide = 0, dummyMove, tempBoard);
+        opponentMoves := combineTrimSide (gameSide = 0, tempBoard);
         if getBit (opponentMoves, playMove.endSq) <> 0 then
             exit;
         
         {generate trim board for attacking piece}
-        bits := Trim (gameSide, playMove.id, playMove.endSq, dummyMove, tempBoard, epCapDummy); 
+        bits := Trim (gameSide, playMove.id, playMove.endSq, tempBoard, epCapDummy); 
 
         {check if any opposite piece movement blocks it}
         BitAnd (bits, opponentMoves, bits);
@@ -217,7 +216,7 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
             BitOr (bits, tempBoard.white.pieces, tempBoard.white.pieces);
 
         {regenerate Trim board for attacking piece}
-        bits := Trim (gameSide, playMove.id, playMove.endSq, dummyMove, tempBoard, epCapDummy);
+        bits := Trim (gameSide, playMove.id, playMove.endSq, tempBoard, epCapDummy);
 
         {check if overalp with opposite king}
         if getBit (bits, kingPos) = 0 then

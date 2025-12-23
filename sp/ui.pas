@@ -155,7 +155,7 @@ procedure BoardDisplay (var board: TBoardRecord);
                         showSquare (posArray [i] div 8, posArray [i] mod 8, figure [s, piece])
                 end;
         gotoxy (0, 16);
-        write ('castling rights: ');
+        write ('castling: ');
         if board.castleFlags and whiteRightCastle <> 0 then
             write ('K');
         if board.castleFlags and whiteLeftCastle <> 0 then
@@ -164,6 +164,8 @@ procedure BoardDisplay (var board: TBoardRecord);
             write ('k');
         if board.castleFlags and blackLeftCastle <> 0 then
             write ('q');
+        if board.castleFlags and epMoveFlag <> 0 then            
+            write (' EP: ', chr (ord ('A') + board.castleFlags and 7), 3 + 3 * ord (board.castleFlags and epWhiteFlag = 0));
         gotoxy(0, 14)
     end;
 
@@ -177,7 +179,6 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
 
     begin
         NewBoard;
-
         fillChar (board, sizeof (board), 0);
 
         repeat

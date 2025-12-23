@@ -11,27 +11,18 @@ implementation
 uses trimprocs, ui, utility;
 
 function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
-
-    function search (var sideBoards: TSideRecord): integer;
-        var
-            pieceType: integer;
-        begin
-            search := InvalidPiece;
-            for pieceType := 0 to 5 do
-                if getBit (sideBoards.bitboards [pieceType], pos) <> 0 then
-                    begin
-                        search := pieceType;
-                        exit
-                    end
-        end;
-        
+    var
+        pieceType: integer;
     begin
-        if turn = 0 then 
-            findPieceType := search (board.white)
-        else
-            findPieceType := search (board.black)
+        for pieceType := Pawn to King do
+            if getBit (board.side [turn].bitboards [pieceType], pos) <> 0 then
+                begin
+                    findPieceType := pieceType;
+                    exit
+                end;
+        findPieceType := InvalidPiece
     end;
-
+        
 procedure clearEntryField;
     begin
         soundBell;
@@ -148,7 +139,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; lastMove: 
                     else
                         begin
                             {trim movement to blocks}
-                            bits := Trim (turn, playMove.id, iLoc, lastMove, workBoard, epCapDummy);
+                            bits := Trim (turn, playMove.id, iLoc, workBoard, epCapDummy);
                             validSq := getBit (bits, eLoc) <> 0
                         end
                 end;

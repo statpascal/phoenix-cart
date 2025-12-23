@@ -2,7 +2,7 @@ unit Globals;
 
 interface
 
-uses samsutil, vdp, bitops;
+uses vdp, bitops;
 
 const
     Pawn = 0;
@@ -22,7 +22,7 @@ const
     blackLeftCastle = 128;
     blackRightCastle = 256;
     
-    versionString = '2025-12-22-19-00';
+    versionString = '2025-12-23-17-00';
     
     Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
                                           ('p', 'r', 'n', 'b', 'q', 'k'));
@@ -84,14 +84,10 @@ procedure soundBell;
 
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
     var
-        dummyMove: moverec;
         res: bitboard;
     begin
-        {ignore en passant - cannot affect king}
-        fillchar (dummyMove, sizeof (dummyMove), 0);
-        
         {check if own king attacked by opposite trim board}
-        res := board.side [turn].kingBitboard and combineTrimSide (turn = 0, dummyMove, board);
+        res := board.side [turn].kingBitboard and combineTrimSide (turn = 0, board);
         isKingChecked := not isClear (res)
     end;
     
@@ -143,12 +139,22 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
             setBit (board.allPieces, endSq);
             setBit (ownPieces, endSq);
             if (id = Pawn) and (endSq in [0..7, 56..63]) then
+                // TODO: ask for human side
                 setBit (own.queenBitboard, endSq)
             else
-                setBit (own.bitboards [id], endSq)
+                setBit (own.bitboards [id], endSq);
+              
+            {set EP rights in board}  
+            if (id = Pawn) and (abs (startSq - endSq) = 16) then
+                begin
+                    board.castleFlags := board.castleFlags or (startSq and 7) or epMoveFlag;
+                    if endSq in [24..31] then 
+                        board.castleFlags := board.castleFlags or epWhiteFlag
+                end
         end;
     
     begin
+        board.castleFlags := board.castleFlags and not (epMoveFlag + epWhiteFlag + epColBitmask);
         if turn = 0 then
             begin
                 updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, move.id, move.startsq, move.endsq);
@@ -190,7 +196,6 @@ procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: mov
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
     var
         bits: bitboard;
-        dummyMove: moverec;
     begin
         result := board.castleFlags;
             
@@ -215,8 +220,7 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
             end;
             
         {check for back row attack and remove affected rights}
-        fillChar (dummyMove, sizeof (dummyMove), 0);
-        bits := combineTrimSide (turn = 0, dummyMove, board);
+        bits := combineTrimSide (turn = 0, board);
         if turn = 0 then
             begin
                 if bytearray (bits) [0] and $38 <> 0 then		// not correct - rook may be attacked
