@@ -87,7 +87,24 @@ procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integ
                 inc (index);
             end;
             
-        // TODO: ep, half move count
+        skipBlank;
+        if s [index] = '-' then
+            inc (index)
+        else
+            begin
+                col := s [index] - ord ('a');
+                inc (index);
+                row := s [index] - ord ('0');
+                inc (index)
+                if (col in [0..7]) and (row in [3, 7]) then
+                    begin
+                        board.castleFlags := board.castleFlags or epMoveFlag or col;
+                        if row = 3 then
+                            board.castleFlags := board.castleFlags or epWhiteFlag;
+                    end
+            end;
+            
+        // TODO: half move count
         index := length (s);
         gameMove := 0;
         factor := 1;

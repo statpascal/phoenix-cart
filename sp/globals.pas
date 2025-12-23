@@ -13,10 +13,14 @@ const
     King = 5;
     InvalidPiece = 6;
 
-    whiteLeftCastle = 1;
-    whiteRightCastle = 2;
-    blackLeftCastle = 4;
-    blackRightCastle = 8;
+    epColBitmask = 7;
+    epWhiteFlag = 8;
+    epMoveFlag = 16;
+    
+    whiteLeftCastle = 32;
+    whiteRightCastle = 64;
+    blackLeftCastle = 128;
+    blackRightCastle = 256;
     
     versionString = '2025-12-22-19-00';
     
@@ -53,6 +57,7 @@ var
     gamePly, gameMove, humanSide: integer;
     moveNumHi, moveNumLo: integer;
     plyQS: integer;
+    disableAlphaBetaPruning: boolean;
     
 procedure ClearBitboard (var b: bitboard);
 function IsClear (var b: bitboard): boolean;
@@ -253,4 +258,6 @@ function IsClear(var b: bitboard): boolean; assembler;
         movb r14, *r12
 end;        
 
+begin
+    disableAlphaBetaPruning := false
 end.

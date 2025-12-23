@@ -6,13 +6,14 @@ var
  fResult, offset, n : integer;
  datBuffer : packed array[0..4095] of byte;
  boarddat : file;
+ iFile : file of integer;
 
 procedure SamsSize(sizeCode : integer; var size : integer); external;
 function SamsInit : integer; external;
  
 begin
  Page(OUTPUT);
- writeln('Phoenix Chess 2.4');
+ writeln('Phoenix Chess 2.5');
  n := SamsInit;
  if n = 0 then
   begin
@@ -43,8 +44,21 @@ begin
  offset := 0;
  fResult := BlockRead(boarddat, datBuffer, 8);
  DataOps(1, startPage, dataSize, offset, datBuffer);
- 
  Close(boarddat);
+ 
+ offset := OPENLIB;
+ startPage := BASE3;
+ dataSize := 2;
+ reset(iFile, 'openings.data');
+ n := iFile^;
+ repeat
+  DataOps(1, startPage, dataSize, offset, n);
+  offset := offset + 2;
+  get(iFile);
+  n := iFile^;
+ until n = 99;
+ Close(iFile);
+ 
  writeln('starting Phoenix Chess...');
  Chain('main');
  

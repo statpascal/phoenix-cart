@@ -1,47 +1,4 @@
-(* version 12-19-25 v2.4)
-(* MinMax, no iterative deepening, capture evaluation bonus *)
-(* fixed castling when rook has moved bug *)
-(* adjustments to scorepos
-   - modified the mobility bonus
-   - decreased opposite check to 100
-   - modified the capture bonus table
-   - removed the pawn count factor for bishops
-   - increased the castling bonus to 500
-   - increased pawn support bonus to 20
-   - reduced pawn en-passant capture penalty to 20
-   - added doubled pawns penalty *)
-(* cMoveFlag set only on initial ply *)
-(* reset the castling obstruction flags with every turn *)
-(* lastMove variable now local only *)
-(* capture flags only set on topmost ply *)
-(* fixed castling at ply > 2 *)
-(* fixed impending mate detection *)
-(* removed randomization of bestScore in MinMax *)
-(* replaced bitgen with direct file load *)
-(* fixed checkmate bug when attacking piece can be captured *)
-(* fixed bug in the BitTrim routine *)
-(* added pawn promotion piece choice for human side *)
-(* fixed discovery check bug *)
-(* moved Update routine to an Include file *)
-(* added mating move check during move generation *)
-(* reduced maximum ply to 5 *)
-(* fixed bugs with the GetBoards, matecheck and matechk routines *)
-(* removed move skipping when king in check during move generation *)
-(* added game moves saving to SAMS card *)
-(* added penalty for moving king when castling possible *)
-(* fixed bug in board update after en passant capture *)
-(* fixed bug in queen movement trimming *)
-(* fixed back row threat detection during castling *)
-(* added 3-fold repetition draw detection *)
-(* added game status storage to SAMS card *)
-(* fixed en-passant capture risk detection *)
-(* fixed stalemate function and added the resign function *)
-(* added the utility menu *)
-(* fixed bug in opening move *)
-(* Added rook move penalty before castling *)
-(* adjusted end game conditions *)
-(* added check condition evaluation to position setup *)
-(* ignored moves that did not eliminate own check *)
+(* version 12-21-25 v2.5)
 (* 10-19-25: Fixed castling when rook not present *)
 (* 10-19-25: Adjusted the resign parameters *)
 (* 10-30-25: Added capture bonus in scorepos *)
@@ -65,7 +22,8 @@
 (* 12-4-25: broke up MoveGen into 2 units *)
 (* 12-5-25: added stalemate detection to deeper plys *)
 (* 12-6-25: fixed distance function between kings in end game *)
-(* 12-18-25: move various score modifiers from Scorepos to Move1 *)
+(* 12-20-25: move various score modifiers from Scorepos to Move1 *)
+(* 12-21-25: implemented opening library *)
 
 Program Main;
 uses random,
@@ -78,7 +36,8 @@ label
 var
  i, j, moveScore, offset, found, aVal, bVal, ans :integer;
  sideOffset, offset1, offset2, tempPointer : integer;
- humanFlag, cmFlag, checkFlag, promFlag, repFlag : boolean;
+ moveLoc, openPoint : integer;
+ humanFlag, cmFlag, checkFlag, promFlag, repFlag, openFlag : boolean;
  moveArray : bitarray;
  lastMove, playMove, moveStore, tempMove : moverec;
  bit8 : bitboard;
@@ -194,6 +153,9 @@ begin (* main *)
  moveStore.startSq := 99;
  moveStore.endSq := 99;
  gamePointer := 0;
+ openFlag := TRUE;
+ moveLoc := 1500;
+ openPoint := -6;
 
  {initialize the game storage pointers}
  startPage := BASE2;

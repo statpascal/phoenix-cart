@@ -181,7 +181,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                                                         bestScore := evalScore;
                                                         bestMove := tempMove
                                                     end;
-                                                if bestScore > beta then
+                                                if not disableAlphaBetaPruning and (bestScore > beta) then
                                                     exit
                                                 else
                                                     if bestScore > alpha then
@@ -195,7 +195,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                                                         bestScore := evalScore;
                                                         bestMove := tempMove
                                                     end;
-                                                if bestScore < alpha then
+                                                if not disableAlphaBetaPruning and (bestScore < alpha) then
                                                     exit
                                                 else
                                                     if bestScore < beta then
