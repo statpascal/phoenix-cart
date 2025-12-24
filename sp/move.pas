@@ -92,12 +92,12 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
         checkCastling (board);
         for piece := Pawn to King do
             begin
-                BitPos (board.side [turn].bitboards [piece], posArray);
+                BitPos (board.sides [turn].bitboards [piece], posArray);
                 for l := 1 to posArray [0] do
                     begin
                         pLoc := posArray[l];
                         currentMoveBoard := Trim (turn, piece, pLoc, board, epCapSquare);
-                        attackBoard := currentMoveBoard and board.side [1 - turn].pieces;
+                        attackBoard := currentMoveBoard and board.sides [1 - turn].pieces;
                         {re-add en passant capture squares}
                         if epCapSquare <> -1 then
                             setBit (attackBoard, epCapSquare);

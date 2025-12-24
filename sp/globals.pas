@@ -48,7 +48,7 @@ type
         allPieces: bitboard;
         case boolean of
             false: (white, black: TSideRecord);
-            true:  (side: array [0..1] of TSideRecord)
+            true:  (sides: array [0..1] of TSideRecord)
     end;
     
 var
@@ -87,11 +87,9 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
         res: bitboard;
     begin
         {check if own king attacked by opposite trim board}
-        res := board.side [turn].kingBitboard and combineTrimSide (turn = 0, board);
+        res := board.sides [turn].kingBitboard and combineTrimSide (turn = 0, board);
         isKingChecked := not isClear (res)
     end;
-    
-
 
 procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: moverec);
         

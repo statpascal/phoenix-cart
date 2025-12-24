@@ -267,7 +267,7 @@ procedure chainMain;
         {save current game state}
 // TODO: move to VDP                    SaveMove;
 
-                    playerMove(mainBoard, playMove, lastMove, gameSide);
+                    playerMove (mainBoard, playMove, gameSide);
 //                    if humanSide <> gameSide then
 //				TODO: handle side change
                     if pieceCount = -1 then

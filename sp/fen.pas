@@ -16,7 +16,7 @@ procedure placePiece (var board: TBoardRecord; row, col: integer; piece: char);
         for s := 0 to 1 do
             for pieceType := 0 to 5 do
                 if piece = Figure [s, pieceType] then
-                    setBit (board.side [s].bitboards [pieceType], row * 8 + col)
+                    setBit (board.sides [s].bitboards [pieceType], row * 8 + col)
    end;
     
 procedure combineBoards (var side: TSideRecord; var res: bitboard);

@@ -150,25 +150,14 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             distance := abs (p1 shr 3 - p2 shr 3) + abs (p1 and 7 - p2 and 7)
         end;
         
-    procedure evaluateKing;
+    procedure evaluateKing (var ownKing, opponentKing: bitboard);
         const
             KingEdge: array [0..7] of uint8 = ($ff, $81, $81, $81, $81, $81, $81, $ff);
         var
-            ownKing, opponentKing, bits: bitboard;
+            bits: bitboard;
             locArray: bitarray;
             ownPos: integer;
         begin
-            if side = 0 then
-                begin
-                    ownKing := board.white.kingBitboard;
-                    opponentKing := board.black.kingBitboard
-                end
-            else
-                begin
-                    ownKing := board.black.kingBitboard;
-                    opponentKing := board.white.kingBitboard
-                end;
-
             {own king immediate check penalty}
             if isClear (ownKing) then
                 begin
@@ -215,7 +204,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
         evaluateKnightsBishops (sideBoards.knightBitboard, KnightScore);
         evaluateKnightsBishops (sideBoards.bishopBitboard, BishopScore);
         evaluateQueen;
-        evaluateKing;
+        evaluateKing (board.sides [side].kingBitboard, board.sides [1 - side].kingBitBoard);
             
         evaluateSide := evalScore
     end;

@@ -184,9 +184,9 @@ function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSqu
         else 
             begin
                 if (piece = Knight) or (piece = King) then
-                    result := getMovementBitboard (TBitboardType (pred (piece)), iLoc) and not board.side [turn].pieces
+                    result := getMovementBitboard (TBitboardType (pred (piece)), iLoc) and not board.sides [turn].pieces
                 else
-                    result := makeMovementBitboard (iLoc, piece, board.side [turn].pieces, board.side [1 - turn].pieces)
+                    result := makeMovementBitboard (iLoc, piece, board.sides [turn].pieces, board.sides [1 - turn].pieces)
             end;
     end;
     
@@ -200,7 +200,7 @@ function combineTrimSide (isBlack: boolean; var board: TBoardRecord): bitboard;
         clearBitboard (result);
         for pieceType := Pawn to King do
             begin
-                BitPos (board.side [ord (isBlack)].bitboards [pieceType], posArray);
+                BitPos (board.sides [ord (isBlack)].bitboards [pieceType], posArray);
                 for j := 1 to posArray [0] do
                     result := result or Trim (ord (isBlack), pieceType, posArray [j], board, epCapDummy)
             end

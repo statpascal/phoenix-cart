@@ -150,7 +150,7 @@ procedure BoardDisplay (var board: TBoardRecord);
         for s := 0 to 1 do
             for piece := Pawn to King do
                 begin
-                    BitPos (board.side [s].bitboards [piece], posArray);
+                    BitPos (board.sides [s].bitboards [piece], posArray);
                     for i := 1 to posArray [0] do
                         showSquare (posArray [i] div 8, posArray [i] mod 8, figure [s, piece])
                 end;

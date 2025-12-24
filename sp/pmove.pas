@@ -4,7 +4,7 @@ interface
 
 uses globals;
 
-procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; lastMove: moverec; turn: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; turn: integer);
 
 implementation
 
@@ -15,7 +15,7 @@ function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
         pieceType: integer;
     begin
         for pieceType := Pawn to King do
-            if getBit (board.side [turn].bitboards [pieceType], pos) <> 0 then
+            if getBit (board.sides [turn].bitboards [pieceType], pos) <> 0 then
                 begin
                     findPieceType := pieceType;
                     exit
@@ -31,7 +31,7 @@ procedure clearEntryField;
         gotoxy (whereX - 2, whereY)
     end;
             
-procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; lastMove: moverec; turn: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; turn: integer);
     label 
         l_1, l_2;
     var 
