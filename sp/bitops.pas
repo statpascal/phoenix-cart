@@ -154,42 +154,37 @@ procedure BitTrim (var b: bitboard; pos, ptype, opponent: integer);
 
 procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
         mov     @posarray, r13  
-        inct    r13             // R13: data pointer
+        mov	r13, r12	// R12: first word in posarray: counter
+        clr     *r13+           // R13: data pointer
         mov     @b1, r14        // R14: pointer to bitboard
         
-        clr     r0              // R0: piece positition (0-63)
-        li      r15, 4          // R0: loop counter over bitboard words
+        clr     r15             // R0: loop counter over bitboard words
         
     bitpos_1:
         mov     *r14+, r8       // R8: content of bitboard block
         jeq     bitpos_4        // skip if 0
         
+        mov	r15, r0
+        sla     r0, 4		// piece position (9 - 63)
+        
     bitpos_2:
         sla     r8, 1
-        jnc     bitpos_3
-        
-        mov     r0, *r13+
-        
-    bitpos_3:
-        mov     r8, r8		// check if all bits handled
-        jeq     bitpos_4
+        joc     bitpos_3
         
         inc     r0
         jmp	bitpos_2
         
-    bitpos_4:
-        ai      r0, 16
-        andi	r0, >FFF0	// start of next double row
-
-    bitpos_5:
-        dec     r15             // word counter
-        jne     bitpos_1
+    bitpos_3:
+        mov     r0, *r13+
+        inc	*r12
+        inc	r0
+        mov	r8, r8		// check if another bit to handle
+        jne	bitpos_2
         
-        mov     @posarray, r12  // r12: pointer to posarray
-        s       r12, r13
-        dect    r13
-        srl     r13, 1          // calculate number of pieces
-        mov     r13, *r12       // store number of pieces at begin of posarray
+    bitpos_4:
+        inc	r15
+        ci      r15, 4          // word counter
+        jne     bitpos_1
 end;
 
 function BitCount (var b: bitboard): integer; assembler;

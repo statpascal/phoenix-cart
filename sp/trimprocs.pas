@@ -159,27 +159,6 @@ function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSqu
                         else
                             epCapSquare := -1
                     end
-(*                
-                if (lastMove.id = Pawn) and (abs (lastMove.endSq - lastMove.startSq) = 16) and (row = 4 - turn) then
-                    begin
-                        if turn = 0 then
-                            begin
-                                bit2 := getEnpassantBitboard (true, lastMove.startSq and 7);
-                                epCapSquare := lastMove.startSq - 8
-                            end
-                        else
-                            begin
-                                bit2 := getEnpassantBitboard (false, lastMove.startSq and 7);
-                                epCapSquare := lastMove.startSq + 8
-                            end;
-                        {check if pawn on an EP square}
-                        if getBit (bit2, iLoc) <> 0 then
-                            begin
-                                epCapFlag := 1;
-                                setBit (result, epCapSquare)
-                            end
-                    end
-*)                    
                 end
         else 
             begin
