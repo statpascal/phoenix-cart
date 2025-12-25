@@ -38,3 +38,8 @@
 2025-12-22-19-00
 
 - changed handling of sliding pieces
+
+2025-12-25-19-00
+
+- moved EP rights to board structs
+- FEN position loading in UI
