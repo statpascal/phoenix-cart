@@ -11,7 +11,7 @@ procedure showMove (score, iLoc, eLoc: integer; isHumanMove: boolean);
 
 implementation
 
-uses trimprocs;
+uses trimprocs, fen;
 
 procedure PrintGame;
 
@@ -168,21 +168,56 @@ procedure BoardDisplay (var board: TBoardRecord);
             write (' EP: ', chr (ord ('A') + board.castleFlags and 7), 3 + 3 * ord (board.castleFlags and epWhiteFlag = 0));
         gotoxy(0, 14)
     end;
-
+    
+procedure loadFENData (var board: TBoardRecord; var turn, gameMove: integer);
+    var
+        fn, s: string;
+        f: text;
+    begin
+        write ('Filename: ');
+        readln (fn);
+        assign (f, fn);
+        s := '';
+        reset (f);
+        readln (f, s);
+        if s <> '' then
+            setFENPosition (board, turn, gameMove, s)
+        else
+            writeln ('Cannot read ', fn);
+        close (f)
+    end;
 
 procedure EnterPos (var board: TBoardRecord; var turn: integer);
     var 
         row, column, sideKey, pieceKey, offset : integer;
         ans, pLoc : integer;
+        ch: char;
         pname : string;
         pieceType, bitval, side: integer;
 
     begin
+        writeln;
+        writeln ('load [f]en/[i]nteractive?');
+        write ('(q) to exit');
+        repeat
+            ch := upcase (GetKey)
+        until ch in ['F','I', 'Q'];
+        writeln;
+        
+        if ch = 'Q' then 
+            exit;
+            
+        if ch = 'F' then
+            begin
+                loadFENData (board, turn, gameMove);
+                exit
+            end;
+        
         NewBoard;
         fillChar (board, sizeof (board), 0);
 
         repeat
-            gotoxy(0, 14);
+            gotoxy (0, 14);
             writeln(chr(7), 'select side: [w]hite/[b]black');
             write('[q] to exit  ');
             repeat
