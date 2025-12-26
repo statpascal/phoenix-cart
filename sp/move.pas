@@ -85,9 +85,6 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                 end
         end;
         
-    const
-        EPBitboard: array [0..1] of TBitboardType = (WhitePawnCapture, BlackPawnCapture);
-        
     begin
         checkCastling (board);
         for piece := Pawn to King do
@@ -101,7 +98,6 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
                         {re-add en passant capture squares}
                         if epCapSquare <> -1 then
                             setBit (attackBoard, epCapSquare);
-//                            attackBoard := attackBoard or currentMoveBoard and getMovementBitboard (EPBitboard [turn], pLoc);
                             
                         createMoveNodes (true, piece, pLoc, attackBoard);
                         createMoveNodes (false, piece, pLoc, currentMoveBoard and not attackBoard)

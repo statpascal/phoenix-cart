@@ -25,12 +25,12 @@ function makeMovementBitboard (pos, ptype: integer; var ownPieces, opponentPiece
             lwpi >8320
             mov  @>8314, r10      // copy stack pointer from Pascal runtime workspace
            
-            mov  @b, r1
-            mov  @ownPieces, r2
-            mov  @opponentPieces, r3
-            mov  @pos, r4
-            mov  @dy, r5
-            mov  @dx, r6
+            mov  *r10+, r1	// b
+            mov  *r10+, r4	// pos
+            mov  *r10+, r5	// dy
+            mov  *r10+, r6	// dx
+            mov  *r10+, r2	// pointer to ownPieces
+            mov  *r10, r3	// pointer to oppentPieces
            
             mov  r4, r0
             srl  r0, 3		// r0: row
@@ -132,19 +132,16 @@ function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSqu
         epCapSquare := -1;
         if piece = Pawn then
             begin
-                {trim forward movement to any piece}
                 row := iLoc shr 3;
+                result := getPawnMovementBitboard (turn, iLoc) and not board.allPieces or
+                          getPawnCaptureBitboard (turn, iLoc) and board.sides [1 - turn].pieces;
                 if turn = 0 then
                     begin
-                        result := getMovementBitboard (WhitePawnMove, iLoc) and not board.allPieces or
-                                  getMovementBitboard (WhitePawnCapture, iLoc) and board.black.pieces;
                         if (row = 1) and (getBit (result, iLoc + 8) = 0) then
                             clearBit (result, iLoc + 16)
                     end
                 else
                     begin
-                        result := getMovementBitboard (BlackPawnMove, iLoc) and not board.allPieces or 
-                                  getMovementBitboard (BlackPawnCapture, iLoc) and board.white.pieces;
                         if (row = 6) and (getBit (result, iLoc - 8) = 0) then
                             clearBit (result, iLoc - 16)
                     end;
@@ -161,9 +158,11 @@ function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSqu
                     end
                 end
         else 
-            begin
-                if (piece = Knight) or (piece = King) then
-                    result := getMovementBitboard (TBitboardType (pred (piece)), iLoc) and not board.sides [turn].pieces
+            case piece of
+                Knight:
+                    result := getKnightMovementBitboard (iLoc) and not board.sides [turn].pieces;
+                King:
+                    result := getKingMovementBitboard (iLoc) and not board.sides [turn].pieces
                 else
                     result := makeMovementBitboard (iLoc, piece, board.sides [turn].pieces, board.sides [1 - turn].pieces)
             end;
@@ -184,13 +183,5 @@ function combineTrimSide (isBlack: boolean; var board: TBoardRecord): bitboard;
                     result := result or Trim (ord (isBlack), pieceType, posArray [j], board, epCapDummy)
             end
     end;        
-
-(*        
-procedure CombineTrim (var whiteTrim, blackTrim: bitboard; var lastMove: moverec; var board: TBoardRecord);
-    begin
-        whiteTrim := combineTrimSide (false, lastmove, board);
-        blackTrim := combineTrimSide (true, lastmove, board)
-    end;
-*)    
 
 end.

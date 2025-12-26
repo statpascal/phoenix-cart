@@ -4,14 +4,12 @@ interface
 
 uses globals;
 
-type 
-    TBitboardType = (RookMove, KnightMove, BishopMove, QueenMove, KingMove, WhitePawnMove, WhitePawnCapture, BlackPawnMove, BlackPawnCapture);
-
-function getMovementBitboard (bitboardType: TBitboardType; loc: integer): bitboard;
-function getPieceLocationBitboard (loc: integer): bitboard;
+function getPawnMovementBitboard (side: integer; loc: integer): bitboard;
+function getPawnCaptureBitboard (side: integer; loc: integer): bitboard;
 function getEnPassantBitboard (isBlack: boolean; col: integer): bitboard;
 
-function getInitPosition: TBoardRecord;
+function getKnightMovementBitboard (loc: integer): bitboard;
+function getKingMovementBitboard (loc: integer): bitboard;
 
 type
     TPieceScoreType = (WhitePawnScore, BlackPawnScore, KnightScore, BishopScore, KingMidScore, KingEndScore);
@@ -21,57 +19,55 @@ function getPieceScoreValue (pieceScoreType: TPieceScoreType; loc: integer): int
 
 implementation
 
-function getMovementBitboard (bitboardType: TBitboardType; loc: integer): bitboard;
-
-    type
-        TBitboardData = array [TBitboardType, 0..63] of bitboard;
-
-    procedure data_move; external '../resources/movement.dat';
+type
+    TPieceMovementBitboard = array [0..63] of bitboard;
     
+function getPawnMovementBitboard (side: integer; loc: integer): bitboard;
+    procedure whitePawnMove; external '../resources/whitepawnmove.dat';
+    procedure blackPawnMove; external '../resources/blackpawnmove.dat';
     begin
-        result := TBitboardData (addr (data_move)) [bitboardType, loc]
-    end;
-    
-function getPieceLocationBitboard (loc: integer): bitboard;
-
-    type
-        TBitboardData = array [0..63] of bitboard;
-
-    procedure data_loc; external '../resources/pieceloc.dat';
-    
-    begin
-        result := TBitboardData (addr (data_loc)) [loc]
+        if side = 0 then
+            result := TPieceMovementBitboard (addr (whitePawnMove)) [loc]
+        else
+            result := TPieceMovementBitboard (addr (blackPawnMove)) [loc]
     end;
 
+function getPawnCaptureBitboard (side: integer; loc: integer): bitboard;
+    procedure whitePawnCapture; external '../resources/whitepawncapture.dat';
+    procedure blackPawnCapture; external '../resources/blackpawncapture.dat';
+    begin
+        if side = 0 then
+            result := TPieceMovementBitboard (addr (whitePawnCapture)) [loc]
+        else
+            result := TPieceMovementBitboard (addr (blackPawnCapture)) [loc]
+    end;
+
+function getKnightMovementBitboard (loc: integer): bitboard;
+    procedure knightMove; external '../resources/knightmove.dat';
+    begin
+        result := TPieceMovementBitboard (addr (knightMove)) [loc]
+    end;
+
+function getKingMovementBitboard (loc: integer): bitboard;
+    procedure kingMove; external '../resources/kingmove.dat';
+    begin
+        result := TPieceMovementBitboard (addr (kingMove)) [loc]
+    end;
+    
 function getEnPassantBitboard (isBlack: boolean; col: integer): bitboard;
-
     type
         TBitboardData = array [boolean, 0..7] of bitboard;
-        
     procedure data_ep; external '../resources/enpassant.dat';
-    
     begin
         result := TBitboardData (addr (data_ep)) [isBlack, col]
     end;
     
 function getPieceScoreValue (pieceScoreType: TPieceScoreType; loc: integer): integer;
-
     type
         TPieceScoreData = array [TPieceScoreType, 0..63] of integer;
-        
     procedure data_score; external '../resources/piecescore.dat';
-    
     begin
         result := TPieceScoreData (addr (data_score)) [pieceScoreType, loc]
-    end;
-    
-function getInitPosition: TBoardRecord;
-
-    procedure data_init; external '../resources/initboard.dat';
-    
-    begin
-        result := TBoardRecord (addr (data_init));
-        result.castleFlags := 0
     end;
     
 end.
