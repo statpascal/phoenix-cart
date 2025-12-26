@@ -10,7 +10,11 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
 
 implementation
 
-uses scorepos, trimprocs, utility, resources, logger;
+uses scorepos, trimprocs, 
+{$ifdef ti99}
+utility, 
+{$endif}
+resources, logger, bitops;
 
 (* encoding of moves on move stack:
 
@@ -24,7 +28,12 @@ const
     MoveStackSize = 4095;
 
 var
+{$ifdef ti99}
     moveStack: array [0..MoveStackSize] of integer absolute $2000;
+{$endif}
+{$ifdef fpc}
+    moveStack: array [0..MoveStackSize] of integer;
+{$endif}
     moveStackPointer: integer;
     
 procedure pushMoveStack (attackFlag: boolean; id, startSq, endSq: integer);
@@ -228,11 +237,13 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
             begin
                 if ply = gamePly then
                     begin
+{$ifdef ti99}                    
                         gotoxy(20, 1);
                         write(chr(7), chr(7), 'stalemate!');
                         readln;
                         Utility(switchFlag);
                         // TODO: where to go from here
+{$endif}                        
                     end
                 else
                     score := 0;

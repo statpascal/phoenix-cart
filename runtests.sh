@@ -16,7 +16,3 @@ $XAS99 -R -b -q -L out.lst out.a99 -o testphoenix.bin
 cat testphoenix_b*.bin >testphoenix.bin
 
 $EMUL99 phoenix-cart.cfg cart_rom=testphoenix.bin &
-sleep 2
-echo -n 2 >keyin_fifo
-sleep 1
-echo -n 2 >keyin_fifo

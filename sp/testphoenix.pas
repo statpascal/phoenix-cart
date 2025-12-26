@@ -18,8 +18,13 @@ procedure testPosition (fenStr, logfn: string; ply, qsdeepening: integer);
         gamePly := ply;
         plyQS := 1 - qsdeepening;
         fillChar (lastMove, sizeof (lastMove), 0);
-        
+
+{$ifdef ti99}        
         startLogging (logfn);
+{$endif}
+{$ifdef fpc}
+        startLogging (copy (logfn, 6, 100));
+{$endif}        
         writeln ('Analyzing: ', fenStr);
         MoveGen (mainBoard, lastMove, playMove, moveScore, alpha, beta, gamePly, gameSide);
         printMove (output, playMove);
@@ -29,6 +34,7 @@ procedure testPosition (fenStr, logfn: string; ply, qsdeepening: integer);
     end;
     
 begin
+    writeln ('Starting tests');
     testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', 'DSK0.opening-ply3.log', 3, 2);
     testPosition ('r1b4r/pp1p2pp/7k/5Q2/8/2PB4/P4PPP/2K1R2R w - - 0 40', 'DSK0.queen-h5-ply4.log', 3, 2);
     testPosition ('4k3/8/8/8/8/8/1B2P3/R3K3 b Q - 0 40', 'DSK0.castle-ply3.log', 3, 2);
@@ -42,5 +48,7 @@ begin
     
     writeln;
     writeln ('** DONE **');
+{$ifdef ti99}    
     waitKey
+{$endif}
 end.

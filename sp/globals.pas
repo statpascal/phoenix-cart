@@ -2,7 +2,11 @@ unit Globals;
 
 interface
 
-uses vdp, bitops;
+uses bitops
+{$ifdef ti99}
+, vdp
+{$endif}
+;
 
 const
     Pawn = 0;
@@ -61,8 +65,6 @@ var
     
 procedure ClearBitboard (var b: bitboard);
 function IsClear (var b: bitboard): boolean;
-
-function GetKeyInt: integer;
 
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
@@ -238,16 +240,12 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
     end;        
            
 
-function getKeyInt: integer;
-    begin
-        getKeyInt := ord (upcase (getkey ()))
-    end;
-
 procedure ClearBitboard (var b: bitboard);
     begin
         fillChar (b, sizeof (b), 0)
     end; 
 
+{$ifdef ti99}
 function IsClear(var b: bitboard): boolean; assembler;
         clr  r14
         mov  @b, r12
@@ -260,7 +258,15 @@ function IsClear(var b: bitboard): boolean; assembler;
     isclear_done:
         mov  *r10, r12
         movb r14, *r12
-end;        
+end;
+{$endif}
+
+{$ifdef fpc}
+function IsClear(var b: bitboard): boolean;
+    begin
+        isClear := b = 0
+    end;
+{$endif}
 
 begin
     disableAlphaBetaPruning := false

@@ -2,7 +2,7 @@ unit logger;
 
 interface
 
-uses globals;
+uses globals, bitops;
 
 var
     doLogging: boolean;

@@ -2,12 +2,10 @@ unit trimprocs;
 
 interface
 
-uses globals;
+uses bitops, globals;
 
 function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSquare: integer): bitboard;
 function combineTrimSide (isBlack: boolean; var board: TBoardRecord): bitboard;
-
-// procedure CombineTrim (var whiteTrim, blackTrim: bitboard; var lastMove: moverec; var board: TBoardRecord);
 
 
 implementation
@@ -21,6 +19,7 @@ function makeMovementBitboard (pos, ptype: integer; var ownPieces, opponentPiece
         RightVal = $0917;	// srl r7, 1
         ZeroVal =  $10F1;	// jmp makeray_1
         
+{$ifdef ti99}        
     procedure makeRay (var b: bitboard; pos, dy, dx: integer; var ownPieces, opponentPieces: bitboard); assembler;
             lwpi >8320
             mov  @>8314, r10      // copy stack pointer from Pascal runtime workspace
@@ -69,8 +68,10 @@ function makeMovementBitboard (pos, ptype: integer; var ownPieces, opponentPiece
         makeray_2:            
             lwpi >8300
     end;
+{$endif}    
         
-    procedure makeRayPascal (var b: bitboard; pos, dy, dx: integer; var ownPieces, opponentPieces: bitboard);
+{$ifdef fpc}        
+    procedure makeRay (var b: bitboard; pos, dy, dx: integer; var ownPieces, opponentPieces: bitboard);
         var row, bitval: integer;
         begin
             row := pos shr 3;
@@ -90,6 +91,7 @@ function makeMovementBitboard (pos, ptype: integer; var ownPieces, opponentPiece
                     bitval := bitval shr 1
             until (row < 0) or (row >= 8) or (bitval > 128) or (bitval = 0) 
         end;
+{$endif}        
         
     begin
         clearBitboard (result);

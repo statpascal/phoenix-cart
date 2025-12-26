@@ -2,7 +2,7 @@ unit fen;
 
 interface
 
-uses globals;
+uses bitops, globals, logger;
 
 procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integer; s: string);
 
@@ -113,8 +113,8 @@ procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integ
                 inc (gameMove, factor * (ord (s [index]) - ord ('0')));
                 factor := factor * 10;
                 dec (index)
-            end
-                
+            end;
+            
     end;
                 
 end.

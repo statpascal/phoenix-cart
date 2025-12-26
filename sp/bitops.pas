@@ -9,24 +9,86 @@ type
     bitarray = array [0..64] of integer;
 
 
-procedure BitTrim (var b: bitboard; pos, ptype, opponent: integer);
+// procedure BitTrim (var b: bitboard; pos, ptype, opponent: integer);
 procedure BitPos (var b1: bitboard; var posarray: bitarray);
 function BitCount (var b: bitboard): integer;
 
+{$ifdef ti99}
 // procedure BitNot (var b1, br: bitboard);
 procedure BitAnd (var b1, b2, br: bitboard);
 procedure BitAndNot (var b1, b2, br: bitboard); assembler;
 procedure BitOr (var b1, b2, br: bitboard);
+{$endif}
 
 procedure clearBit (var b: bitboard; n: integer);
-procedure setBit (var b: bitboard; n: integer);
+procedure setBit (var b: bitboard; n: integer); overload;
 function getBit (var b: bitboard; n: integer): integer;
-procedure setBit (var b: bitboard; pos, val: integer);
+procedure setBit (var b: bitboard; pos, val: integer); overload;
 
 implementation
 
 uses globals;
 
+{$ifdef fpc}
+
+var
+    bitm: array [0..63] of uint64;
+    
+procedure initBitmask;
+    var 
+        i: 0..63;
+    begin
+        for i := 0 to 63 do
+            bitm [(i and $f8) or (7 - i and 7)] := uint64 (1) shl i
+        end;
+
+procedure BitPos (var b1: bitboard; var posarray: bitarray);
+    var
+        i, count: integer;
+    begin
+        count := 0;
+        for i := 0 to 63 do
+            if b1 and bitm [i] <> 0 then
+                begin
+                    inc (count);
+                    posarray [count] := i
+                end;
+        posarray [0] := count
+    end;
+    
+function BitCount (var b: bitboard): integer;
+    var
+        val: uint64;
+        count: integer;
+    begin
+        count := 0;
+        val := b;
+        while val <> 0 do 
+            begin
+                inc (count);
+                val := val and pred (val)
+            end;
+        BitCount := count
+    end;
+    
+procedure clearBit (var b: bitboard; n: integer);
+    begin
+        b := b and not bitm [n]
+    end;
+    
+procedure setBit (var b: bitboard; n: integer);
+    begin
+        b := b or bitm [n]
+    end;
+    
+function getBit (var b: bitboard; n: integer): integer;
+    begin
+        getBit := ord (b and bitm [n] <> 0)
+    end;
+
+{$endif}
+
+(*
 procedure BitTrim (var b: bitboard; pos, ptype, opponent: integer);
 
     type 
@@ -146,12 +208,14 @@ procedure BitTrim (var b: bitboard; pos, ptype, opponent: integer);
                     end
             end
     end;
+*)
 
 //extract the board positions of each piece on the board
 //intarray will have number of pieces at index 0
 //and a sequential list of positions for each piece
 //starting at index 1 and board position 
 
+{$ifdef ti99}
 procedure BitPos(var b1 : bitboard; var posarray : bitarray); assembler;
         mov     @posarray, r13  
         mov	r13, r12	// R12: first word in posarray: counter
@@ -353,6 +417,7 @@ function getBit (var b: bitboard; n: integer): integer; assembler;
         inc  *r13	// return 1
     getbit_1:        
 end;
+{$endif}
 
 procedure setBit (var b: bitboard; pos, val: integer);
     begin
@@ -433,5 +498,10 @@ begin
     rewrite (f)
     
 *)    
+
+{$ifdef fpc}
+begin
+    initBitMask
+{$endif}
     
 end.

@@ -9,9 +9,19 @@ procedure BoardDisplay (var board: TBoardRecord);
 procedure EnterPos (var board: TBoardRecord; var turn: integer);
 procedure showMove (score, iLoc, eLoc: integer; isHumanMove: boolean);
 
+function getKeyInt: integer;
+
+
 implementation
 
 uses trimprocs, fen;
+
+function getKeyInt: integer;
+    begin
+        getKeyInt := ord (upcase (getkey ()))
+    end;
+
+
 
 procedure PrintGame;
 
