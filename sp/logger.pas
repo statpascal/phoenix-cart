@@ -2,7 +2,7 @@ unit logger;
 
 interface
 
-uses globals, bitops;
+uses globals, bitops, board;
 
 var
     doLogging: boolean;
@@ -44,7 +44,7 @@ procedure indent (ply: integer);
 
 procedure dumpBitBoard (var b: bitboard);
     var
-        i, j, k, val: integer;
+        i, k: integer;
     begin
         for i := 7 downto 0 do
             for k := 0 to 7 do

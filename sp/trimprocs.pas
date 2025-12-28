@@ -2,7 +2,7 @@ unit trimprocs;
 
 interface
 
-uses bitops, globals;
+uses bitops, globals, board;
 
 function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSquare: integer): bitboard;
 function combineTrimSide (isBlack: boolean; var board: TBoardRecord): bitboard;
@@ -175,7 +175,6 @@ function combineTrimSide (isBlack: boolean; var board: TBoardRecord): bitboard;
         pieceType, j: integer;
         posArray: bitarray;
         epCapDummy: integer;
-        bit: bitboard;
     begin
         clearBitboard (result);
         for pieceType := Pawn to King do

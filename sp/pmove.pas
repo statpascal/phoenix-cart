@@ -2,7 +2,7 @@ unit pmove;
 
 interface
 
-uses globals;
+uses globals, board;
 
 procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; turn: integer);
 
@@ -10,19 +10,6 @@ implementation
 
 uses trimprocs, ui, utility;
 
-function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
-    var
-        pieceType: integer;
-    begin
-        for pieceType := Pawn to King do
-            if getBit (board.sides [turn].bitboards [pieceType], pos) <> 0 then
-                begin
-                    findPieceType := pieceType;
-                    exit
-                end;
-        findPieceType := InvalidPiece
-    end;
-        
 procedure clearEntryField;
     begin
         soundBell;

@@ -2,7 +2,7 @@ unit Move;
 
 interface
 
-uses globals;
+uses globals, board;
 
 procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec;
                    var score: integer; aggMoveScores, alpha, beta, ply, turn: integer);
@@ -58,9 +58,9 @@ procedure readMoveStack (index: integer; var attackFlag: boolean; var id, startS
 
 procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: moverec);
     var 
-        piece, l, n, pLoc, epCapSquare: integer;
-        posArray, moveArray: bitArray;
-        currentMoveBoard, attackBoard, bits: bitboard;
+        piece, l, pLoc, epCapSquare: integer;
+        posArray: bitArray;
+        currentMoveBoard, attackBoard: bitboard;
         
     procedure createMoveNodes (attackFlag: boolean; id, startSq: integer; endSquares: bitboard);
         var

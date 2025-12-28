@@ -25,6 +25,11 @@ procedure setBit (var b: bitboard; n: integer); overload;
 function getBit (var b: bitboard; n: integer): integer;
 procedure setBit (var b: bitboard; pos, val: integer); overload;
 
+procedure ClearBitboard (var b: bitboard);
+function IsClear (var b: bitboard): boolean;
+
+
+
 implementation
 
 uses globals;
@@ -426,6 +431,36 @@ procedure setBit (var b: bitboard; pos, val: integer);
         else
             setBit (b, pos)
     end;
+    
+procedure ClearBitboard (var b: bitboard);
+    begin
+        fillChar (b, sizeof (b), 0)
+    end; 
+
+{$ifdef ti99}
+function IsClear(var b: bitboard): boolean; assembler;
+        clr  r14
+        mov  @b, r12
+        mov  *r12+, r13
+        soc  *r12+, r13
+        soc  *r12+, r13
+        soc  *r12, r13
+        jne  isclear_done
+        li   r14, >0100
+    isclear_done:
+        mov  *r10, r12
+        movb r14, *r12
+end;
+{$endif}
+
+{$ifdef fpc}
+function IsClear(var b: bitboard): boolean;
+    begin
+        isClear := b = 0
+    end;
+{$endif}
+
+    
 
 (*
 

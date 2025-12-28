@@ -2,7 +2,7 @@ unit scorepos;
 
 interface
 
-uses globals, bitops;
+uses globals, bitops, board;
 
 function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: moverec; capId: integer): integer;
 function evaluatePosition (turn: integer; var board: TBoardRecord; var move: moverec): integer;

@@ -1,7 +1,7 @@
 program testphoenix;
 
 uses
-    globals, move, fen, logger;
+    globals, board, move, logger;
 
 procedure testPosition (fenStr, logfn: string; ply, qsdeepening: integer);
     const

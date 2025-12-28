@@ -8,7 +8,7 @@ implementation
 // uses random,
 
 uses 
-    globals, move, trimprocs, ui, pmove, utility, resources, fen,  logger;
+    globals, move, trimprocs, ui, pmove, utility, resources, logger;
 
 var 
     i, j, moveScore, aVal, bVal: integer;
@@ -233,7 +233,8 @@ procedure chainMain;
 
     begin
 //        mainBoard := getInitPosition;
-        setFENPosition (mainBoard, gameSide, gameMove, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+        setInitPosition (mainboard, gameSide, gameMove);
+//        setFENPosition (mainBoard, gameSide, gameMove, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
         initGame (mainBoard);
 
      {start game}

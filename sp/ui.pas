@@ -2,7 +2,7 @@ unit ui;
 
 interface
 
-uses {$U chesslib.code} globals;
+uses globals, board;
 
 procedure PrintGame;
 procedure BoardDisplay (var board: TBoardRecord);
@@ -14,7 +14,7 @@ function getKeyInt: integer;
 
 implementation
 
-uses trimprocs, fen;
+uses trimprocs;
 
 function getKeyInt: integer;
     begin
