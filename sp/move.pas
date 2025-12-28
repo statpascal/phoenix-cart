@@ -5,7 +5,7 @@ interface
 uses globals;
 
 procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec;
-                   var score: integer; alpha, beta: integer; ply, turn: integer);
+                   var score: integer; aggMoveScores, alpha, beta, ply, turn: integer);
 
 
 implementation
@@ -114,15 +114,16 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
             end
     end;
     
-procedure iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIndex, alpha, beta: integer; var validMoveCount, bestScore: integer; var bestMove: moverec);
+function iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIndex, aggMoveScores, alpha, beta: integer; var validMoveCount, bestScore: integer; var bestMove: moverec): boolean;
     var
         attackFlag, foundFlag: boolean;
         attackMoves: boolean;
         attackId, capId, currentMoveindex: integer;
-        evalScore, moveScore: integer;
+        evalScore, evalMove, moveScore: integer;
         resultMove, tempMove: moverec;
         workBoard: TBoardRecord;
     begin
+        iterateMoveList := true;
         for attackMoves := true downto false do
             for currentMoveIndex := startIndex to endIndex do
                 begin
@@ -135,7 +136,12 @@ procedure iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIn
                             {check if own king in check after current move}
                             if not isKingChecked (turn, workBoard) then 
                                 begin
-                                    moveScore := evaluateMove (turn, board, attackFlag, tempMove, capId);
+                                    evalMove := evaluateMove (turn, board, attackFlag, tempMove, capId);
+                                    if turn = 0 then
+                                        moveScore := aggMoveScores + evalMove
+                                    else
+                                        moveScore := aggMoveScores - evalMove;
+                                        
                                     inc (validMoveCount);
                                     if not foundFlag and (ply <= 1) or (ply = plyQS) then
                                         {terminal node check}
@@ -147,25 +153,21 @@ procedure iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIn
                                                     moveNumLo := 0;
                                                     inc (moveNumHi)
                                                 end;
-                                            evalScore := EvaluatePosition (turn, workBoard, tempMove);
+                                            evalScore := EvaluatePosition (turn, workBoard, tempMove) + moveScore;
                                             if doLogging then begin   
                                                 indent (ply - 1); 
                                                 printMove (logFile, tempMove); 
-                                                if turn = 0 then
-                                                    writeln (logFile, ': ', evalScore + moveScore: 6)
-                                                else
-                                                    writeln (logFile, ': ', evalScore - moveScore: 6)
+                                                writeln (logFile, ': ', evalScore: 6)
                                             end
                                         end
                                     else
                                         begin
-                                            MoveGen (workBoard, tempMove, resultMove, evalScore, alpha, beta, pred (ply), 1 - turn);
+                                            MoveGen (workBoard, tempMove, resultMove, evalScore, moveScore, alpha, beta, pred (ply), 1 - turn);
                                         end;
 
                                     {alpha/beta selection}
                                     if turn = 0 then
                                         begin
-                                            inc (evalScore, moveScore);
                                             if evalScore >= bestScore then
                                                 begin
                                                     bestScore := evalScore;
@@ -179,7 +181,6 @@ procedure iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIn
                                         end
                                     else
                                         begin
-                                            dec (evalScore, moveScore);
                                             if evalScore <= bestScore then
                                                 begin
                                                     bestScore := evalScore;
@@ -193,15 +194,18 @@ procedure iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIn
                                         end
                                 end
                         end
-                end
+                end;
+        iterateMoveList := false
     end;
     
-procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec; var score: integer; alpha, beta: integer; ply, turn: integer);
+procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec;
+                   var score: integer; aggMoveScores, alpha, beta, ply, turn: integer);
     var 
         bestScore, validMoveCount: integer;
         switchFlag: integer;
         bestMove: moverec;
         savedMoveStackPointer: integer;
+        pruned: boolean;
     begin
         savedMoveStackPointer := moveStackPointer;
 
@@ -230,7 +234,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
             bestScore := 20000;
 
         validMoveCount := 0;
-        iterateMoveList (board, turn, ply, savedMoveStackPointer, pred (moveStackPointer), alpha, beta, validMoveCount,  bestScore, bestMove);
+        pruned := iterateMoveList (board, turn, ply, savedMoveStackPointer, pred (moveStackPointer), aggMoveScores, alpha, beta, validMoveCount,  bestScore, bestMove);
 
         {stalemate condition}
         if (validMoveCount = 0) and not isKingChecked (turn, board) then
@@ -255,9 +259,14 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
         
         if doLogging then begin
             indent (pred (ply)); 
-            write (logFile, 'Best: '); 
-            printMove (logFile, finalMove); 
-            writeln (logfile, ': ', score:6)
+            if pruned then
+                writeln (logFile, 'Pruned')
+            else
+                begin
+                    write (logFile, 'Best: '); 
+                    printMove (logFile, finalMove); 
+                    writeln (logfile, ': ', score:6)
+                end
         end;
 
         moveStackPointer := savedMoveStackPointer;

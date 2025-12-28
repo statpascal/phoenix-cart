@@ -37,7 +37,7 @@ function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: b
             else 
                 if (turn = 0) and (prevBoard.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) or
                    (turn = 1) and (prevBoard.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
-                    dec (result, 200);
+                    dec (result, 100);
 
         {penalty for moving the rook if castling possible on its side}
         if (move.id = Rook) and (gameMove < 13) then

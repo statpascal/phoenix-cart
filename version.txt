@@ -43,3 +43,12 @@
 
 - moved EP rights to board structs
 - FEN position loading in UI
+
+2025-12-27-14-00
+
+- apply move score on leaf nodes
+- x64 port with conditional compilation
+
+2025-12-28-14-00
+
+- reduced lost castling malus from 200 to 100
