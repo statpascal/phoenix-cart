@@ -20,7 +20,7 @@ function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: b
             (  0,  50,   0,   0,  50,   0),         // rook
             (  0,  50,  25,  25,  50,   0),         // knight
             (  0,  50,  25,  25,  50,   0),         // bishop
-            (  0,   0,   0,   0,  75,   0),         // queen
+            (  0,   0,   0,   0,   0,   0),         // queen
             (  0,   0,   0,   0,   0,   0));   	    // king
 
     begin
@@ -33,17 +33,17 @@ function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: b
         {bonus for castling/penalty for moving king if castling possible}
         if move.id = King then
             if abs (move.startSq - move.endSq) = 2 then
-                inc (result, 150)
+                inc (result, 20)
             else 
                 if (turn = 0) and (prevBoard.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) or
                    (turn = 1) and (prevBoard.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
-                    dec (result, 100);
+                    dec (result, 20);
 
         {penalty for moving the rook if castling possible on its side}
         if (move.id = Rook) and (gameMove < 13) then
             if (turn = 0) and (prevBoard.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) or
                (turn = 1) and (prevBoard.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
-            dec (result, 200);
+            dec (result, 10);
   
         {penalty if moving queen too early in game}
         if (move.id = Queen) and (gameMove < 5) then

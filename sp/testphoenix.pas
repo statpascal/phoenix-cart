@@ -3,7 +3,7 @@ program testphoenix;
 uses
     globals, board, move, logger;
 
-procedure testPosition (fenStr, logfn: string; ply, qsdeepening: integer);
+procedure testPosition (fenStr, move: string; ply, qsdeepening: integer);
     const
         alpha = -20000;
         beta = 20000;
@@ -19,24 +19,18 @@ procedure testPosition (fenStr, logfn: string; ply, qsdeepening: integer);
         plyQS := 1 - qsdeepening;
         fillChar (lastMove, sizeof (lastMove), 0);
 
-{$ifdef ti99}        
-        startLogging (logfn);
-{$endif}
-{$ifdef fpc}
-        startLogging (copy (logfn, 6, 100));
-{$endif}        
         writeln ('Analyzing: ', fenStr);
+//        startLogging ('ticket.log');
         MoveGen (mainBoard, lastMove, playMove, moveScore, 0, alpha, beta, gamePly, gameSide);
         printMove (output, playMove);
-        writeln (' ', moveScore);
-        writeln;
-        stopLogging
+//        writeln (' ', move);
+//        stopLogging;
     end;
 
 procedure BratkoKopecTest;
     const
-        ply = 5;
-        qs = 4;
+        ply = 6;
+        qs = 3;
     var
         f: text;
         logFn, fenstr, s, move: string;
@@ -62,31 +56,38 @@ procedure BratkoKopecTest;
             end;
         close (f)
     end;
+
+(*    
+procedure evalTests;
+    const
+        ply = 4;
+        qs = 2;
+    var
+        f: text;
+        pos, move: string;
+    begin
+        assign (f, 'testpos/tests.txt');
+        reset (f);
+        while not eof (f) do
+            begin
+                readln (f, pos);
+//                readln (f, move));
+                testPosition (pos, move, ply, qs)
+            end;
+        close (f)
+    end;
+*)
+
+
   
 begin
-//    BratkoKopecTest;
+    BratkoKopecTest;
 
     writeln ('Starting tests');
-
-    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', 'DSK0.opening-ply3.log', 3, 2);    
-    testPosition ('r1b4r/pp1p2pp/7k/5Q2/8/2PB4/P4PPP/2K1R2R w - - 0 40', 'DSK0.queen-h5-ply4.log', 3, 2);
-    testPosition ('4k3/8/8/8/8/8/1B2P3/R3K3 b Q - 0 40', 'DSK0.castle-ply3.log', 3, 2);
-    testPosition ('rnb1kb1r/ppp1pppp/4qn2/8/3P4/2N5/PPP1BPPP/R1BQK1NR w KQkq - 0 40', 'DSK0.knight-lost-ply4.log', 3, 2);
-    testPosition ('6k1/8/8/6p1/4Q3/8/5KRq/7N b - - 0 40', 'DSK0.queen-lost-ply3.log', 3, 2);;
-    testPosition ('4k3/8/1b6/8/4p2p/7K/3P4/8 w - - 0 40', 'DSK0.ep-ply3.log', 3, 2);
-//    testPosition ('1k1r4/pp1b1R2/3q2pp/4p3/2B5/4Q3/PPP2B2/2K5 b - - 0 40', 'DSK0.Kopec1.log', 5, 3);
-
-    disableAlphaBetaPruning := true;
-    testPosition ('4k3/p1p3p1/8/1P5P/1p1p4/8/P1P1P3/4K3 w - - 0 10', 'DSK0.ep-test.log', 3, 0);
-    disableAlphaBetaPruning := false;
+//    testPosition ('r2qkb1r/ppp1pppp/2n1b3/4P3/2pP2n1/N4N1P/PP3PP1/R1BQKB1R b KQkq - 0 7', '', 4, 7);
+//    testPosition ('rn1qkb1r/ppp1pppp/4b3/4P3/2pP2n1/N4N2/PP3PPP/R1BQKB1R b KQkq - 2 6', '', 4, 7);
+//    evalTests
     
-    testPosition ('r3k2r/1pp2ppp/p2bbn2/4N3/4P3/2N1B3/PPP1B1PP/R1K4R b kq - 0 12', 'DSK0.ticket.log', 4, 7);
+    
 
-    testPosition ('rn1qkb1r/ppp1pppp/4b3/4P3/2pP2n1/N4N2/PP3PPP/R1BQKB1R b KQkq - 2 6', 'DSK0.ticket.log', 4, 7);
-
-    writeln;
-    writeln ('** DONE **');
-{$ifdef ti99}    
-    waitKey
-{$endif}
 end.
