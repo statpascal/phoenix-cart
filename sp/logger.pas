@@ -9,7 +9,7 @@ var
     logFile: text;
 
 procedure dumpBitBoard (var b: bitboard);
-procedure printBoard (var board: TBoardRecord);
+procedure printBoard (var f: text; var board: TBoardRecord);
 
 procedure indent (ply: integer);
 procedure printMove (var f: text; var move: moverec);
@@ -52,7 +52,7 @@ procedure dumpBitBoard (var b: bitboard);
             writeln (logFile);
     end;
 
-procedure printBoard (var board: TBoardRecord);
+procedure printBoard (var f: text; var board: TBoardRecord);
     var
         s: array [0..7] of string [8];
         side, piece, i, j: integer;
@@ -74,18 +74,18 @@ procedure printBoard (var board: TBoardRecord);
                         s [pos [i] shr 3][succ (pos [i] and 7)] := Figure [side, piece]
                 end;
                 
-        writeln (logFile);
-        writeln (logFile, '========================================');
-        writeln (logFile, 'Move: ', gameMove);
-        writeln (logFile);
+        writeln (f);
+        writeln (f, '========================================');
+        writeln (f, 'Move: ', gameMove);
+        writeln (f);
         for i := 7 downto 0 do
             begin
-                write (logFile, '|');
+                write (f, '|');
                 for j := 1 to 8 do
-                    write (logFile, s [i][j], '|');
-                writeln (logFile);
+                    write (f, s [i][j], '|');
+                writeln (f);
             end;
-        writeln (logFile)
+        writeln (f)
     end;
                     
 procedure printMove (var f: text; var move: moverec);

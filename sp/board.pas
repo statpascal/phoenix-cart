@@ -22,6 +22,8 @@ const
     whiteRightCastle = 64;
     blackLeftCastle = 128;
     blackRightCastle = 256;
+    
+    moveBlackFlag = 512;
 
     Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
                                           ('p', 'r', 'n', 'b', 'q', 'k'));
@@ -41,17 +43,17 @@ type
     end;
     
     TBoardRecord = record
-        castleFlags: integer;
+        castleFlags: int16;
         allPieces: bitboard;
         case boolean of
             false: (white, black: TSideRecord);
             true:  (sides: array [0..1] of TSideRecord)
     end;
     
-    TCompressedBoard = record
+    TCompressedBoard = packed record
         board: bitboard;	         // all pieces
         pieces: array [0..15] of uint8;	 // color/piece type for bits in board (4 bit per position)
-        flags: integer;			 // EP/castling flag
+        flags: int16;			 // EP/castling flag
     end;
 
 procedure setInitPosition (var board: TBoardRecord; var gameSide, gameMove: integer);
@@ -91,7 +93,12 @@ procedure compressBoard (var board: TBoardRecord; var res: TCompressedBoard);
         i, square, piece: integer;
     begin
         res.board := board.allpieces;
+{$ifdef ti99}        
         res.flags := board.castleFlags;
+{$endif}
+{$ifdef fpc}
+        res.flags := swapEndian (board.castleFlags);
+{$endif}
         fillChar (res.pieces, sizeof (res.pieces), 0);
         
         BitPos (res.board, position);
@@ -101,7 +108,10 @@ procedure compressBoard (var board: TBoardRecord; var res: TCompressedBoard);
                 piece := findPieceType (board, 0, square);
                 if piece = InvalidPiece then
                     piece := findPieceType (board, 1, square) or 8;
-                res.pieces [pred (i) shr 1] := piece shl (4 * ord (odd (i)))
+                if odd (i) then
+                    res.pieces [pred (i) shr 1] := piece shl 4
+                else
+                    res.pieces [pred (i) shr 1] := res.pieces [pred (i) shr 1] or piece
             end
     end;
     
@@ -111,11 +121,19 @@ procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord)
         i, piece: integer;
     begin
         fillchar (res, sizeof (res), 0);
+{$ifdef ti99}
         res.castleFlags := compressed.flags;
+{$endif}
+{$ifdef fpc}        
+        res.castleFlags := swapEndian (compressed.flags);
+{$endif}
         BitPos (compressed.board, position);
         for i := 1 to position [0] do
             begin
-                piece := compressed.pieces [pred (i) shr 1] shr (4 * ord (odd (i)));
+                if odd (i) then 
+                    piece := (compressed.pieces [pred (i) shr 1] shr 4) and $f
+                else
+                    piece := compressed.pieces [pred (i) shr 1] and $f;
                 setBit (res.sides [ord (piece and 8 <> 0)].bitboards [piece and 7], position [i])
             end;
         combinePieces (res)

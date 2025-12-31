@@ -212,7 +212,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
         if doLogging then begin
             if ply = gamePly then
                 begin
-                    printBoard (board);
+                    printBoard (logFile, board);
                     write (logFile, 'Last move: ');
                     printMove (logFile, lastMove);
                     writeln (logFile)
