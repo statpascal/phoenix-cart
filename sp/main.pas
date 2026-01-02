@@ -8,7 +8,7 @@ implementation
 // uses random,
 
 uses 
-    globals, move, trimprocs, ui, pmove, utility, resources, logger;
+    globals, move, trimprocs, ui, pmove, utility, resources, logger, openbook;
 
 var 
     i, j, moveScore, aVal, bVal: integer;
@@ -229,6 +229,8 @@ end;
 procedure chainMain;
 
     var mainBoard: TBoardRecord;
+        compressedBoard: TCompressedBoard;
+        moves: TBookMoves;
         checkFlag: boolean;
 
     begin
@@ -280,90 +282,13 @@ procedure chainMain;
                 end
             else
                 begin
-                    {opening move selection}
-                    if gameMove = 1 then
+                    compressBoard (mainBoard, compressedBoard);
+                    moves := searchMove (compressedBoard);
+                    if moves [0] <> 0 then
                         begin
-                            moveScore := 0;
-                            //      i := Rnd_Int(3);		TODO
-                            i := 2;
-                            if gameSide = 0 then
-                                begin
-                                    case i of 
-                                        1: 
-                                        begin
-                                            playMove.id := 0;
-                                            playMove.startSq := 12;
-                                            playMove.endSq := 28;
-                                        end;
-                                        2: 
-                                        begin
-                                            playMove.id := 0;
-                                            playMove.startSq := 11;
-                                            playMove.endSq := 27;
-                                        end;
-                                        3: 
-                                        begin
-                                            playMove.id := 16;
-                                            playMove.startSq := 6;
-                                            playMove.endSq := 21;
-                                        end;
-                                    end;
-                                end
-                            else
-                                begin
-                                    case lastMove.endSq of 
-                                        12: 
-                                        begin
-                                            playMove.id := 0;
-                                            case i of 
-                                                1: 
-                                                begin
-                                                    playMove.startSq := 52;
-                                                    playMove.endSq := 44;
-                                                end;
-                                                2: 
-                                                begin
-                                                    playMove.startSq := 51;
-                                                    playMove.endSq := 43;
-                                                end;
-                                                3: 
-                                                begin
-                                                    playMove.startSq := 51;
-                                                    playMove.endSq := 35;
-                                                end;
-                                            end;
-                                        end;
-                                        11,21: 
-                                        begin
-                                            case i of 
-                                                1: 
-                                                begin
-                                                    playMove.id := 0;
-                                                    playMove.startSq := 51;
-                                                    playMove.endSq := 35;
-                                                end;
-                                                2: 
-                                                begin
-                                                    playMove.id := 16;
-                                                    playMove.startSq := 62;
-                                                    playMove.endSq := 45;
-                                                end;
-                                                3: 
-                                                begin
-                                                    playMove.id := 0;
-                                                    playMove.startSq := 50;
-                                                    playMove.endSq := 34
-                                                end;
-                                            end;
-                                        end;
-                                    end;
-                                    if not(lastMove.endSq in [11, 12, 21]) then
-                                        begin
-                                            playMove.id := 0;
-                                            playMove.startSq := 51;
-                                            playMove.endSq := 35;
-                                        end;
-                                end;
+                            playMove.startSq := moves [0] shr 6;
+                            playMove.endSq := moves [0] and $3f
+//                            playMove.id := findPieceType (
                         end
                     else
                         begin
