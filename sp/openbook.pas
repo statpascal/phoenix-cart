@@ -2,12 +2,12 @@ unit openbook;
 
 interface
 
-uses board;
+uses board, logger;
 
 const
     MaxMoves = 20;
     BookSize = 100;
-    OpeningPositions = 300;
+    OpeningPositions = 2855;
 
 type
     TBookMoves = array [0..MaxMoves - 1] of integer;
@@ -239,25 +239,33 @@ function searchMove (var compressed: TCompressedBoard): TBookMoves;
     var
         hi, lo, mid: integer;
         bookEntry: TBookEntry;
+        i: integer;
     begin
+        fillChar (result, sizeof (TBookMoves), 0);
         lo := 0;
         hi := pred (OpeningPositions);
         repeat
             mid := (hi + lo) shr 1;
             bookEntry := getMove (mid);
+            writeln (logfile, lo:5, mid:5, hi:5);
+            for i := 0 to 25 do
+                write (logfile, hexstr2 (bytearray (bookEntry.compressedBoard) [i]));
+            writeln (logfile);
+            for i := 0 to 25 do
+                write (logfile, hexstr2 (bytearray (compressed) [i]));
+            writeln (logfile);
             case compareWord (compressed, bookEntry.compressedBoard, sizeof (TCompressedBoard) div 2) of
                 1:
-                    lo := mid;
+                    lo := mid + 1;
                 -1:
-                    hi := mid;
+                    hi := mid - 1;
                 0:
                     begin
                         result := bookEntry.bookMoves;
                         exit
                     end
             end
-        until lo = hi;
-        // indicate not found
+        until lo > hi
     end;
     
 end.

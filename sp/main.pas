@@ -233,6 +233,7 @@ procedure chainMain;
         moves: TBookMoves;
         checkFlag: boolean;
 
+i: integer;
     begin
 //        mainBoard := getInitPosition;
         setInitPosition (mainboard, gameSide, gameMove);
@@ -283,12 +284,22 @@ procedure chainMain;
             else
                 begin
                     compressBoard (mainBoard, compressedBoard);
+                    if gameSide = 1 then
+                        compressedBoard.flags := compressedBoard.flags or moveBlackFlag;
                     moves := searchMove (compressedBoard);
+                    write (logfile, 'book: ');
+                    for i := 0 to pred (MaxMoves) do
+                        write (logfile, moves [i]:5) ;
+                    writeln (logfile);
                     if moves [0] <> 0 then
                         begin
-                            playMove.startSq := moves [0] shr 6;
-                            playMove.endSq := moves [0] and $3f
-//                            playMove.id := findPieceType (
+                            i := 1;
+                            while (i < MaxMoves) and (moves [i] <> 0) do
+                                inc (i);
+                            i := Random (i);
+                            playMove.startSq := moves [i] shr 6;
+                            playMove.endSq := moves [i] and $3f;
+                            playMove.id := findPieceType (mainBoard, gameSide, playMove.startSq)
                         end
                     else
                         begin

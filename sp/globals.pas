@@ -9,7 +9,7 @@ uses bitops
 ;
 
 const    
-    versionString = '2025-12-29-19-00';
+    versionString = '2026-01-03-15-30';
     bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
     
 var

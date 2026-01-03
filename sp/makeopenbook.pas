@@ -30,7 +30,7 @@ procedure registerMove (var board: TBoardRecord; turn: integer; var move: movere
         compressBoard (board, compressed);
         index := 1;
         if turn = 1 then
-            compressed.flags := compressed.flags or moveBlackFlag;
+            compressed.flags := compressed.flags or swapEndian (moveBlackFlag);
         while (index <= posCount) and (compareByte (compressed, openings [index].compressed, sizeof (compressed)) <> 0) do
             inc (index);
         if (index = succ (posCount)) and (posCount < maxPositions) then
@@ -192,9 +192,10 @@ procedure saveOpenings;
                         for j := 1 to maxMoves do
                             begin
                                 if j <= openings [i].count then
-                                    m := openings [i].nextMoves [j].startSq shl 6 + openings [i].nextMoves [j].endSq 
+                                    m := (openings [i].nextMoves [j].startSq shl 6) or openings [i].nextMoves [j].endSq
                                 else
                                     m := 0;
+                                m := swapEndian (m);
                                 blockwrite (f, m, sizeof (m))
                             end
                     end;
