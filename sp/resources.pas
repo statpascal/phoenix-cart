@@ -135,7 +135,6 @@ procedure readRes (var buf; size: integer; fn: string);
     end;    
     
 begin
-    writeln ('Loading res');
     readRes (whitePawnMove, sizeof (whitePawnMove), 'resources/whitepawnmove.dat');
     readRes (blackPawnMove, sizeof (whitePawnMove), 'resources/blackpawnmove.dat');
     readRes (whitePawnCapture, sizeof (whitePawnCapture), 'resources/whitepawncapture.dat');
@@ -144,7 +143,6 @@ begin
     readRes (kingMove, sizeof (kingMove), 'resources/kingmove.dat');
     readRes (data_ep, sizeof (data_ep), 'resources/enpassant.dat');
     readRes (data_score, sizeof (data_score), 'resources/piecescore.dat');
-    writeln ('res loaded');
 end.
     
 

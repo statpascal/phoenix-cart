@@ -247,6 +247,7 @@ function searchMove (var compressed: TCompressedBoard): TBookMoves;
         repeat
             mid := (hi + lo) shr 1;
             bookEntry := getMove (mid);
+(*            
             writeln (logfile, lo:5, mid:5, hi:5);
             for i := 0 to 25 do
                 write (logfile, hexstr2 (bytearray (bookEntry.compressedBoard) [i]));
@@ -254,6 +255,7 @@ function searchMove (var compressed: TCompressedBoard): TBookMoves;
             for i := 0 to 25 do
                 write (logfile, hexstr2 (bytearray (compressed) [i]));
             writeln (logfile);
+*)            
             case compareWord (compressed, bookEntry.compressedBoard, sizeof (TCompressedBoard) div 2) of
                 1:
                     lo := mid + 1;

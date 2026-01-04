@@ -287,10 +287,12 @@ i: integer;
                     if gameSide = 1 then
                         compressedBoard.flags := compressedBoard.flags or moveBlackFlag;
                     moves := searchMove (compressedBoard);
+(*                    
                     write (logfile, 'book: ');
                     for i := 0 to pred (MaxMoves) do
                         write (logfile, moves [i]:5) ;
                     writeln (logfile);
+*)                    
                     if moves [0] <> 0 then
                         begin
                             i := 1;

@@ -5,6 +5,7 @@ uses globals, main, resources, vdp;
 begin
     clrscr;
     setBackColor (white);
+    enableScreenSaver (false);
     writeln('Phoenix Chess ', versionString);
     chainMain;
 
