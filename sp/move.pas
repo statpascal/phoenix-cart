@@ -36,6 +36,19 @@ var
 {$endif}
     moveStackPointer: integer;
     
+procedure insertMoveStack (position: integer; attackFlag: boolean; id, startSq, endSq: integer);
+    var
+        i: integer;
+    begin
+        if moveStackPointer <= moveStackSize then
+            begin
+                inc (moveStackPointer);
+                for i := moveStackPointer downto succ (position) do
+                    moveStack [i] := moveStack [pred (i)];
+                moveStack [position] := ord (attackFlag) shl 15 + id shl 12 + startSq shl 6 + endSq
+            end
+    end;
+
 procedure pushMoveStack (attackFlag: boolean; id, startSq, endSq: integer);
     begin
         if moveStackPointer <= moveStackSize then
@@ -56,20 +69,34 @@ procedure readMoveStack (index: integer; var attackFlag: boolean; var id, startS
         attackFlag := boolean (val shr 15 and 1)
     end;
 
-procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: moverec);
+procedure loopAllPieces (var board: TBoardRecord; turn, moveStackBegin: integer);
     var 
         piece, l, pLoc, epCapSquare: integer;
         posArray: bitArray;
         currentMoveBoard, attackBoard: bitboard;
+        valueCaptureBoard: array [Pawn..Bishop] of bitboard;
         
     procedure createMoveNodes (attackFlag: boolean; id, startSq: integer; endSquares: bitboard);
+        const
+            AlreadyHandled = -1;
         var
             k: integer;
             moveArray: bitArray;
+            valueCaps: bitboard;
         begin
             BitPos (endSquares, moveArray);
+            
+            if attackFlag and (id <= Bishop) then
+                for k := 1 to moveArray [0] do
+                    if getBit (valueCaptureBoard [id], moveArray [k]) <> 0 then
+                        begin
+                            insertMoveStack (moveStackBegin, attackFlag, id, startSq, moveArray [k]);
+                            moveArray [k] := AlreadyHandled
+                        end;
+                    
             for k := 1 to moveArray [0] do
-                pushMoveStack (attackFlag, id, startSq, moveArray [k])
+                if moveArray [k] <> AlreadyHandled then
+                    pushMoveStack (attackFlag, id, startSq, moveArray [k])
         end;
         
     procedure checkCastling (var board: TBoardRecord);
@@ -96,6 +123,12 @@ procedure loopAllPieces (var board: TBoardRecord; turn: integer; var lastMove: m
         
     begin
         checkCastling (board);
+        
+        valueCaptureBoard [Pawn] := board.sides [1 - turn].pieces and not board.sides [1 - turn].pawnBitboard;
+        valueCaptureBoard [Rook] := board.sides [1 - turn].queenBitboard;
+        valueCaptureBoard [Knight] := board.sides [1 - turn].rookBitboard or board.sides [1 - turn].queenBitboard;
+        valueCaptureBoard [Bishop] := valueCaptureBoard [Knight];
+        
         for piece := Pawn to King do
             begin
                 BitPos (board.sides [turn].bitboards [piece], posArray);
@@ -225,7 +258,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                 end
         end;
 
-        loopAllPieces (board, turn, lastMove);
+        loopAllPieces (board, turn, savedMoveStackPointer);
         bestMove.id := InvalidPiece;
 
         if turn = 0 then

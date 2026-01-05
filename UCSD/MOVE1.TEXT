@@ -16,19 +16,21 @@ label
  1, 2, 5;
  
 var
- i, j, l, n, offset, bestScore, switchFlag, bonus, sPage1 : integer;
+ i, j, offset, bestScore, switchFlag, bonus, sPage1 : integer;
  offset1, offset2, offset3, offset4, offset5, offset6, offset7 : integer;
  attackFlag, evalScore, pruneFlag, attackId, capId, cMoveFlag : integer;
- foundFlag : boolean;
- bestMove, tempMove : moverec;
+ foundFlag, checkFlag : boolean;
+ bestMove, tempMove, predMove : moverec;
  moveList, attackList, tailIndex, attackIndex, currentMove : listPointer;
- bit9 : bitboard;
+ moveArray : bitarray;
  
 begin
  MoveGen(moveList, attackList, tailIndex, attackIndex, lastMove);
  
- sPage1 := BASE1;
- 
+ sPage1 := BASE2;
+ score := 0;
+ evalScore := 0;
+
  {save ply base bitboards}
  offset := TWPO;
  dataSize := 120;
@@ -42,7 +44,6 @@ begin
  else
   bestScore := 20000;
 
- ClearBitboard(bit9);
  {iterate through move list}
  currentMove := attackList;
  attackFlag := 1;
@@ -72,6 +73,34 @@ begin
     end;
   end;
 
+ {insert killer moves if present}
+ if attackFlag = 0 then
+  begin
+   offset := 3000 + (ply * 16);
+   DataOps(2, sPage1, dataSize, offset, predMove);
+   if predMove.id <> 99 then
+    begin
+     new(tailIndex);
+     tailIndex^.id := predMove.id;
+     tailIndex^.startSq := predMove.startSq;
+     tailIndex^.endSq := predMove.endSq;
+     tailIndex^.link := currentMove;
+     attackIndex^.link := tailIndex;
+     currentMove := tailIndex;
+    end;
+   offset := offset + 8;
+   DataOps(2, sPage1, dataSize, offset, predMove);
+   if predMove.id <> 99 then
+    begin
+     new(tailIndex);
+     tailIndex^.id := predMove.id;
+     tailIndex^.startSq := predMove.startSq;
+     tailIndex^.endSq := predMove.endSq;
+     tailIndex^.link := currentMove^.link;
+     currentMove^.link := tailIndex;
+    end;
+  end;
+  
  repeat
   foundFlag := FALSE;
   tempMove.id := 99;
@@ -117,6 +146,7 @@ begin
     BitNot(bit2, bit2);
 
     j := 0;
+    checkFlag := FALSE;
     repeat
      offset2 := offset5 + j;
      DataOps(2, startPage, dataSize, offset2, bit1);
@@ -126,6 +156,8 @@ begin
        foundFlag := TRUE;
        attackId := currentMove^.id;
        capId := j;
+       if capId = 40 then
+        checkFlag := TRUE;
       end;
      BitAnd(bit1, bit2, bit1);
      DataOps(1, startPage, dataSize, offset2, bit1);
@@ -137,6 +169,8 @@ begin
      begin
       if abs(currentMove^.startSq - currentMove^.endSq) in[7, 9] then
        begin
+        capId := 0;
+        attackId := 0;
         if turn = 0 then
          offset7 := PIECELOC + ((currentMove^.endSq - 8) * 8)
         else
@@ -229,6 +263,11 @@ begin
   {generate combined trim boards}
   dataSize := 8;
   CombineTrim(bit3, bit5, lastMove);
+  {generate mobility count}
+  if turn = 0 then
+   BitPos(bit3, moveArray)
+  else
+   BitPos(bit5, moveArray);
   {restore main boards}
   startPage := BASE2;
   dataSize := 120;
@@ -281,7 +320,19 @@ begin
         bestMove.endSq := tempMove.endSq;
        end;
       if bestScore > beta then
-       pruneFlag := 1;
+       begin
+        pruneFlag := 1;
+        {save killer move}
+        if attackFlag = 0 then
+         begin
+          offset := 3000 + (ply * 16);
+          DataOps(2, sPage1, dataSize, offset, predMove);
+          offset := offset + 8;
+          DataOps(1, sPage1, dataSize, offset, predMove);
+          offset := offset - 8;
+          DataOps(1, sPage1, dataSize, offset, tempMove);
+         end;
+       end;
       if bestScore > alpha then
        alpha := bestScore;
      end
@@ -330,7 +381,19 @@ begin
         bestMove.endSq := tempMove.endSq;
        end;
       if bestScore > beta then
-       pruneFlag := 1;
+       begin
+        pruneFlag := 1;
+        {save killer move}
+        if attackFlag = 0 then
+         begin
+          offset := 3000 + (ply * 16);
+          DataOps(2, sPage1, dataSize, offset, predMove);
+          offset := offset + 8;
+          DataOps(1, sPage1, dataSize, offset, predMove);
+          offset := offset - 1;
+          DataOps(1, sPage1, dataSize, offset, tempMove);
+         end;
+       end;
       if bestScore > alpha then
        alpha := bestScore;
      end
@@ -358,7 +421,7 @@ begin
   offset := TWPO;
   DataOps(1, startPage, dataSize, offset, buffer);
   dataSize := 8;
-    
+  attackIndex := currentMove;
   currentMove := currentMove^.link;
   if (currentMove^.link = NIL) and (attackFlag = 1) then
    begin

@@ -54,6 +54,7 @@ begin
   until ans in[48..57, 80];
 
   ClearFields;
+  openFlag := FALSE;
 
   case ans of
    80: begin {print}

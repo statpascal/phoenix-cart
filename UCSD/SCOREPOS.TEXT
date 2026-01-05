@@ -35,7 +35,7 @@ begin
  offset1 := APIECES;
  DataOps(2, startPage, dataSize, offset1, bit1);
  BitPos(bit1, locArray);
- if locArray[0] in [6..8] then
+ if locArray[0] in [6..10] then
   endGame := 1
  else
   if locArray[0] <=5 then
@@ -97,7 +97,7 @@ begin
                  offset1 := WPAWN + (pLoc * 2);
                  {promote pawn advancement in end game}
                  if (endGame > 0) and (pLoc >= 24) then
-                  evalScore := evalScore + ((pLoc div 8) * 50);
+                  evalScore := evalScore + ((pLoc div 5) * 50);
                  {check for pawn promotion}
                  if pLoc >= 56 then
                   evalScore := evalScore + 1000;
@@ -139,7 +139,7 @@ begin
                  offset1 := BPAWN + (pLoc * 2);
                  {promote pawn advancement in endgame}
                  if (endGame > 0) and (pLoc <= 32) then
-                  evalScore := evalScore + (((63 - pLoc) div 8) * 50);
+                  evalScore := evalScore + (((63 - pLoc) div 5) * 50);
                  {check for pawn promotion}
                  if pLoc <= 7 then
                   evalScore := evalScore + 1000;
@@ -303,16 +303,6 @@ begin
       evalScore := -20000
     else
      begin
-      {bonus for checking opposite king}
-      if side = 0 then
-       offset := TBKO
-      else
-       offset := TWKO;
-
-      DataOps(2, startPage, dataSize, offset, bit1);
-      if IsClear(bit1) then
-       evalScore := evalScore + 50;
-
       {encourage moving opposite king to board edge}
       if (endGame > 0) and (side = gameSide) then
        begin

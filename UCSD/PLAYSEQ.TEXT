@@ -106,6 +106,8 @@ if humanSide = gameSide then
           openFlag := FALSE;
           gotoxy(20, 7);
           write('thinking...');
+          sPage := BASE1;
+          dataSize := 8;
           ProcessMove(moveScore, aVal, bVal, playMove, lastMove);
          end; 
        end;

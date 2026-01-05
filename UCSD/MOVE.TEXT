@@ -15,17 +15,27 @@ label
  3;
 
 var
- j, k, l, n, offset, initOffset : integer;
+ j, k, l, m, n, offset, initOffset : integer;
  pLoc, sideOffset, offset1, offset2, offset4 : integer;
  offset7, epCapFlag : integer;
  alpha, beta : integer;
- foundFlag : boolean;
+ foundFlag, valCap : boolean;
  currentMove : listPointer;
  posArray, moveArray : bitarray;
  bit8, bit9 : bitboard;
+ killerMove : moverec;
 
 begin
  startPage := BASE;
+ sPage := BASE2;
+ dataSize := 8;
+ 
+ {reset killer moves slots for ply}
+ offset := 3000 + (ply * 16);
+ killerMove.id := 99;
+ DataOps(1, sPage, dataSize, offset, killerMove);
+ offset := offset + 8;
+ DataOps(1, sPage, dataSize, offset, killerMove);
  sPage := BASE1;
 
  if turn = 0 then
@@ -259,13 +269,7 @@ begin
      BitPos(bit3, moveArray);
      for k := 1 to moveArray[0] do
       begin
-       new(currentMove);
-       attackIndex^.id := j;
-       attackIndex^.startSq := pLoc;
-       attackIndex^.endSq := moveArray[k];
-       attackIndex^.link := currentMove;
-       attackIndex := currentMove;
-       attackIndex^.link := NIL;
+       {$I attack.text}
       end;
      end;
 
