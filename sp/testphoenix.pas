@@ -3,7 +3,7 @@ program testphoenix;
 uses
     globals, board, move, logger;
 
-procedure testPosition (fenStr, move: string; ply, qsdeepening: integer);
+procedure testPosition (fenStr, move, log: string; ply, qsdeepening: integer);
     const
         alpha = -20000;
         beta = 20000;
@@ -20,11 +20,14 @@ procedure testPosition (fenStr, move: string; ply, qsdeepening: integer);
         fillChar (lastMove, sizeof (lastMove), 0);
 
         writeln ('Analyzing: ', fenStr);
-        startLogging ('ticket.log');
+        if log <> '' then
+            startLogging (log);
         MoveGen (mainBoard, lastMove, playMove, moveScore, 0, alpha, beta, gamePly, gameSide);
         printMove (output, playMove);
-//        writeln (' ', move);
-        stopLogging;
+        if move <> '' then
+            writeln (', should be: ', move);
+        if log <> '' then
+            stopLogging;
     end;
 
 procedure BratkoKopecTest;
@@ -49,9 +52,9 @@ procedure BratkoKopecTest;
                 move := copy (s, succ (n), 4);
                 str (count, logFn);
                 inc (count);
-                logFn := 'DSK0.KP-' + logFn + '.log';
-                testPosition (fenstr, logFn, ply, qs);
-                writeln (', should be: ', move);
+//                logFn := 'DSK0.KP-' + logFn + '.log';
+                logFn := '';
+                testPosition (fenstr, move, logFn, ply, qs);
                 writeln
             end;
         close (f)
@@ -84,7 +87,7 @@ begin
     BratkoKopecTest;
 
 //    writeln ('Starting tests');
-//    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 3, 2);
+//    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
 //    evalTests
     
     

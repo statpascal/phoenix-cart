@@ -23,6 +23,10 @@ implementation
 procedure startLogging (fn: string);
     begin
         doLogging := true;
+{$ifdef fpc}
+        if copy (fn, 1, 5) = 'DSK0.' then
+            fn := copy (fn, 6, length (fn) - 5);
+{$endif}        
         assign (logFile, fn);
         rewrite (logFile)
     end;
