@@ -1,7 +1,7 @@
 program testphoenix;
 
 uses
-    globals, board, move, logger;
+    globals, board, genmove, logger;
 
 procedure testPosition (fenStr, move, log: string; ply, qsdeepening: integer);
     const
@@ -84,10 +84,10 @@ procedure evalTests;
 
   
 begin
-    BratkoKopecTest;
+//    BratkoKopecTest;
 
 //    writeln ('Starting tests');
-//    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
+    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
 //    evalTests
     
     

@@ -8,7 +8,7 @@ implementation
 // uses random,
 
 uses 
-    globals, move, trimprocs, ui, pmove, utility, resources, logger, openbook;
+    globals, genmove, trimprocs, ui, pmove, utility, resources, logger, openbook;
 
 var 
     i, j, moveScore, aVal, bVal: integer;

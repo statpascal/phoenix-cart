@@ -15,7 +15,7 @@ label
  3;
 
 var
- j, k, l, m, n, offset, initOffset : integer;
+ j, k, l, m, n, offset, initOffset, sPage1 : integer;
  pLoc, sideOffset, offset1, offset2, offset4 : integer;
  offset7, epCapFlag : integer;
  alpha, beta : integer;
@@ -27,17 +27,9 @@ var
 
 begin
  startPage := BASE;
- sPage := BASE2;
+ sPage := BASE1;
  dataSize := 8;
  
- {reset killer moves slots for ply}
- offset := 3000 + (ply * 16);
- killerMove.id := 99;
- DataOps(1, sPage, dataSize, offset, killerMove);
- offset := offset + 8;
- DataOps(1, sPage, dataSize, offset, killerMove);
- sPage := BASE1;
-
  if turn = 0 then
   begin
    initOffset := TWPO;
@@ -502,6 +494,32 @@ begin
       currentMove^.link := moveList;
       moveList := currentMove;
      end;
+   end;
+  
+  {add killer moves if present to top of move list}
+  sPage1 := BASE2;
+  dataSize := 8;
+  offset := 3000 + (ply * 16);
+  DataOps(2, sPage1, dataSize, offset, killerMove);
+  if killerMove.id <> 99 then
+   begin
+    new(currentMove);
+    currentMove^.id := killerMove.id;
+    currentMove^.startSq := killerMove.startSq;
+    currentMove^.endSq := killerMove.endSq;
+    currentMove^.link := moveList;
+    moveList := currentMove;
+   end;
+  offset := offset + 8;
+  DataOps(2, sPage1, dataSize, offset, killerMove);
+  if killerMove.id <> 99 then
+   begin
+    new(currentMove);
+    currentMove^.id := killerMove.id;
+    currentMove^.startSq := killerMove.startSq;
+    currentMove^.endSq := killerMove.endSq;
+    currentMove^.link := moveList;
+    moveList := currentMove;
    end;
 end; (* MoveGen *)
 

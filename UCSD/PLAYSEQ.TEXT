@@ -17,6 +17,18 @@ if humanSide = gameSide then
    end
   else
    begin
+    {clear killer move slots}
+    sPage := BASE2;
+    dataSize := 8;
+    for j := 1 to gamePly do
+     begin
+      offset := 3000 + (j * 16);
+      playMove.id := 99;
+      DataOps(1, sPage, dataSize, offset, playMove);
+      offset := offset + 8;
+      DataOps(1, sPage, dataSize, offset, playMove);
+     end;
+     
     {opening move selection}
     if openFlag then
      begin

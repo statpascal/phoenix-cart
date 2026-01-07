@@ -73,34 +73,6 @@ begin
     end;
   end;
 
- {insert killer moves if present}
- if attackFlag = 0 then
-  begin
-   offset := 3000 + (ply * 16);
-   DataOps(2, sPage1, dataSize, offset, predMove);
-   if predMove.id <> 99 then
-    begin
-     new(tailIndex);
-     tailIndex^.id := predMove.id;
-     tailIndex^.startSq := predMove.startSq;
-     tailIndex^.endSq := predMove.endSq;
-     tailIndex^.link := currentMove;
-     attackIndex^.link := tailIndex;
-     currentMove := tailIndex;
-    end;
-   offset := offset + 8;
-   DataOps(2, sPage1, dataSize, offset, predMove);
-   if predMove.id <> 99 then
-    begin
-     new(tailIndex);
-     tailIndex^.id := predMove.id;
-     tailIndex^.startSq := predMove.startSq;
-     tailIndex^.endSq := predMove.endSq;
-     tailIndex^.link := currentMove^.link;
-     currentMove^.link := tailIndex;
-    end;
-  end;
-  
  repeat
   foundFlag := FALSE;
   tempMove.id := 99;
@@ -421,7 +393,6 @@ begin
   offset := TWPO;
   DataOps(1, startPage, dataSize, offset, buffer);
   dataSize := 8;
-  attackIndex := currentMove;
   currentMove := currentMove^.link;
   if (currentMove^.link = NIL) and (attackFlag = 1) then
    begin

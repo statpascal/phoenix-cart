@@ -1,4 +1,4 @@
-unit Move;
+unit genmove;
 
 interface
 
@@ -158,8 +158,8 @@ procedure loopAllPieces (var board: TBoardRecord; turn, moveStackBegin: integer)
                     end
             end;
             
-        system.move (attackMoves, moveStack [moveStackPointer], attackMoveCount * sizeof (integer));
-        system.move (moves, moveStack [moveStackPointer + attackMoveCount], moveCount * sizeof (integer));
+        move (attackMoves, moveStack [moveStackPointer], attackMoveCount * sizeof (integer));
+        move (moves, moveStack [moveStackPointer + attackMoveCount], moveCount * sizeof (integer));
         inc (moveStackPointer, attackMoveCount + moveCount);
         
     end;
