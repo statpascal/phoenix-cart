@@ -234,7 +234,7 @@ function evaluatePosition (turn: integer; var board: TBoardRecord; var move: mov
         case bitCount (board.allPieces) of
             2..5: 
                 endGame := 2;
-            6..8:
+            6..10:
                 endGame := 1
             else
                 endGame := 0
