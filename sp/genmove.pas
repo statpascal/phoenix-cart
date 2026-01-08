@@ -4,9 +4,7 @@ interface
 
 uses globals, board;
 
-procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec;
-                   var score: integer; aggMoveScores, alpha, beta, ply, turn: integer);
-
+procedure generateMove (ply, turn: integer; var board: TBoardRecord; var move: moverec; var score: integer); 
 
 implementation
 
@@ -35,6 +33,11 @@ var
     moveStack: array [0..MoveStackSize] of integer;
 {$endif}
     moveStackPointer: integer;
+    
+function encodeMove (attackFlag: boolean; var move: moverec): integer;
+    begin
+        encodeMove := ord (attackFlag) shl 15 + move.id shl 12 + move.startSq shl 6 + move.endSq
+    end;
     
 procedure insertMoveStack (position: integer; attackFlag: boolean; id, startSq, endSq: integer);
     var
@@ -68,12 +71,15 @@ procedure readMoveStack (index: integer; var attackFlag: boolean; var id, startS
         id := (val shr 12) and $7;
         attackFlag := boolean (val shr 15 and 1)
     end;
+
+const
+    MinPly = -5;
     
 var
-        valueCaptureBoard: array [Pawn..Bishop] of bitboard;
+    valueCaptureBoard: array [Pawn..Bishop] of bitboard;
+    killerMoves: array [MinPly..MaxPly, 0..1] of integer;
 
-
-procedure loopAllPieces (var board: TBoardRecord; turn, moveStackBegin: integer);
+procedure loopAllPieces (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
     const
         MaxMoves = 218;
     var 
@@ -85,27 +91,34 @@ procedure loopAllPieces (var board: TBoardRecord; turn, moveStackBegin: integer)
         attackMoveCount, moveCount: integer;
         
     procedure createMoveNodes (attackFlag: boolean; id, startSq: integer; endSquares: bitboard);
-        const
-            AlreadyHandled = -1;
         var
-            k: integer;
+            k, move: integer;
             moveArray: bitArray;
         begin
             BitPos (endSquares, moveArray);
             for k := 1 to moveArray [0] do
-                if attackFlag then
-                    if (id <= Bishop) and (getBit (valueCaptureBoard [id], moveArray [k]) <> 0) then
-                        pushMoveStack (attackFlag, id, startSq, moveArray [k])
+                begin
+                    move := id shl 12 + startSq shl 6 + moveArray [k];
+                    if attackFlag then
+                        if (id <= Bishop) and (getBit (valueCaptureBoard [id], moveArray [k]) <> 0) then
+                            pushMoveStack (attackFlag, id, startSq, moveArray [k])
+                        else
+                            begin
+                                attackMoves [attackMoveCount] := $8000 + move;
+                                inc (attackMoveCount)
+                            end
                     else
-                        begin
-                            attackMoves [attackMoveCount] := ord (attackFlag) shl 15 + id shl 12 + startSq shl 6 + moveArray [k];
-                            inc (attackMoveCount)
-                        end
-                else
-                    begin
-                        moves [moveCount] := ord (attackFlag) shl 15 + id shl 12 + startSq shl 6 + moveArray [k];
-                        inc (moveCount)
-                    end
+                        if (ply >= MinPly) and ((move = killerMoves [ply, 0]) or (move = killerMoves [ply, 1])) then
+                            begin
+                                attackMoves [attackMoveCount] := move;
+                                inc (attackMoveCount)
+                            end
+                        else
+                            begin
+                                moves [moveCount] := move;
+                                inc (moveCount)
+                            end
+                end
         end;
         
     procedure checkCastling (var board: TBoardRecord);
@@ -164,6 +177,9 @@ procedure loopAllPieces (var board: TBoardRecord; turn, moveStackBegin: integer)
         
     end;
     
+procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: moverec;
+                   var score: integer; aggMoveScores, alpha, beta, ply, turn: integer); forward;
+                   
 function iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIndex, aggMoveScores, alpha, beta: integer; var validMoveCount, bestScore: integer; var bestMove: moverec): boolean;
     var
         attackFlag, foundFlag: boolean;
@@ -224,7 +240,15 @@ function iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endInd
                                                     bestMove := tempMove
                                                 end;
                                             if not disableAlphaBetaPruning and (bestScore > beta) then
-                                                exit
+                                                begin
+                                                    {save killer move}
+                                                    if ply >= MinPly then
+                                                        begin
+                                                            killerMoves [ply, 1] := killerMoves [ply, 0];
+                                                            killerMoves [ply, 0] := encodeMove (false, tempMove)
+                                                        end;
+                                                    exit
+                                                end
                                             else
                                                 if bestScore > alpha then
                                                     alpha := bestScore;
@@ -261,12 +285,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
 
         if doLogging then begin
             if ply = gamePly then
-                begin
-                    printBoard (logFile, board);
-                    write (logFile, 'Last move: ');
-                    printMove (logFile, lastMove);
-                    writeln (logFile)
-                end
+                printBoard (logFile, board)
             else
                 begin                    
                     indent (ply); 
@@ -275,7 +294,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
                 end
         end;
 
-        loopAllPieces (board, turn, savedMoveStackPointer);
+        loopAllPieces (board, ply, turn, savedMoveStackPointer);
         bestMove.id := InvalidPiece;
 
         if turn = 0 then
@@ -320,6 +339,21 @@ procedure MoveGen (var board: TBoardRecord; lastMove: moverec; var finalMove: mo
         end;
 
         moveStackPointer := savedMoveStackPointer;
+    end;
+    
+procedure generateMove (ply, turn: integer; var board: TBoardRecord; var move: moverec; var score: integer);
+    const
+        alpha = -20000;
+        beta = 20000;
+    var
+        dummyMove: moveRec;
+        i, j: integer;
+    begin
+        dummyMove.id := InvalidPiece;
+        for i := 0 to ply do
+            for j := 0 to 1 do
+                killerMoves [i, j] := InvalidPiece shl 12;
+        MoveGen (board, dummyMove, move, score, 0, alpha, beta, ply, turn)
     end;
 
 begin

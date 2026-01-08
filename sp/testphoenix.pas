@@ -22,10 +22,11 @@ procedure testPosition (fenStr, move, log: string; ply, qsdeepening: integer);
         writeln ('Analyzing: ', fenStr);
         if log <> '' then
             startLogging (log);
-        MoveGen (mainBoard, lastMove, playMove, moveScore, 0, alpha, beta, gamePly, gameSide);
+        generateMove (ply, gameSide, mainBoard, playMove, moveScore);
         printMove (output, playMove);
         if move <> '' then
-            writeln (', should be: ', move);
+            write (', should be: ', move);
+        writeln;
         if log <> '' then
             stopLogging;
     end;
@@ -84,10 +85,10 @@ procedure evalTests;
 
   
 begin
-//    BratkoKopecTest;
+    BratkoKopecTest;
 
 //    writeln ('Starting tests');
-    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
+//    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
 //    evalTests
     
     

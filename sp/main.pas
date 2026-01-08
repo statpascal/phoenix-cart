@@ -307,7 +307,7 @@ i: integer;
                         begin
                             gotoxy(20, 7);
                             write('thinking...');
-                            MoveGen (mainBoard, lastMove, playMove, moveScore, 0, aVal, bVal, gamePly, gameSide);
+                            generateMove (gamePly, gameSide, mainBoard, playMove, moveScore);
                         end;
                 end;
 
