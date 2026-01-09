@@ -9,12 +9,12 @@ procedure ProcessMove(var score : integer; alpha, beta : integer;
 implementation
 uses {$U chesslib.code} move, scorepos,
      {$U interface.code} trimprocs, pmove;
- 
+
 procedure ProcessMove;
 
 label
  1, 2, 5;
- 
+
 var
  i, j, offset, bestScore, switchFlag, bonus, sPage1 : integer;
  offset1, offset2, offset3, offset4, offset5, offset6, offset7 : integer;
@@ -22,11 +22,10 @@ var
  foundFlag, checkFlag : boolean;
  bestMove, tempMove, predMove : moverec;
  moveList, attackList, tailIndex, attackIndex, currentMove : listPointer;
- moveArray : bitarray;
- 
+
 begin
  MoveGen(moveList, attackList, tailIndex, attackIndex, lastMove);
- 
+
  sPage1 := BASE2;
  score := 0;
  evalScore := 0;
@@ -38,7 +37,7 @@ begin
  offset := PLYBOARDS + ((ply + 3) * 120);
  DataOps(1, sPage, dataSize, offset, buffer);
  dataSize := 8;
- 
+
  if turn = 0 then
   bestScore := -20000
  else
@@ -135,7 +134,7 @@ begin
      DataOps(1, startPage, dataSize, offset2, bit1);
      j := j + 8;
     until (foundFlag) or (j > 40);
-    
+
     {en passant capture handling}
     if (foundFlag = FALSE) and (currentMove^.id = 0) then
      begin
@@ -235,11 +234,6 @@ begin
   {generate combined trim boards}
   dataSize := 8;
   CombineTrim(bit3, bit5, lastMove);
-  {generate mobility count}
-  if turn = 0 then
-   BitPos(bit3, moveArray)
-  else
-   BitPos(bit5, moveArray);
   {restore main boards}
   startPage := BASE2;
   dataSize := 120;
@@ -273,9 +267,9 @@ begin
 
     {evaluate position}
     evalScore := Evaluate(lastMove, tempMove);
-    
+
     {$I bonuscalc.text}
-    
+
     if turn = 0 then
      evalScore := evalScore + bonus
     else
@@ -400,10 +394,10 @@ begin
     currentMove := moveList;
    end;
  until (currentMove^.link = NIL) or (pruneFlag = 1);
- 
+
  finalMove := bestMove;
  score := bestScore;
- 
+
  2:
  {up 1 ply}
  ply := succ(ply);
@@ -411,7 +405,7 @@ begin
   turn := 1
  else
   turn := 0;
-  
+
  {dispose of linked lists}
  repeat
   attackIndex := attackList;
@@ -437,4 +431,4 @@ end; (* ProcessMove *)
 end. (* Move1 *)
 
 
-  
+

@@ -125,49 +125,47 @@ function makeMovementBitboard (pos, ptype: integer; var ownPieces, opponentPiece
             end
     end;
     
-
 function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSquare: integer): bitboard;
     var 
         row: integer;
         bits: bitboard;
     begin
         epCapSquare := -1;
-        if piece = Pawn then
-            begin
-                row := iLoc shr 3;
-                result := getPawnMovementBitboard (turn, iLoc) and not board.allPieces or
-                          getPawnCaptureBitboard (turn, iLoc) and board.sides [1 - turn].pieces;
-                if turn = 0 then
-                    begin
-                        if (row = 1) and (getBit (result, iLoc + 8) = 0) then
-                            clearBit (result, iLoc + 16)
-                    end
-                else
-                    begin
-                        if (row = 6) and (getBit (result, iLoc - 8) = 0) then
-                            clearBit (result, iLoc - 16)
-                    end;
+        case piece of
+            Pawn:
+                begin
+                    row := iLoc shr 3;
+                    result := getPawnMovementBitboard (turn, iLoc) and not board.allPieces or
+                              getPawnCaptureBitboard (turn, iLoc) and board.sides [1 - turn].pieces;
+                    if turn = 0 then
+                        begin
+                            if (row = 1) and (getBit (result, iLoc + 8) = 0) then
+                                clearBit (result, iLoc + 16)
+                        end
+                    else
+                        begin
+                            if (row = 6) and (getBit (result, iLoc - 8) = 0) then
+                                clearBit (result, iLoc - 16)
+                        end;
 
-                { check for en passant capture }
-                if (board.castleFlags and epMoveFlag <> 0) and (row = 4 - turn) then
-                    begin
-                        bits := getEnpassantBitboard (turn = 0, board.castleFlags and epColBitmask);
-                        epCapSquare := 16 + board.castleFlags and epColBitmask + 24 * ord (board.castleFlags and epWhiteFlag = 0);
-                        if getBit (bits, iLoc) <> 0 then
-                            setBit (result, epCapSquare)
-                        else
-                            epCapSquare := -1
-                    end
-                end
-        else 
-            case piece of
-                Knight:
-                    result := getKnightMovementBitboard (iLoc) and not board.sides [turn].pieces;
-                King:
-                    result := getKingMovementBitboard (iLoc) and not board.sides [turn].pieces
-                else
-                    result := makeMovementBitboard (iLoc, piece, board.sides [turn].pieces, board.sides [1 - turn].pieces)
-            end;
+                    { check for en passant capture }
+                    if (board.castleFlags and epMoveFlag <> 0) and (row = 4 - turn) then
+                        begin
+                            bits := getEnpassantBitboard (turn = 0, board.castleFlags and epColBitmask);
+                            epCapSquare := 16 + board.castleFlags and epColBitmask + 24 * ord (board.castleFlags and epWhiteFlag = 0);
+                            if getBit (bits, iLoc) <> 0 then
+                                setBit (result, epCapSquare)
+                            else
+                                epCapSquare := -1
+                        end
+                end;
+            Knight:
+                result := getKnightMovementBitboard (iLoc) and not board.sides [turn].pieces;
+            King:
+                result := getKingMovementBitboard (iLoc) and not board.sides [turn].pieces
+            else
+                result := makeMovementBitboard (iLoc, piece, board.sides [turn].pieces, board.sides [1 - turn].pieces)
+        end;
     end;
     
 function combineTrimSide (isBlack: boolean; var board: TBoardRecord): bitboard;

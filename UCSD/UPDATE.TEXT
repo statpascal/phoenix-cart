@@ -40,13 +40,13 @@ begin
       bRookRFlag := 1;
    end;
 
- promFlag := FALSE;
+ cmFlag := FALSE;
 
  {check for pawn promotion}
  if (playMove.id = 0) and ((playMove.endSq in[56..63]) or
     (playMove.endSq in[0..7])) then
   begin
-   promFlag := TRUE;
+   cmFlag := TRUE;
    if turn = 0 then
     offset := WPO
    else
@@ -212,7 +212,7 @@ begin
  DataOps(1, startPage, dataSize, offset4, bit2);
 
  {promote pawn if applicable}
- if (promFlag) and (sPage = 1) then
+ if (cmFlag) and (sPage = 1) then
   begin
    ans := GetKey;
    gotoxy(20, 8);
@@ -231,7 +231,7 @@ begin
    playMove.id := (ans - 48) * 8;
   end
  else
-  if (promFlag) and (sPage = 0) then
+  if (cmFlag) and (sPage = 0) then
    playMove.id := 32;
 
  {update new piece position}

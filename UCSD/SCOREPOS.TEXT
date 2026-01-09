@@ -15,7 +15,7 @@ label
 var
  sPage1, dSize, initOffset, offset, offset1, offset2, i, j, k, l : integer;
  sPage2, side, wScore, bScore, evalScore, tempTurn : integer;
- endGame, pLoc, kDist, xDist, yDist : integer;
+ pLoc, kDist, xDist, yDist : integer;
  cRFlag : boolean;
  locArray, moveArray : bitarray;
  bit8, bit9 : bitboard;
@@ -27,20 +27,9 @@ begin
  cRFlag := FALSE;
  wScore := 0;
  bScore := 0;
- endGame := 0;
  startPage := BASE;
  dataSize := 8;
-
- {endgame determination}
- offset1 := APIECES;
- DataOps(2, startPage, dataSize, offset1, bit1);
- BitPos(bit1, locArray);
- if locArray[0] in [6..10] then
-  endGame := 1
- else
-  if locArray[0] <=5 then
-   endGame := 2;
-
+(*
  {en passant capture risk}
  if (tempMove.id = 0) and (abs(tempMove.startSq - tempMove.endSq) = 16)
     then
@@ -64,7 +53,7 @@ begin
     else
      bScore := bScore - 50;
   end;
-
+*)
  {determine base score for each side}
  for side := 0 to 1 do
   begin
@@ -96,7 +85,7 @@ begin
                 begin
                  offset1 := WPAWN + (pLoc * 2);
                  {promote pawn advancement in end game}
-                 if (endGame > 0) and (pLoc >= 24) then
+                 if (endGame) and (pLoc >= 24) then
                   evalScore := evalScore + ((pLoc div 5) * 50);
                  {check for pawn promotion}
                  if pLoc >= 56 then
@@ -138,7 +127,7 @@ begin
                 begin
                  offset1 := BPAWN + (pLoc * 2);
                  {promote pawn advancement in endgame}
-                 if (endGame > 0) and (pLoc <= 32) then
+                 if (endGame) and (pLoc <= 32) then
                   evalScore := evalScore + (((63 - pLoc) div 5) * 50);
                  {check for pawn promotion}
                  if pLoc <= 7 then
@@ -235,9 +224,7 @@ begin
                        BitAnd(bit8, bit9, bitRes);
                        if not(IsClear(bitRes)) then
                         begin
-                         if endGame = 0 then
-                          evalScore := evalScore + 50
-                         else
+                         if endGame then
                           evalScore := evalScore + 100;
                         end
                        else
@@ -245,9 +232,7 @@ begin
                          if (Abs(moveArray[1] - moveArray[2]) = 1) and
                             (moveArray[1] Div 8 = moveArray[2] Div 8) then
                           begin
-                           if endGame = 0 then
-                            evalScore := evalScore + 50
-                           else
+                           if endGame then
                             evalScore := evalScore + 100;
                           end;
                         end;
@@ -285,7 +270,7 @@ begin
               end;
           40: begin
                {apply piece square table offset}
-               if endGame > 0 then
+               if endGame then
                 offset1 := KINGEND + (pLoc * 2)
                else
                 offset1 := KINGMID + (pLoc * 2);
@@ -304,7 +289,7 @@ begin
     else
      begin
       {encourage moving opposite king to board edge}
-      if (endGame > 0) and (side = gameSide) then
+      if (endGame) and (side = gameSide) then
        begin
         if side = 0 then
          offset := TBKO

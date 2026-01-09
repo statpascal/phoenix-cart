@@ -126,7 +126,7 @@ var
  gamePly, gameMove, humanSide : integer;
  wRAFlag, wLAFlag, bRAFlag, bLAFlag : integer;
  wRookLFlag, wRookRFlag, bRookLFlag, bRookRFlag : integer;
- openFlag : boolean;
+ openFlag, endGame : boolean;
  moveNum : longint;
  bit1, bit2, bit3, bit4, bit5, bit6, bit7, bitRes : bitboard;
  buffer : array[0..59] of integer;

@@ -1,4 +1,4 @@
-(* version 1-7-26 v2.7)
+(* version 1-9-26 v2.7)
 (* 10-19-25: Fixed castling when rook not present *)
 (* 10-19-25: Adjusted the resign parameters *)
 (* 10-30-25: Added capture bonus in scorepos *)
@@ -34,6 +34,10 @@
 (* 1-4-26: added killer moves search optimization *)
 (* 1-5-26: fixed a bug in the Attack inclusion file *)
 (* 1-7-26: fixed killer moves routines *)
+(* 1-8-26: validated killer moves before insertion into move list *)
+(* 1-9-26: discarded mobility score (again!). Adverse effect on pruning *)
+(* 1-9-26: moved endgame determination to main unit *)
+(* 1-9-26: discarded the en passant risk penalty from scorepos *)
 
 Program Main;
 uses random,
@@ -47,7 +51,7 @@ var
  i, j, moveScore, offset, found, aVal, bVal, ans :integer;
  sideOffset, offset1, offset2, tempPointer : integer;
  moveLoc, openPoint : integer;
- humanFlag, cmFlag, checkFlag, promFlag, repFlag : boolean;
+ humanFlag, cmFlag, checkFlag, repFlag : boolean;
  moveArray : bitarray;
  lastMove, playMove, moveStore, tempMove : moverec;
  bit8 : bitboard;
@@ -146,6 +150,7 @@ end; (* SaveMove *)
 begin (* main *)
  Page(OUTPUT);
  Randomize;
+ endGame := FALSE;
  turn := 0;
  gameSide := turn;
  gameMove := 1;
@@ -282,6 +287,25 @@ begin (* main *)
  
   humanFlag := FALSE;
 
+  if not(endGame) then
+   begin
+    i := 0;
+    offset := WPO;
+    offset1 := WPO;
+    repeat
+     repeat
+      DataOps(2, startPage, dataSize, offset1, bit1);
+      BitPos(bit1, moveArray);
+      i := i + moveArray[0];
+      offset1 := offset1 + 8;
+     until offset1 = 40;
+     offset := offset + 48;
+     offset1 := BPO;
+    until offset > BPO;
+    if i <= 3000 then
+     endGame := TRUE;
+   end;
+  
   i := 0;
   {$I playseq.text}
   if i = 1 then

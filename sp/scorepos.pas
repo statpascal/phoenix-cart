@@ -47,7 +47,11 @@ function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: b
   
         {penalty if moving queen too early in game}
         if (move.id = Queen) and (gameMove < 5) then
-            dec (result, 100)
+            dec (result, 100);
+            
+        {check bonus}
+//        if isKingChecked (1 - turn, board) then
+//            inc (result, 200)
     end;
     
 function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; side, endGame: integer): integer;
@@ -126,7 +130,10 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                     {bonus for connected rooks - check if other rook could be caught as opponent}
                     bits := Trim (1 - side, Rook, locArray [1], board, epDummy);
                     if getBit (bits, locArray [2]) <> 0 then
-                        inc (evalScore, 100)
+                        if (endGame = 0) and (locArray [1] and not 7 = locArray [2] and not 7) then
+                            inc (evalScore, 50)
+                        else
+                            inc (evalScore, 100)
                 end
         end;
         
@@ -171,28 +178,21 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             if endGame > 0 then
                 inc (evalScore, getPieceScoreValue (KingEndScore, ownPos))
             else
-            if endGame = 0 then
                 inc (evalScore, getPieceScoreValue (KingMidScore, ownPos));
                 
             {bonus for checking opposite king}
-            if isClear (opponentKing) then
-                inc (evalScore, 50)
-            else if side = gameSide then
+//            if isClear (opponentKing) then
+//                inc (evalScore, 50)
+//            else if side = gameSide then
+            if (side = gameSide) and (endGame > 0) then
                 begin
                     {encourage moving opposite king to board edge}
-                    if endGame > 0 then
-                        begin
-                            bits := opponentKing and bitboard (KingEdge);
-                            if not isClear (bits) then
-                                inc (evalScore, 100)
-                    end;
-
-                    {move own king toward opposite king when <=4 pieces left}
-                    if endGame = 2 then
-                        begin
-                            BitPos (opponentKing, locArray);
-                            inc (evalScore, (15 - distance (ownPos, locArray [1])) * 15);
-                           end
+                    bits := opponentKing and bitboard (KingEdge);
+                    if not isClear (bits) then
+                        inc (evalScore, 100);
+                    {move own king toward opposite king}
+                    BitPos (opponentKing, locArray);
+                    inc (evalScore, (15 - distance (ownPos, locArray [1])) * 15);
                 end
         end;    
 
@@ -212,24 +212,10 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
 
 function evaluatePosition (turn: integer; var board: TBoardRecord; var move: moverec): integer;
     var
-        wScore, bScore, endGame: integer;
+        endGame: integer;
         
-(*
-    procedure checkEnPassant (isBlack: boolean; var pawnBitboard: bitboard; startSq: integer; var score: integer);
-            var
-                bits: bitboard;
-            begin
-                bits := getEnPassantBitboard (isBlack, startSq and 7);
-                BitAnd (bits, pawnBitboard, bits);
-                if not isClear (bits) then
-                    dec (score, 100)
-            end;
-*)            
         
     begin
-        wScore := 0;
-        bScore := 0;
-
         {endgame determination}
         case bitCount (board.allPieces) of
             2..5: 
@@ -239,16 +225,8 @@ function evaluatePosition (turn: integer; var board: TBoardRecord; var move: mov
             else
                 endGame := 0
         end;
-(*            
-        if (tempMove.id = Pawn) and (abs(tempMove.startSq - tempMove.endSq) = 16) then
-            if turn = 0 then
-                checkEnPassant (false, board.black.pawnBitboard, tempMove.startSq, wScore)
-            else
-                checkEnPassant (true, board.white.pawnBitboard, tempMove.startSq, bScore);
-*)
-        evaluatePosition := wScore - bScore
-                      + evaluateSide (board.white, board, 0, endGame) 
-                      - evaluateSide (board.black, board, 1, endGame)
+        
+        evaluatePosition := evaluateSide (board.white, board, 0, endGame) - evaluateSide (board.black, board, 1, endGame)
     end;
     
 end.
