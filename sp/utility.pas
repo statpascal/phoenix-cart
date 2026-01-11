@@ -154,7 +154,7 @@ procedure Utility(var switch: integer);
         gBuffer: array[0..67] of integer;
         mBuffer: array[0..2048] of integer;
         gname: string;
-        tempStore: moverec;
+        tempStore: TMoveRecord;
         gamefile: file of integer;
 
     begin
@@ -426,7 +426,7 @@ procedure Utility(var switch: integer);
                     utilFlag := TRUE;
 //	 TODO:                    turn := gameSide;
 //                    gamePointer := tempGPointer;
-                    tempStore.id := 99;
+                    tempStore.pieceType := InvalidPiece;
 (*                    
                     startPage := BASE2;
                     dataSize := 8;

@@ -29,7 +29,6 @@ var
     pturn, offset : integer;
     pcname : array [0..40] of char;
     status : boolean;
-    moveStore : moverec;
     rdir, iLocString, eLocString, gDate, pName : string;
 
 begin

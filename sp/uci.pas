@@ -1,7 +1,7 @@
-program testphoenix;
+program uci;
 
 uses
-    globals, board, move, logger;
+    globals, board, genmove, logger;
 
 var
     board: TBoardRecord;
@@ -13,16 +13,14 @@ const
 procedure answerUciInit;
     begin
         writeln ('id name PHOENIX-', versionString);
-//        writeln ('id author Vorticon');
 //        writeln ('option name OwnBook type check default true');
         writeln ('uciok')
     end;
     
 procedure calcMove (side: integer);
     var
-        null: moverec;
         score: integer;
-        move: moverec;
+        move: TMoveRecord;
         
     procedure writeCoord (sq: integer);
         begin
@@ -31,11 +29,11 @@ procedure calcMove (side: integer);
         end;
         
     begin
-        fillChar (null, sizeof (null), 0);
-        MoveGen (board, null, move, score, 0, -20000, 20000, ply, side);
+        generateMove (ply, side, board, move, score);
         write ('bestmove ');
         writeCoord (move.startSq);
-        writeCoord (move.endSq)
+        writeCoord (move.endSq);
+        writeln
     end;
 
 procedure handlePosition (s: string);
@@ -44,7 +42,7 @@ procedure handlePosition (s: string);
         t: string;
         isMoves: boolean;
         
-    function interpretMove (t: string; side: integer; var move: moverec): boolean;
+    function interpretMove (t: string; side: integer; var move: TMoveRecord): boolean;
         begin
             if (length (t) >= 4) and
                (t [1] in ['a'..'h']) and (t [2] in ['1'..'8']) and
@@ -52,7 +50,15 @@ procedure handlePosition (s: string);
                 begin
                     move.startSq := ord (t [1]) - ord ('a') + 8 * (ord (t [2]) - ord ('1'));
                     move.endSq   := ord (t [3]) - ord ('a') + 8 * (ord (t [4]) - ord ('1'));
-                    move.id := findPieceType (board, side, move.startSq);
+                    move.pieceType := findPieceType (board, side, move.startSq);
+                    move.flags := 0;
+                    if length (t) = 5 then
+                        case t [5] of
+                            'r': move.flags := Rook shl 4;
+                            'b': move.flags := Bishop shl 4;
+                            'n': move.flags := Knight shl 4;
+                            'q': move.flags := Queen shl 4
+                        end;
                     interpretMove := true
                 end
             else
@@ -61,7 +67,7 @@ procedure handlePosition (s: string);
         
     procedure handle (t: string);
         var
-            move: moverec;
+            move: TMoveRecord;
         begin
             if t = 'startpos' then
                 setInitPosition (board, side, movenr);
@@ -96,7 +102,7 @@ procedure commandLoop;
     var
         s: string;
     begin
-        writeln ('PHOENIX Chess');
+//        writeln ('PHOENIX Chess');
         repeat
             readln (s);
             if s = 'uci' then
@@ -112,31 +118,8 @@ procedure commandLoop;
         until s = 'quit'
     end;
 
-procedure testPosition (fenStr, move: string; ply, qsdeepening: integer);
-    const
-        alpha = -20000;
-        beta = 20000;
-
-    var 
-        mainBoard: TBoardRecord;
-        lastMove, playMove: moverec;
-        moveScore: integer;
-
-    begin
-        setFENPosition (mainBoard, gameSide, gameMove, fenStr);
-        gamePly := ply;
-        plyQS := 1 - qsdeepening;
-        fillChar (lastMove, sizeof (lastMove), 0);
-
-        writeln ('Analyzing: ', fenStr);
-//        startLogging ('ticket.log');
-        MoveGen (mainBoard, lastMove, playMove, moveScore, 0, alpha, beta, gamePly, gameSide);
-        printMove (output, playMove);
-//        writeln (' ', move);
-//        stopLogging;
-    end;
-
 begin
     plyQs := -3;
+    gamePly := ply;
     commandLoop
 end.

@@ -4,15 +4,15 @@ interface
 
 uses globals, bitops, board;
 
-function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: moverec; capId: integer): integer;
-function evaluatePosition (turn: integer; var board: TBoardRecord; var move: moverec): integer;
+function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; capId: integer): integer;
+function evaluatePosition (turn: integer; var board: TBoardRecord): integer;
 
 
 implementation
 
 uses trimprocs, resources;
 
-function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: moverec; capId: integer): integer;
+function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; capId: integer): integer;
     const
         captureBonus: array [0..5, 0..5] of uint8 = (
         //     P    R    N    B    Q    K
@@ -28,10 +28,10 @@ function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: b
         
         {capture bonus}
         if attackFlag then
-            inc (result, captureBonus [move.id, capId]);
+            inc (result, captureBonus [move.pieceType, capId]);
 
         {bonus for castling/penalty for moving king if castling possible}
-        if move.id = King then
+        if move.pieceType = King then
             if abs (move.startSq - move.endSq) = 2 then
                 inc (result, 20)
             else 
@@ -40,13 +40,13 @@ function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: b
                     dec (result, 20);
 
         {penalty for moving the rook if castling possible on its side}
-        if (move.id = Rook) and (gameMove < 13) then
+        if (move.pieceType = Rook) and (gameMove < 13) then
             if (turn = 0) and (prevBoard.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) or
                (turn = 1) and (prevBoard.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
             dec (result, 10);
   
         {penalty if moving queen too early in game}
-        if (move.id = Queen) and (gameMove < 5) then
+        if (move.pieceType = Queen) and (gameMove < 5) then
             dec (result, 100);
             
         {check bonus}
@@ -210,7 +210,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
     end;
     
 
-function evaluatePosition (turn: integer; var board: TBoardRecord; var move: moverec): integer;
+function evaluatePosition (turn: integer; var board: TBoardRecord): integer;
     var
         endGame: integer;
         

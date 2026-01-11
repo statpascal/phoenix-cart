@@ -12,7 +12,7 @@ uses
 
 var 
     i, j, moveScore, aVal, bVal: integer;
-    lastMove, playMove: moverec;
+    lastMove, playMove: TMoveRecord;
 
 
 procedure SaveMove;
@@ -28,7 +28,7 @@ procedure initGame (var mainBoard: TBoardRecord);
 //        gameSide := 0;
 //        gameMove := 1;
 
-        lastMove.id := InvalidPiece;
+        lastMove.pieceType := InvalidPiece;
         lastMove.startSq := 0;
         lastMove.endSq := 0;
 
@@ -150,12 +150,12 @@ procedure check3Rep;
 *)    
     
     
-function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: moverec): boolean;
+function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: TMoveRecord): boolean;
     var
         moveArray: bitarray;
         bits, kingMovement, opponentMoves: bitboard;
         kingPos, epCapDummy: integer;
-        move: moverec;
+        move: TMoveRecord;
         tempBoard: TBoardRecord;
     begin
         isOpponentMate := false;
@@ -171,7 +171,7 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
         kingMovement := Trim (1 - gameSide, King, kingPos, board, epCapDummy);
         BitPos (kingMovement, moveArray);
         
-        move.id := King;
+        move.pieceType := King;
         move.startSq := kingPos;
         for i := 1 to moveArray [0] do
             begin
@@ -202,7 +202,7 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
             exit;
         
         {generate trim board for attacking piece}
-        bits := Trim (gameSide, playMove.id, playMove.endSq, tempBoard, epCapDummy); 
+        bits := Trim (gameSide, playMove.pieceType, playMove.endSq, tempBoard, epCapDummy); 
 
         {check if any opposite piece movement blocks it}
         BitAnd (bits, opponentMoves, bits);
@@ -216,7 +216,7 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: m
             BitOr (bits, tempBoard.white.pieces, tempBoard.white.pieces);
 
         {regenerate Trim board for attacking piece}
-        bits := Trim (gameSide, playMove.id, playMove.endSq, tempBoard, epCapDummy);
+        bits := Trim (gameSide, playMove.pieceType, playMove.endSq, tempBoard, epCapDummy);
 
         {check if overalp with opposite king}
         if getBit (bits, kingPos) = 0 then
@@ -301,7 +301,7 @@ i: integer;
                             i := Random (i);
                             playMove.startSq := moves [i] shr 6;
                             playMove.endSq := moves [i] and $3f;
-                            playMove.id := findPieceType (mainBoard, gameSide, playMove.startSq)
+                            playMove.pieceType := findPieceType (mainBoard, gameSide, playMove.startSq)
                         end
                     else
                         begin

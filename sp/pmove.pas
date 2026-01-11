@@ -4,7 +4,7 @@ interface
 
 uses globals, board;
 
-procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; turn: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer);
 
 implementation
 
@@ -18,7 +18,7 @@ procedure clearEntryField;
         gotoxy (whereX - 2, whereY)
     end;
             
-procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; turn: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer);
     label 
         l_1, l_2;
     var 
@@ -79,7 +79,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; turn: inte
         until validSq;
 
         playMove.startSq := iLoc;
-        playMove.id := findPieceType (workBoard, turn, iLoc);
+        playMove.pieceType := findPieceType (workBoard, turn, iLoc);
 
         l_2: 
      {get end square}
@@ -106,7 +106,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; turn: inte
             if getBit (playerPieces, eLoc) = 0 then
                 begin
                     {check if castling move}
-                    if (playMove.id = King) and (abs(iLoc - eLoc) = 2) then
+                    if (playMove.pieceType = King) and (abs(iLoc - eLoc) = 2) then
                         begin
                             castleRights := checkCastleRights (workBoard, turn);
                             if turn = 0 then
@@ -126,7 +126,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: moverec; turn: inte
                     else
                         begin
                             {trim movement to blocks}
-                            bits := Trim (turn, playMove.id, iLoc, workBoard, epCapDummy);
+                            bits := Trim (turn, playMove.pieceType, iLoc, workBoard, epCapDummy);
                             validSq := getBit (bits, eLoc) <> 0
                         end
                 end;

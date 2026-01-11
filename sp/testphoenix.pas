@@ -10,7 +10,7 @@ procedure testPosition (fenStr, move, log: string; ply, qsdeepening: integer);
 
     var 
         mainBoard: TBoardRecord;
-        lastMove, playMove: moverec;
+        lastMove, playMove: TMoveRecord;
         moveScore: integer;
 
     begin
@@ -61,36 +61,28 @@ procedure BratkoKopecTest;
         close (f)
     end;
 
-(*    
+
 procedure evalTests;
-    const
-        ply = 4;
-        qs = 2;
-    var
-        f: text;
-        pos, move: string;
     begin
-        assign (f, 'testpos/tests.txt');
-        reset (f);
-        while not eof (f) do
-            begin
-                readln (f, pos);
-//                readln (f, move));
-                testPosition (pos, move, ply, qs)
-            end;
-        close (f)
-    end;
-*)
+    writeln ('Starting tests');
+    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', 'PD5-E4', 'DSK0.opening-ply3.log', 3, 2);    
+    testPosition ('r1b4r/pp1p2pp/7k/5Q2/8/2PB4/P4PPP/2K1R2R w - - 0 40', 'QF5-H3', 'DSK0.queen-h5-ply4.log', 3, 2);
+    testPosition ('4k3/8/8/8/8/8/1B2P3/R3K3 b Q - 0 40', '', 'DSK0.castle-ply3.log', 3, 2);
+    testPosition ('rnb1kb1r/ppp1pppp/4qn2/8/3P4/2N5/PPP1BPPP/R1BQK1NR w KQkq - 0 40', '', 'DSK0.knight-lost-ply4.log', 3, 2);
+    
+    disableAlphaBetaPruning := true;
+    testPosition ('4k3/p1p3p1/8/1P5P/1p1p4/8/P1P1P3/4K3 w - - 0 10', '', 'DSK0.ep-test.log', 3, 0);
+    disableAlphaBetaPruning := false;
+
+    testPosition ('r3k2r/1pp2ppp/p2bbn2/4N3/4P3/2N1B3/PPP1B1PP/R1K4R b kq - 0 12', 'BD6-E5', 'DSK0.ticket1.log', 4, 7);
+    testPosition ('rn1qkb1r/ppp1pppp/4b3/4P3/2pP2n1/N4N2/PP3PPP/R1BQKB1R b KQkq - 2 6', 'PC7-C5', 'DSK0.ticket2.log', 4, 7);
+    writeln;
+    writeln ('** DONE **');    end;
 
 
   
 begin
-    BratkoKopecTest;
-
-//    writeln ('Starting tests');
+//    BratkoKopecTest;
 //    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
-//    evalTests
-    
-    
-
+    evalTests
 end.

@@ -60,3 +60,8 @@
 2026-01-03-15-30
 
 - added opening book
+
+2026-01-08-18-30
+
+- value captures 
+- killer moves

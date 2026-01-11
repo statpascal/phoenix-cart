@@ -12,7 +12,7 @@ procedure dumpBitBoard (var b: bitboard);
 procedure printBoard (var f: text; var board: TBoardRecord);
 
 procedure indent (ply: integer);
-procedure printMove (var f: text; var move: moverec);
+procedure printMove (var f: text; var move: TMoveRecord);
 
 procedure startLogging (fn: string);
 procedure stopLogging;
@@ -92,7 +92,7 @@ procedure printBoard (var f: text; var board: TBoardRecord);
         writeln (f)
     end;
                     
-procedure printMove (var f: text; var move: moverec);
+procedure printMove (var f: text; var move: TMoveRecord);
     
     procedure writeCoord (sq: integer);
         begin
@@ -101,9 +101,9 @@ procedure printMove (var f: text; var move: moverec);
         end;
     
     begin
-        if move.id <> InvalidPiece then
+        if move.pieceType <> InvalidPiece then
             begin
-                write (f, Figure [0, move.id]);
+                write (f, Figure [0, move.pieceType]);
                 writeCoord (move.startSq);
                 write (f, '-');
                 writecoord (move.endSq)

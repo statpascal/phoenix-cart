@@ -5,6 +5,9 @@ interface
 uses bitops;
 
 const
+
+    (* Board flags *)
+
     Pawn = 0;
     Rook = 1;
     Knight = 2;
@@ -24,17 +27,29 @@ const
     blackRightCastle = 256;
     
     moveBlackFlag = 512;
+    
+    (* Move Flags *)
+    
+    AttackMove = 1;
 
     Figure: array [0..1, 0..5] of char = (('P', 'R', 'N', 'B', 'Q', 'K'),
                                           ('p', 'r', 'n', 'b', 'q', 'k'));
     
 
 type
+    TMoveRecord = packed record
+        startSq, endSq: uint8;
+        pieceType: uint8;	// moved piece
+        flags: uint8		// high nibble: pawn promotion piece
+    end;
+
+(*    
     moverec = record
         id: integer;
         startSq: integer;
         endSq: integer
     end;
+*)    
 
     TSideRecord = record
         case boolean of
@@ -63,8 +78,8 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 
 function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
-procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: moverec);
-procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: moverec);
+procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: TMoveRecord);
+procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
 
 procedure combinePieces (var board: TBoardRecord);
 procedure compressBoard (var board: TBoardRecord; var res: TCompressedBoard);
@@ -161,9 +176,9 @@ function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
         findPieceType := InvalidPiece
     end;
         
-procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: moverec);
+procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: TMoveRecord);
         
-    procedure updateBitboards (var own, opponent: TSideRecord; var ownPieces, opponentPieces: bitboard; id, startSq, endSq: integer);
+    procedure updateBitboards (var own, opponent: TSideRecord; var ownPieces, opponentPieces: bitboard; id, startSq, endSq, flags: integer);
         var
             epSquare: integer;
             j: integer;
@@ -209,8 +224,10 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
             setBit (board.allPieces, endSq);
             setBit (ownPieces, endSq);
             if (id = Pawn) and (endSq in [0..7, 56..63]) then
-                // TODO: ask for human side
-                setBit (own.queenBitboard, endSq)
+                if flags shr 4 <> 0 then
+                    setBit (own.bitboards [flags shr 4], endSq)
+                else
+                    setBit (own.queenBitboard, endSq)
             else
                 setBit (own.bitboards [id], endSq);
               
@@ -227,22 +244,22 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
         board.castleFlags := board.castleFlags and not (epMoveFlag + epWhiteFlag + epColBitmask);
         if turn = 0 then
             begin
-                updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, move.id, move.startsq, move.endsq);
-                if (move.id = King) and (move.startSq = 4) and (move.endSq = 6) then
-                    updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 7, 5);
-                if (move.id = King) and (move.startSq = 4) and (move.endSq = 2) then
-                    updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 0, 3);
-                if move.id = King then
+                updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, move.pieceType, move.startSq, move.endSq, move.flags);
+                if (move.pieceType = King) and (move.startSq = 4) and (move.endSq = 6) then
+                    updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 7, 5, 0);
+                if (move.pieceType = King) and (move.startSq = 4) and (move.endSq = 2) then
+                    updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 0, 3, 0);
+                if move.pieceType = King then
                     board.castleFlags := board.castleFlags and not (whiteLeftCastle or whiteRightCastle)
             end
         else
             begin
-                updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, move.id, move.startsq, move.endsq);
-                if (move.id = King) and (move.startSq = 60) and (move.endSq = 58) then
-                    updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 56, 59);
-                if (move.id = King) and (move.startSq = 60) and (move.endSq = 62) then
-                    updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 63, 61);
-                if move.id = King then
+                updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, move.pieceType, move.startSq, move.endSq, move.flags);
+                if (move.pieceType = King) and (move.startSq = 60) and (move.endSq = 58) then
+                    updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 56, 59, 0);
+                if (move.pieceType = King) and (move.startSq = 60) and (move.endSq = 62) then
+                    updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 63, 61, 0);
+                if move.pieceType = King then
                     board.castleFlags := board.castleFlags and not (blackLeftCastle or blackRightCastle)
             end;
         if getBit (board.white.rookBitBoard, 0) = 0 then
@@ -255,7 +272,7 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
             board.castleFlags := board.castleFlags and not blackRightCastle
     end;    
     
-procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: moverec);
+procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
     var
         dummyId1, dummyId2: integer;
         dummyFlg: boolean;
