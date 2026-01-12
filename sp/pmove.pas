@@ -27,11 +27,10 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
         fn: string [20];
         castleRights, epCapDummy: integer;
         playerPieces, bits: bitboard;
-        workBoard: TBoardRecord;
+        testBoard: TBoardRecord;
                 
     begin
         l_1: 
-        workBoard := board;
         gotoxy(20, 6);
         write(chr(7), 'enter move');
         gotoxy(20, 7);
@@ -69,17 +68,14 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
             write(chr(ans));
 
             {validate square}
-            if turn = 0 then
-                playerPieces := workBoard.white.pieces
-            else
-                playerPieces := workBoard.black.pieces;
-            validSq := getBit (playerPieces, iLoc) <> 0;
+            validSq := getBit (board.sides [turn].bitboards [SidePieces], iLoc) <> 0;
             if not validSq then
                 clearEntryField
         until validSq;
 
         playMove.startSq := iLoc;
-        playMove.pieceType := findPieceType (workBoard, turn, iLoc);
+        playMove.pieceType := findPieceType (board, turn, iLoc);
+        playMove.flags := 0;
 
         l_2: 
      {get end square}
@@ -103,50 +99,63 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
             write(chr(ans));
 
             {validate end square}
-            if getBit (playerPieces, eLoc) = 0 then
+            if (playMove.pieceType = King) and (abs(iLoc - eLoc) = 2) then
                 begin
-                    {check if castling move}
-                    if (playMove.pieceType = King) and (abs(iLoc - eLoc) = 2) then
+                    castleRights := checkCastleRights (board, turn);
+                    if turn = 0 then
                         begin
-                            castleRights := checkCastleRights (workBoard, turn);
-                            if turn = 0 then
-                                begin
-                                    if (((iLoc - eLoc) > 0) and (castleRights and whiteLeftCastle <> 0)) or
-                                       (((iLoc - eLoc) < 0) and (castleRights and whiteRightCastle <> 0)) then
-                                        validSq := true
-                                end
-                            else
-                                begin
-                                    if (((iLoc - eLoc) > 0) and (castleRights and blackLeftCastle <> 0)) or
-                                       (((iLoc - eLoc) < 0) and (castleRights and blackRightCastle <> 0)) then
-                                        validSq := true
-                                end
-
+                            if (((iLoc - eLoc) > 0) and (castleRights and whiteLeftCastle <> 0)) or
+                               (((iLoc - eLoc) < 0) and (castleRights and whiteRightCastle <> 0)) then
+                                validSq := true
                         end
                     else
                         begin
-                            {trim movement to blocks}
-                            bits := Trim (turn, playMove.pieceType, iLoc, workBoard, epCapDummy);
-                            validSq := getBit (bits, eLoc) <> 0
+                            if (((iLoc - eLoc) > 0) and (castleRights and blackLeftCastle <> 0)) or
+                               (((iLoc - eLoc) < 0) and (castleRights and blackRightCastle <> 0)) then
+                                validSq := true
                         end
+
+                end
+            else
+                begin
+                    {trim movement to blocks}
+                    bits := Trim (turn, playMove.pieceType, iLoc, board, epCapDummy);
+                    validSq := getBit (bits, eLoc) <> 0
                 end;
 
+            {verify if own king in check after move}
+            if validSq then 
+                begin
+                    playMove.endSq := eLoc;
+                    testBoard := board;
+                    enterMoveSimple (turn, testBoard, playMove);
+                    if isKingChecked (turn, testBoard) then
+                        validSq := false;
+                end;
+                
             if not validSq then
                 clearEntryField
         until validSq;
         
-        playMove.endSq := eLoc;
-
-        {verify if own king in check after move}
-        enterMoveSimple (turn, workBoard, playMove);
-        if isKingChecked (turn, workBoard) then
+        {promote pawn if applicable}
+        if (playMove.pieceType = pawn) and (playMove.endSq in [0..7, 56..63]) then
             begin
-                {king in check. undo move}
-                validSq := FALSE;
-                clearEntryField;
-                workBoard := board;
-                goto l_2;
-            end;
-    end; {playerMove}
+                gotoxy (20, 8);
+                writeln ('promote pawn to');
+                gotoxy (22, 9);
+                writeln ('1- rook');
+                gotoxy (22, 10);
+                writeln ('2- knight');
+                gotoxy (22, 11);
+                writeln ('3- bishop');
+                gotoxy (22, 12);
+                writeln ('4- queen');
+                repeat
+                    ans := GetKeyInt
+                until ans in [49..52];
+                playMove.flags := (ans - 48) shl 4
+            end
+
+    end;
 
 end.

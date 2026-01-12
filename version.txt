@@ -65,3 +65,8 @@
 
 - value captures 
 - killer moves
+
+2026-01-12-19-30
+
+- corrected killer moves
+- pawn promotion

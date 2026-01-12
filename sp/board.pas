@@ -78,7 +78,7 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 
 function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
-procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: TMoveRecord);
+procedure enterMove (turn, attackFlag: integer; var capId: integer; var board: TBoardRecord; var move: TMoveRecord);
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
 
 procedure combinePieces (var board: TBoardRecord);
@@ -176,10 +176,11 @@ function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
         findPieceType := InvalidPiece
     end;
         
-procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; var foundFlag: boolean; var board: TBoardRecord; var move: TMoveRecord);
+procedure enterMove (turn, attackFlag: integer; var capId: integer; var board: TBoardRecord; var move: TMoveRecord);
         
     procedure updateBitboards (var own, opponent: TSideRecord; var ownPieces, opponentPieces: bitboard; id, startSq, endSq, flags: integer);
         var
+            foundFlag: boolean;
             epSquare: integer;
             j: integer;
         begin
@@ -197,7 +198,6 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
                         if getBit (opponent.bitboards [j], endSq) <> 0 then
                             begin
                                 foundFlag := true;
-                                attackId := id;
                                 capId := j;
                                 clearBit (opponent.bitboards [j], endSq);
                                 clearBit (opponentPieces, endSq)
@@ -215,7 +215,6 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
                             clearBit (opponent.pawnBitboard, epSquare);
                             clearBit (opponentPieces, epSquare);
                             clearBit (board.allPieces, epSquare);
-                            attackId := pawn;
                             capId := pawn
                         end
                 end;
@@ -274,10 +273,9 @@ procedure enterMove (turn, attackFlag: integer; var attackId, capId: integer; va
     
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
     var
-        dummyId1, dummyId2: integer;
-        dummyFlg: boolean;
+        dummyId: integer;
     begin
-        enterMove (turn, 1, dummyId1, dummyId2, dummyFlg, board, move)
+        enterMove (turn, 1, dummyId, board, move)
     end;
     
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;

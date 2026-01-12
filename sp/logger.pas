@@ -106,7 +106,9 @@ procedure printMove (var f: text; var move: TMoveRecord);
                 write (f, Figure [0, move.pieceType]);
                 writeCoord (move.startSq);
                 write (f, '-');
-                writecoord (move.endSq)
+                writecoord (move.endSq);
+                if move.flags and $f0 <> 0 then
+                    write (f, figure [0, move.flags shr 4])
             end
         else
             write (f, 'None')

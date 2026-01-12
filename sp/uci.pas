@@ -101,10 +101,15 @@ procedure handlePosition (s: string);
 procedure commandLoop;
     var
         s: string;
+        f: text;
     begin
-//        writeln ('PHOENIX Chess');
+        writeln ('PHOENIX Chess');
+        assign (f, '/tmp/uci.log');
+        rewrite (f);
         repeat
             readln (s);
+            writeln (f, s);
+            flush (f);
             if s = 'uci' then
                 answerUciInit;
             if s = 'isready' then
