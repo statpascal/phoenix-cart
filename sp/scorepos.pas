@@ -4,15 +4,33 @@ interface
 
 uses globals, bitops, board;
 
-function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; capId: integer): integer;
-function evaluatePosition (turn: integer; var board: TBoardRecord): integer;
+const
+    MoveQueenExchangeWhite = 1;
+    MoveQueenExchangeBlack = 2;
+    MoveEndGame = 4;
+    
+    PawnValue = 150;
+    RookValue = 525;
+    KnightValue = 400;
+    BishopValue = 400;
+    QueenValue = 973;
+    
+    EndGameReached = 3000;
+
+type
+    TMoveScore = record
+        bonus, flags: integer
+    end;
+
+procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; capId: integer; var moveScore: TMoveScore);
+function evaluatePosition (turn: integer; var board: TBoardRecord; moveScore: TMoveScore): integer;
 
 
 implementation
 
 uses trimprocs, resources;
 
-function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; capId: integer): integer;
+procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; capId: integer; var moveScore: TMoveScore);
     const
         captureBonus: array [0..5, 0..5] of uint8 = (
         //     P    R    N    B    Q    K
@@ -22,36 +40,51 @@ function evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: b
             (  0,  50,  25,  25,  50,   0),         // bishop
             (  0,   0,   0,   0,   0,   0),         // queen
             (  0,   0,   0,   0,   0,   0));   	    // king
+    var
+        bonus: integer;
 
     begin
-        result := 0;
-        
+        bonus := 0;
+    
         {capture bonus}
         if attackFlag then
-            inc (result, captureBonus [move.pieceType, capId]);
+            begin
+                inc (bonus, captureBonus [move.pieceType, capId]);
+                if (move.pieceType = Queen) and (capId = Queen) then
+                    if turn = 0 then
+                        move.flags := move.flags or MoveQueenExchangeWhite
+                    else
+                        move.flags := move.flags or MoveQueenExchangeBlack
+            end;
 
         {bonus for castling/penalty for moving king if castling possible}
         if move.pieceType = King then
             if abs (move.startSq - move.endSq) = 2 then
-                inc (result, 20)
+                inc (bonus, 20)
             else 
                 if (turn = 0) and (prevBoard.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) or
                    (turn = 1) and (prevBoard.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
-                    dec (result, 20);
+                    dec (bonus, 20);
 
         {penalty for moving the rook if castling possible on its side}
         if (move.pieceType = Rook) and (gameMove < 13) then
             if (turn = 0) and (prevBoard.castleFlags and (whiteLeftCastle or whiteRightCastle) <> 0) or
                (turn = 1) and (prevBoard.castleFlags and (blackLeftCastle or blackRightCastle) <> 0) then
-            dec (result, 10);
+            dec (bonus, 10);
   
         {penalty if moving queen too early in game}
         if (move.pieceType = Queen) and (gameMove < 5) then
-            dec (result, 100);
+            dec (bonus, 100);
             
         {check bonus}
 //        if isKingChecked (1 - turn, board) then
-//            inc (result, 200)
+//            inc (bous, 200);
+
+        if turn = 0 then
+            inc (moveScore.bonus, bonus)
+        else
+            dec (moveScore.bonus, bonus)
+            
     end;
     
 function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; side, endGame: integer): integer;
@@ -70,7 +103,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                     pLoc := locArray [i];
                     row := pLoc shr 3;
                     col := pLoc and 7;
-                    inc (evalScore, 150);
+                    inc (evalScore, PawnValue);
                     
                     if side = 0 then
                         begin
@@ -124,7 +157,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             bits: bitboard;
         begin
             BitPos (sideBoards.rookBitboard, locArray);
-            inc (evalScore, 525 * locArray [0]);
+            inc (evalScore, RookValue * locArray [0]);
             if locArray [0] = 2 then
                 begin
                     {bonus for connected rooks - check if other rook could be caught as opponent}
@@ -144,12 +177,12 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
         begin
             BitPos (bits, locArray);
             for i := 1 to locArray [0] do
-                inc (evalScore, 400 + getPieceScoreValue (scoreType, locArray [i]))
+                inc (evalScore, KnightValue + getPieceScoreValue (scoreType, locArray [i]))
         end;
         
     procedure evaluateQueen;
         begin
-            inc (evalScore, 973 * bitCount (sideBoards.queenBitboard))
+            inc (evalScore, QueenValue * bitCount (sideBoards.queenBitboard))
         end;
         
     function distance (p1, p2: integer): integer;
@@ -210,23 +243,22 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
     end;
     
 
-function evaluatePosition (turn: integer; var board: TBoardRecord): integer;
+function evaluatePosition (turn: integer; var board: TBoardRecord; moveScore: TMoveScore): integer;
     var
         endGame: integer;
         
         
     begin
-        {endgame determination}
-        case bitCount (board.allPieces) of
-            2..5: 
-                endGame := 2;
-            6..10:
-                endGame := 1
-            else
-                endGame := 0
-        end;
+        endGame := moveScore.flags and MoveEndGame;
         
-        evaluatePosition := evaluateSide (board.white, board, 0, endGame) - evaluateSide (board.black, board, 1, endGame)
+        result := evaluateSide (board.white, board, 0, endGame) 
+                  - evaluateSide (board.black, board, 1, endGame)
+                  + moveScore.bonus;
+                  
+        if (result >= 50) and (moveScore.flags and MoveQueenExchangeWhite <> 0) then
+            inc (result, 75)
+        else if (result <= -50) and (moveScore.flags and MoveQueenExchangeBlack <> 0) then
+            dec (result, 75)
     end;
     
 end.

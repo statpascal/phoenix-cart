@@ -2,7 +2,11 @@ unit genmove;
 
 interface
 
-uses globals, board;
+uses globals, board
+{$ifdef fpc}
+, math
+{$endif}
+;
 
 procedure generateMove (ply, turn: integer; var board: TBoardRecord; var move: TMoveRecord; var score: integer); 
 
@@ -35,17 +39,6 @@ procedure pushMoveStack (var move: TMoveRecord); overload;
             end
     end;
     
-procedure pushMoveStack (attack: boolean; pieceType, startSq, endSq: integer); overload;
-    var
-        move: TMoveRecord;
-    begin
-        move.startSq := startSq;
-        move.endSq := endSq;
-        move.pieceType := pieceType;
-        move.flags := ord (attack);
-        pushMoveStack (move)
-    end;
-    
 const
     MinPly = -5;
     
@@ -61,36 +54,37 @@ procedure loopAllPieces (var board: TBoardRecord; ply, turn, moveStackBegin: int
         posArray: bitArray;
         currentMoveBoard, attackBoard: bitboard;
         attackMoves, moves: array [0..MaxMoves] of TMoveRecord;
-        attackMoveCount, moveCount: integer;
+        killers: array [0..1] of TMoveRecord;
+        attackMoveCount, moveCount, killerMoveCount: integer;
     
+    procedure registerMove (attackFlag: boolean; var move: TMoveRecord);
+        begin
+            if attackFlag then
+                if (move.pieceType <= Bishop) and (getBit (valueCaptureBoard [move.pieceType], move.endSq) <> 0) then
+                    pushMoveStack (move)
+                else
+                    begin
+                        attackMoves [attackMoveCount] := move;
+                        inc (attackMoveCount)
+                    end
+            else
+                if (ply >= MinPly) and ((compareByte (move, killerMoves [ply, 0], sizeof (TMoveRecord)) = 0) or (compareByte (move, killerMoves [ply, 1], sizeof (TMoveRecord)) = 0)) then
+                    begin
+                        killers [killerMoveCount] := move;
+                        inc (killerMoveCount)
+                    end
+                else
+                    begin
+                        moves [moveCount] := move;
+                        inc (moveCount)
+                    end
+        end;
+        
     procedure createMoveNodes (attackFlag: boolean; id, startSq: integer; endSquares: bitboard);
         var
             k, piece: integer;
             move: TMoveRecord;
             moveArray: bitArray;
-            
-        procedure registerMove (attackFlag: boolean; var move: TMoveRecord);
-            begin
-                if attackFlag then
-                    if (move.pieceType <= Bishop) and (getBit (valueCaptureBoard [move.pieceType], move.endSq) <> 0) then
-                        pushMoveStack (move)
-                    else
-                        begin
-                            attackMoves [attackMoveCount] := move;
-                            inc (attackMoveCount)
-                        end
-                else
-                    if (ply >= MinPly) and ((compareByte (move, killerMoves [ply, 0], sizeof (TMoveRecord)) = 0) or (compareByte (move, killerMoves [ply, 1], sizeof (TMoveRecord)) = 0)) then
-                        begin
-                            attackMoves [attackMoveCount] := move;
-                            inc (attackMoveCount)
-                        end
-                    else
-                        begin
-                            moves [moveCount] := move;
-                            inc (moveCount)
-                        end
-            end;
             
         begin
             move.startSq := startSq;
@@ -113,7 +107,21 @@ procedure loopAllPieces (var board: TBoardRecord; ply, turn, moveStackBegin: int
         end;
         
     procedure checkCastling (var board: TBoardRecord);
-        var castleRights: integer;
+        var 
+            castleRights: integer;
+            
+        procedure registerCastling (startSq, endSq: integer);
+            var
+                move: TMoveRecord;
+            begin
+                move.flags := 0;
+                move.pieceType := King;
+                move.startSq := startSq;
+                move.endSq := endSq;
+                registerMove (false, move)
+            end;
+            
+            
         begin
             castleRights := checkCastleRights (board, turn);
             if castleRights = 0 then
@@ -121,22 +129,20 @@ procedure loopAllPieces (var board: TBoardRecord; ply, turn, moveStackBegin: int
             if turn = 0 then
                 begin
                     if castleRights and whiteLeftCastle <> 0 then
-                        pushMoveStack (false, King, 4, 2);
+                        registerCastling (4, 2);
                     if castleRights and whiteRightCastle <> 0 then
-                        pushMoveStack (false, King, 4, 6)
+                        registerCastling (4, 6)
                 end
             else
                 begin
                     if castleRights and blackLeftCastle <> 0 then
-                        pushMoveStack (false, King, 60, 58);
+                        registerCastling (60, 58);
                     if castleRights and blackRightCastle <> 0 then
-                        pushMoveStack (false, King, 60, 62)
+                        registerCastling (60, 62)
                 end
         end;
         
     begin
-        checkCastling (board);
-        
         valueCaptureBoard [Pawn] := board.sides [1 - turn].pieces and not board.sides [1 - turn].pawnBitboard;
         valueCaptureBoard [Rook] := board.sides [1 - turn].queenBitboard;
         valueCaptureBoard [Knight] := board.sides [1 - turn].rookBitboard or board.sides [1 - turn].queenBitboard;
@@ -144,7 +150,9 @@ procedure loopAllPieces (var board: TBoardRecord; ply, turn, moveStackBegin: int
         
         attackMoveCount := 0;
         moveCount := 0;
+        killerMoveCount := 0;
         
+        checkCastling (board);
         for piece := Pawn to King do
             begin
                 BitPos (board.sides [turn].bitboards [piece], posArray);
@@ -162,118 +170,117 @@ procedure loopAllPieces (var board: TBoardRecord; ply, turn, moveStackBegin: int
                     end
             end;
             
-        move (attackMoves, moveStack [moveStackPointer], attackMoveCount * sizeof (TMoveRecord));
-        move (moves, moveStack [moveStackPointer + attackMoveCount], moveCount * sizeof (TMoveRecord));
-        inc (moveStackPointer, attackMoveCount + moveCount);
+        move (attackMoves, moveStack [moveStackPointer], min (MoveStackSize - moveStackPointer, attackMoveCount) * sizeof (TMoveRecord));
+        move (killers, moveStack [moveStackPointer + attackMoveCount], min (MoveStackSize - moveStackPointer, killerMoveCount) * sizeof (TMoveRecord));
+        move (moves, moveStack [moveStackPointer + attackMoveCount + killerMoveCount], min (MoveStackSize - moveStackPointer, moveCount) * sizeof (TMoveRecord));
+        inc (moveStackPointer, attackMoveCount + moveCount + killerMoveCount);
         
     end;
     
-procedure MoveGen (var board: TBoardRecord; lastMove: TMoveRecord; var finalMove: TMoveRecord;
-                   var score: integer; aggMoveScores, alpha, beta, ply, turn: integer); forward;
+procedure MoveGen (var board: TBoardRecord; var finalMove: TMoveRecord;
+                   var score: integer; moveScore: TMoveScore; alpha, beta, ply, turn: integer); forward;
                    
-function iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIndex, aggMoveScores, alpha, beta: integer; var validMoveCount, bestScore: integer; var bestMove: TMoveRecord): boolean;
+function iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIndex: integer; moveScore: TMoveScore; alpha, beta: integer; var validMoveCount, bestScore: integer; var bestMove: TMoveRecord): boolean;
     var
         attackMoves: boolean;
         capId, currentMoveindex: integer;
-        evalScore, evalMove, moveScore: integer;
+        evalScore, evalMove: integer;
         resultMove, tempMove: TMoveRecord;
         workBoard: TBoardRecord;
+        workMoveScore: TMoveScore;
     begin
         iterateMoveList := true;
-        for attackMoves := true downto false do
-            for currentMoveIndex := startIndex to endIndex do
-                begin
-                    tempMove := moveStack [currentMoveIndex];
-                    if tempMove.flags and AttackMove = ord (attackMoves) then
-                        begin
-                            workBoard := board;
-                            enterMove (turn, ord (AttackMoves), capId, workBoard, tempMove);
-                            
-                            {check if own king in check after current move}
-                            if not isKingChecked (turn, workBoard) then 
-                                begin
-                                    evalMove := evaluateMove (turn, board, attackMoves, tempMove, capId);
-                                    if turn = 0 then
-                                        moveScore := aggMoveScores + evalMove
-                                    else
-                                        moveScore := aggMoveScores - evalMove;
-                                        
-                                    inc (validMoveCount);
-                                    if not attackMoves and (ply <= 1) or (ply = plyQS) then
-                                        {terminal node check}
-                                        begin
-                                            {update number of positions evaluated}
-                                            inc (moveNumLo);
-                                            if (moveNumLo = 1000) then
-                                                begin
-                                                    moveNumLo := 0;
-                                                    inc (moveNumHi)
-                                                end;
-                                            evalScore := EvaluatePosition (turn, workBoard) + moveScore;
-                                            if doLogging then begin   
-                                                indent (ply - 1); 
-                                                printMove (logFile, tempMove); 
-                                                writeln (logFile, ': ', evalScore: 6)
-                                            end
-                                        end
-                                    else
-                                        begin
-                                            MoveGen (workBoard, tempMove, resultMove, evalScore, moveScore, alpha, beta, pred (ply), 1 - turn);
-                                        end;
-
-                                    {alpha/beta selection}
-                                    if turn = 0 then
-                                        begin
-                                            if evalScore >= bestScore then
-                                                begin
-                                                    bestScore := evalScore;
-                                                    bestMove := tempMove
-                                                end;
-                                            if not disableAlphaBetaPruning and (bestScore > beta) then
-                                                begin
-                                                    {save killer move}
-                                                    if not attackMoves and (ply >= MinPly) and (compareByte (tempMove, killerMoves [ply, 0], sizeof (TMoveRecord)) <> 0) then
-                                                        begin
-//                                                            write ('ply: ', ply, ' '); printMove (output, tempMove); writeln;
-                                                            killerMoves [ply, 1] := killerMoves [ply, 0];
-                                                            killerMoves [ply, 0] := tempMove;
-                                                        end;
-                                                    exit
-                                                end
-                                            else
-                                                if bestScore > alpha then
-                                                    alpha := bestScore;
-                                        end
-                                    else
-                                        begin
-                                            if evalScore <= bestScore then
-                                                begin
-                                                    bestScore := evalScore;
-                                                    bestMove := tempMove
-                                                end;
-                                            if not disableAlphaBetaPruning and (bestScore < alpha) then
-                                                begin
-                                                    {save killer move}
-                                                    if not attackMoves and (ply >= MinPly) and (compareByte (tempMove, killerMoves [ply, 0], sizeof (TMoveRecord)) <> 0) then
-                                                        begin
-//                                                            write ('ply: ', ply, ' '); printMove (output, tempMove); writeln;
-                                                            killerMoves [ply, 1] := killerMoves [ply, 0];
-                                                            killerMoves [ply, 0] := tempMove;
-                                                        end;
-                                                    exit
-                                                end
-                                            else
-                                                if bestScore < beta then
-                                                    beta := bestScore;
-                                        end
+        for currentMoveIndex := startIndex to endIndex do
+            begin
+                tempMove := moveStack [currentMoveIndex];
+                attackMoves := boolean (tempMove.flags and AttackMove);
+                workBoard := board;
+                workMoveScore := moveScore;
+                enterMove (turn, ord (AttackMoves), capId, workBoard, tempMove);
+                
+                {check if own king in check after current move}
+                if not isKingChecked (turn, workBoard) then 
+                    begin
+                        evaluateMove (turn, board, attackMoves, tempMove, capId, workMoveScore);
+                        inc (validMoveCount);
+                        if not attackMoves and (ply <= 1) or (ply = plyQS) then
+                            {terminal node check}
+                            begin
+                                {update number of positions evaluated}
+                                inc (moveNumLo);
+                                if (moveNumLo = 1000) then
+                                    begin
+                                        moveNumLo := 0;
+                                        inc (moveNumHi)
+                                    end;
+                                evalScore := EvaluatePosition (turn, workBoard, workMoveScore);
+                                if doLogging then begin   
+                                    indent (pred (ply)); 
+                                    printMove (logFile, tempMove); 
+                                    writeln (logFile, ': ', evalScore: 6)
                                 end
-                        end
-                end;
+                            end
+                        else
+                            begin
+                                if doLogging then
+                                    begin
+                                        indent (pred (ply));
+                                        printMove (logFile, tempmove); 
+                                        writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
+                                    end;
+                                MoveGen (workBoard, resultMove, evalScore, workMoveScore, alpha, beta, pred (ply), 1 - turn);
+                            end;
+
+                        {alpha/beta selection}
+                        if turn = 0 then
+                            begin
+                                if evalScore >= bestScore then
+                                    begin
+                                        bestScore := evalScore;
+                                        bestMove := tempMove
+                                    end;
+                                if not disableAlphaBetaPruning and (bestScore > beta) then
+                                    begin
+                                        {save killer move}
+                                        if not attackMoves and (ply >= MinPly) and (compareByte (tempMove, killerMoves [ply, 0], sizeof (TMoveRecord)) <> 0) then
+                                            begin
+                                                killerMoves [ply, 1] := killerMoves [ply, 0];
+                                                killerMoves [ply, 0] := tempMove;
+                                            end;
+                                        exit
+                                    end
+                                else
+                                    if bestScore > alpha then
+                                        alpha := bestScore;
+                            end
+                        else
+                            begin
+                                if evalScore <= bestScore then
+                                    begin
+                                        bestScore := evalScore;
+                                        bestMove := tempMove
+                                    end;
+                                if not disableAlphaBetaPruning and (bestScore < alpha) then
+                                    begin
+                                        {save killer move}
+                                        if not attackMoves and (ply >= MinPly) and (compareByte (tempMove, killerMoves [ply, 0], sizeof (TMoveRecord)) <> 0) then
+                                            begin
+                                                killerMoves [ply, 1] := killerMoves [ply, 0];
+                                                killerMoves [ply, 0] := tempMove;
+                                            end;
+                                        exit
+                                    end
+                                else
+                                    if bestScore < beta then
+                                        beta := bestScore;
+                            end
+                    end
+            end;
         iterateMoveList := false
     end;
     
-procedure MoveGen (var board: TBoardRecord; lastMove: TMoveRecord; var finalMove: TMoveRecord;
-                   var score: integer; aggMoveScores, alpha, beta, ply, turn: integer);
+procedure MoveGen (var board: TBoardRecord; var finalMove: TMoveRecord;
+                   var score: integer; moveScore: TMoveScore; alpha, beta, ply, turn: integer);
     var 
         bestScore, validMoveCount: integer;
         switchFlag: integer;
@@ -282,18 +289,6 @@ procedure MoveGen (var board: TBoardRecord; lastMove: TMoveRecord; var finalMove
         pruned: boolean;
     begin
         savedMoveStackPointer := moveStackPointer;
-
-        if doLogging then begin
-            if ply = gamePly then
-                printBoard (logFile, board)
-            else
-                begin                    
-                    indent (ply); 
-                    printMove (logFile, lastmove); 
-                    writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
-                end
-        end;
-
         loopAllPieces (board, ply, turn, savedMoveStackPointer);
         bestMove.pieceType := InvalidPiece;
 
@@ -303,7 +298,7 @@ procedure MoveGen (var board: TBoardRecord; lastMove: TMoveRecord; var finalMove
             bestScore := 20000;
 
         validMoveCount := 0;
-        pruned := iterateMoveList (board, turn, ply, savedMoveStackPointer, pred (moveStackPointer), aggMoveScores, alpha, beta, validMoveCount,  bestScore, bestMove);
+        pruned := iterateMoveList (board, turn, ply, savedMoveStackPointer, pred (moveStackPointer), moveScore, alpha, beta, validMoveCount,  bestScore, bestMove);
 
         {stalemate condition}
         if (validMoveCount = 0) and not isKingChecked (turn, board) then
@@ -345,15 +340,24 @@ procedure generateMove (ply, turn: integer; var board: TBoardRecord; var move: T
     const
         alpha = -20000;
         beta = 20000;
+        pieceValue: array [Pawn..Queen] of integer = (PawnValue, RookValue, KnightValue, BishopValue, QueenValue);
     var
-        dummyMove: TMoveRecord;
-        i, j: integer;
+        moveScore: TMoveScore;
+        totalValue: integer;
+        side, piece: integer;
     begin
-        fillchar (dummyMove, sizeof (dummyMove), 0);
-        for i := 0 to ply do
-            for j := 0 to 1 do
-                killerMoves [i, j] := dummyMove;
-        MoveGen (board, dummyMove, move, score, 0, alpha, beta, ply, turn)
+        fillChar (killerMoves, sizeof (killerMoves), 0);
+        fillChar (moveScore, sizeof (moveScore), 0);
+        totalValue := 0;
+        for piece := Pawn to Queen do
+            for side := 0 to 1 do 
+                inc (totalValue, pieceValue [piece] * BitCount (board.sides [side].bitboards [piece]));
+        if totalValue <= EndGameReached then
+            moveScore.flags := MoveEndGame;
+        
+        if doLogging then
+            printBoard (logFile, board);
+        MoveGen (board, move, score, moveScore, alpha, beta, ply, turn)
     end;
 
 begin

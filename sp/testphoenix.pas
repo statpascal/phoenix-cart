@@ -86,7 +86,7 @@ procedure evalTests;
 
   
 begin
-//    BratkoKopecTest;
+    BratkoKopecTest;
 //    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
-    evalTests
+//    evalTests
 end.
