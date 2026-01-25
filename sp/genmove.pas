@@ -293,9 +293,9 @@ procedure MoveGen (var board: TBoardRecord; var finalMove: TMoveRecord;
         bestMove.pieceType := InvalidPiece;
 
         if turn = 0 then
-            bestScore := -20000
+            bestScore := -19970 - ply
         else
-            bestScore := 20000;
+            bestScore := 19970 + ply;
 
         validMoveCount := 0;
         pruned := iterateMoveList (board, turn, ply, savedMoveStackPointer, pred (moveStackPointer), moveScore, alpha, beta, validMoveCount,  bestScore, bestMove);
@@ -357,7 +357,6 @@ procedure generateMove (ply, turn: integer; var board: TBoardRecord; var move: T
 {$ifdef fpc}
             compressedBoard.flags := compressedBoard.flags or swapEndian (uint16 (moveBlackFlag));
 {$endif}            
-        writeln ('TURN: ', turn);
         moves := searchMove (compressedBoard);
         if moves [0] <> 0 then
             begin

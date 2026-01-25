@@ -79,3 +79,8 @@
 
 - UCI: Windows version
 - UCI: parameters for ply, qs, opening book added
+
+2026-01-25-20-00
+
+- Updated mate scoring
+

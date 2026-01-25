@@ -198,12 +198,16 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             locArray: bitarray;
             ownPos: integer;
         begin
-            {own king immediate check penalty}
+(*        
+
+should not happen
+
             if isClear (ownKing) then
                 begin
                     evalScore := -20000;
                     exit
                 end;
+*)                
                 
             BitPos (ownKing, locArray);
             ownPos := locArray [1];
