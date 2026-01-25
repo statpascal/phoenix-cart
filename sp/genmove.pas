@@ -16,7 +16,7 @@ uses scorepos, trimprocs,
 {$ifdef ti99}
 utility, 
 {$endif}
-resources, logger, bitops;
+resources, logger, bitops, openbook;
 
 const
     MoveStackSize = 2047;
@@ -343,21 +343,47 @@ procedure generateMove (ply, turn: integer; var board: TBoardRecord; var move: T
         pieceValue: array [Pawn..Queen] of integer = (PawnValue, RookValue, KnightValue, BishopValue, QueenValue);
     var
         moveScore: TMoveScore;
-        totalValue: integer;
+        i, totalValue: integer;
         side, piece: integer;
-    begin
-        fillChar (killerMoves, sizeof (killerMoves), 0);
-        fillChar (moveScore, sizeof (moveScore), 0);
-        totalValue := 0;
-        for piece := Pawn to Queen do
-            for side := 0 to 1 do 
-                inc (totalValue, pieceValue [piece] * BitCount (board.sides [side].bitboards [piece]));
-        if totalValue <= EndGameReached then
-            moveScore.flags := MoveEndGame;
+        moves: TBookMoves;
+        compressedBoard: TCompressedBoard;
         
-        if doLogging then
-            printBoard (logFile, board);
-        MoveGen (board, move, score, moveScore, alpha, beta, ply, turn)
+    begin
+        compressBoard (board, compressedBoard);
+        if turn = 1 then
+{$ifdef ti99}
+            compressedBoard.flags := compressedBoard.flags or moveBlackFlag;
+{$endif}            
+{$ifdef fpc}
+            compressedBoard.flags := compressedBoard.flags or swapEndian (uint16 (moveBlackFlag));
+{$endif}            
+        writeln ('TURN: ', turn);
+        moves := searchMove (compressedBoard);
+        if moves [0] <> 0 then
+            begin
+                i := 1;
+                while (i < MaxMoves) and (moves [i] <> 0) do
+                    inc (i);
+                i := Random (i);
+                move.startSq := moves [i] shr 6;
+                move.endSq := moves [i] and $3f;
+                move.pieceType := findPieceType (board, gameSide, move.startSq)
+            end
+        else
+            begin
+                fillChar (killerMoves, sizeof (killerMoves), 0);
+                fillChar (moveScore, sizeof (moveScore), 0);
+                totalValue := 0;
+                for piece := Pawn to Queen do
+                    for side := 0 to 1 do 
+                        inc (totalValue, pieceValue [piece] * BitCount (board.sides [side].bitboards [piece]));
+                if totalValue <= EndGameReached then
+                    moveScore.flags := MoveEndGame;
+        
+                if doLogging then
+                    printBoard (logFile, board);
+                MoveGen (board, move, score, moveScore, alpha, beta, ply, turn)
+            end
     end;
 
 begin

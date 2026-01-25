@@ -8,7 +8,7 @@ implementation
 // uses random,
 
 uses 
-    globals, genmove, trimprocs, ui, pmove, utility, resources, logger, openbook;
+    globals, genmove, trimprocs, ui, pmove, utility, resources, logger;
 
 var 
     i, j, moveScore, aVal, bVal: integer;
@@ -230,10 +230,8 @@ procedure chainMain;
 
     var mainBoard: TBoardRecord;
         compressedBoard: TCompressedBoard;
-        moves: TBookMoves;
         checkFlag: boolean;
 
-i: integer;
     begin
 //        mainBoard := getInitPosition;
         setInitPosition (mainboard, gameSide, gameMove);
@@ -283,32 +281,9 @@ i: integer;
                 end
             else
                 begin
-                    compressBoard (mainBoard, compressedBoard);
-                    if gameSide = 1 then
-                        compressedBoard.flags := compressedBoard.flags or moveBlackFlag;
-                    moves := searchMove (compressedBoard);
-(*                    
-                    write (logfile, 'book: ');
-                    for i := 0 to pred (MaxMoves) do
-                        write (logfile, moves [i]:5) ;
-                    writeln (logfile);
-*)                    
-                    if moves [0] <> 0 then
-                        begin
-                            i := 1;
-                            while (i < MaxMoves) and (moves [i] <> 0) do
-                                inc (i);
-                            i := Random (i);
-                            playMove.startSq := moves [i] shr 6;
-                            playMove.endSq := moves [i] and $3f;
-                            playMove.pieceType := findPieceType (mainBoard, gameSide, playMove.startSq)
-                        end
-                    else
-                        begin
-                            gotoxy(20, 7);
-                            write('thinking...');
-                            generateMove (gamePly, gameSide, mainBoard, playMove, moveScore);
-                        end;
+                    gotoxy(20, 7);
+                    write('thinking...');
+                    generateMove (gamePly, gameSide, mainBoard, playMove, moveScore)
                 end;
 
             {update move list}

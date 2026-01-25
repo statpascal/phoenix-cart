@@ -12,7 +12,7 @@ int main (int argc, char **argv) {
 
     while (!feof (f)) {
         fread (&val, 2, 1, f);
-        printf ("%4d", static_cast<std::int16_t> (ntohs (val)));
+        printf ("%5d,", static_cast<std::int16_t> (ntohs (val)));
         if (++count1 == 8) {
             count1 = 0;
             putchar ('\n');

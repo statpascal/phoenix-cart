@@ -1,14 +1,11 @@
 program uci;
 
 uses
-    globals, board, genmove, logger;
+    globals, board, genmove, logger, readbook;
 
 var
     board: TBoardRecord;
     side, movenr: integer;
-    
-const
-    ply = 6;
     
 procedure answerUciInit;
     begin
@@ -29,7 +26,7 @@ procedure calcMove (side: integer);
         end;
         
     begin
-        generateMove (ply, side, board, move, score);
+        generateMove (gamePly, side, board, move, score);
         write ('bestmove ');
         writeCoord (move.startSq);
         writeCoord (move.endSq);
@@ -104,12 +101,12 @@ procedure commandLoop;
         f: text;
     begin
         writeln ('PHOENIX Chess');
-        assign (f, '/tmp/uci.log');
-        rewrite (f);
+//        assign (f, '/tmp/uci.log');
+//        rewrite (f);
         repeat
             readln (s);
-            writeln (f, s);
-            flush (f);
+//            writeln (f, s);
+//            flush (f);
             if s = 'uci' then
                 answerUciInit;
             if s = 'isready' then
@@ -122,9 +119,29 @@ procedure commandLoop;
 //            if s = 
         until s = 'quit'
     end;
+    
+var
+    i, h: integer;
+    cmd, v: string;
 
 begin
     plyQs := -3;
-    gamePly := ply;
+    gamePly := 6;
+    
+    for i := 0 to pred (ParamCount div 2) do
+        begin
+            cmd := ParamStr (2 * i + 1);
+            v := ParamStr (2 * i + 2);
+            if cmd = '-ply' then
+                val (v, gamePly);
+            if cmd = '-qs' then
+                begin
+                    val (v, h);
+                    plyQs := 1 - h
+                end;
+            if cmd = '-opening' then
+                loadOpeningBook (v)
+        end;
+        
     commandLoop
 end.

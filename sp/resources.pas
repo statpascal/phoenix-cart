@@ -19,11 +19,11 @@ function getPieceScoreValue (pieceScoreType: TPieceScoreType; loc: integer): int
 
 implementation
 
+{$ifdef ti99}
+    
 type
     TPieceMovementBitboard = array [0..63] of bitboard;
 
-{$ifdef ti99}
-    
 function getPawnMovementBitboard (side: integer; loc: integer): bitboard;
     procedure whitePawnMove; external '../resources/whitepawnmove.dat';
     procedure blackPawnMove; external '../resources/blackpawnmove.dat';
@@ -71,81 +71,47 @@ function getPieceScoreValue (pieceScoreType: TPieceScoreType; loc: integer): int
     begin
         result := TPieceScoreData (addr (data_score)) [pieceScoreType, loc]
     end;
-    
-end.
-    
 {$endif}
 
 {$ifdef fpc}
 
-type
-    TBitboardData = array [boolean, 0..7] of bitboard;
-    TPieceScoreData = array [TPieceScoreType, 0..63] of int16;
-    
-var
-    whitePawnMove, blackPawnMove, whitePawnCapture, blackPawnCapture, 
-    knightMove, kingMove: TPieceMovementBitboard;
-    data_ep: TBitboardData;
-    data_score: TPieceScoreData;
+uses resvals;
 
 function getPawnMovementBitboard (side: integer; loc: integer): bitboard;
     begin
         if side = 0 then
-            result := whitePawnMove [loc]
+            result := bitboard (whitePawnMove [loc])
         else
-            result := blackPawnMove [loc]
+            result := bitboard (blackPawnMove [loc])
     end;
 
 function getPawnCaptureBitboard (side: integer; loc: integer): bitboard;
     begin
         if side = 0 then
-            result := whitePawnCapture [loc]
+            result := bitboard (whitePawnCapture [loc])
         else
-            result := blackPawnCapture [loc]
+            result := bitboard (blackPawnCapture [loc])
     end;
 
 function getKnightMovementBitboard (loc: integer): bitboard;
     begin
-        result := knightMove [loc]
+        result := bitboard (knightMove [loc])
     end;
 
 function getKingMovementBitboard (loc: integer): bitboard;
     begin
-        result := kingMove [loc]
+        result := bitboard (kingMove [loc])
     end;
     
 function getEnPassantBitboard (isBlack: boolean; col: integer): bitboard;
     begin
-        result := data_ep [isBlack, col]
+        result := bitboard (data_ep [isBlack, col])
     end;
     
 function getPieceScoreValue (pieceScoreType: TPieceScoreType; loc: integer): integer;
     begin
-        result := swapEndian (data_score [pieceScoreType, loc])
+        result := data_score [ord (pieceScoreType), loc]
     end;
-    
-procedure readRes (var buf; size: integer; fn: string);
-    var
-        f: file;
-    begin
-        assign (f, fn);
-        reset (f, 1);
-        blockread (f, buf, size);
-        close (f)
-    end;    
-    
-begin
-    readRes (whitePawnMove, sizeof (whitePawnMove), 'resources/whitepawnmove.dat');
-    readRes (blackPawnMove, sizeof (whitePawnMove), 'resources/blackpawnmove.dat');
-    readRes (whitePawnCapture, sizeof (whitePawnCapture), 'resources/whitepawncapture.dat');
-    readRes (blackPawnCapture, sizeof (blackPawnCapture), 'resources/blackpawncapture.dat');
-    readRes (knightMove, sizeof (knightMove), 'resources/knightmove.dat');
-    readRes (kingMove, sizeof (kingMove), 'resources/kingmove.dat');
-    readRes (data_ep, sizeof (data_ep), 'resources/enpassant.dat');
-    readRes (data_score, sizeof (data_score), 'resources/piecescore.dat');
-end.
-    
-
-
 {$endif}
-    
+
+end.

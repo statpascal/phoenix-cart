@@ -2,26 +2,30 @@ unit openbook;
 
 interface
 
-uses board, logger;
+uses board;
 
 const
     MaxMoves = 20;
-    BookSize = 100;
-    OpeningPositions = 2855;
-
+    
 type
     TBookMoves = array [0..MaxMoves - 1] of integer;
-    TBookEntry = record
-        compressedBoard: TCompressedBoard;
-        bookMoves: TBookMoves
-    end;
     
 function searchMove (var compressed: TCompressedBoard): TBookMoves;
     
     
 implementation
 
+{$ifdef ti99}
+
+const    
+    BookSize = 100;
+    OpeningPositions = 2855;
+
 type 
+    TBookEntry = record
+        compressedBoard: TCompressedBoard;
+        bookMoves: TBookMoves
+    end;
     TOpeningBook = array [0..BookSize] of TBookEntry;
     
 function getMove0 (n: integer): TBookEntry;
@@ -247,15 +251,6 @@ function searchMove (var compressed: TCompressedBoard): TBookMoves;
         repeat
             mid := (hi + lo) shr 1;
             bookEntry := getMove (mid);
-(*            
-            writeln (logfile, lo:5, mid:5, hi:5);
-            for i := 0 to 25 do
-                write (logfile, hexstr2 (bytearray (bookEntry.compressedBoard) [i]));
-            writeln (logfile);
-            for i := 0 to 25 do
-                write (logfile, hexstr2 (bytearray (compressed) [i]));
-            writeln (logfile);
-*)            
             case compareWord (compressed, bookEntry.compressedBoard, sizeof (TCompressedBoard) div 2) of
                 1:
                     lo := mid + 1;
@@ -269,6 +264,42 @@ function searchMove (var compressed: TCompressedBoard): TBookMoves;
             end
         until lo > hi
     end;
+{$endif}
+
+{$ifdef fpc}
+uses readbook;
+
+function searchMove (var compressed: TCompressedBoard): TBookMoves;
+    var
+        i, diff, hi, lo, mid: integer;
+        move: TMoveRecord;
+    begin
+        fillChar (result, sizeof (TBookMoves), 0);
+        if posCount > 0 then 
+            begin
+                lo := 1;
+                hi := posCount;
+                repeat
+                    mid := (hi + lo) shr 1;
+                    diff := compareByte (compressed, openings [mid].compressed, sizeof (TCompressedBoard));
+                    if diff > 0 then
+                        lo := mid + 1
+                    else if diff < 0 then
+                        hi := mid - 1
+                    else                            
+                        begin
+                            writeln ('FOUND: ', openings [mid].count, ' moves');
+                            for i := 0 to pred (openings [mid].count) do
+                                begin
+                                    move := openings [mid].nextMoves [succ (i)];
+                                    result [i] := move.startSq shl 6 or move.endSq
+                                end;
+                            exit
+                        end
+                until lo > hi
+            end
+    end;
+{$endif}
     
 end.
     
