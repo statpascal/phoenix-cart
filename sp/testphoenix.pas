@@ -3,7 +3,7 @@ program testphoenix;
 uses
     globals, board, genmove, logger;
 
-procedure testPosition (fenStr, move, log: string; ply, qsdeepening: integer);
+function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): boolean;
     const
         alpha = -20000;
         beta = 20000;
@@ -12,37 +12,53 @@ procedure testPosition (fenStr, move, log: string; ply, qsdeepening: integer);
         mainBoard: TBoardRecord;
         lastMove, playMove: TMoveRecord;
         moveScore: integer;
-
+        calcMove: string;
+        
+    function makeCoord (sq: integer): string;
+        begin
+            makeCoord := chr (97 + sq mod 8) + chr (49 + sq div 8)
+        end;
+    
     begin
         setFENPosition (mainBoard, gameSide, gameMove, fenStr);
         gamePly := ply;
         plyQS := 1 - qsdeepening;
         fillChar (lastMove, sizeof (lastMove), 0);
 
-        writeln ('Analyzing: ', fenStr);
+        write (fenStr);
         if log <> '' then
             startLogging (log);
         generateMove (ply, gameSide, mainBoard, playMove, moveScore);
-        printMove (output, playMove);
-        if move <> '' then
-            write (', should be: ', move);
+        calcMove := makeCoord (playMove.startSq) + makeCoord (playMove.endSq);
+        
+        write (' ': 90 - length (fenStr));
+        write (move, ' ', calcMove, ' ');
+
+        result := move = calcMove;        
+        if result then 
+            write ('pass')
+        else
+            write ('fail');
         writeln;
         if log <> '' then
             stopLogging;
     end;
 
-procedure BratkoKopecTest;
+procedure readTestPositions (fn: string);
     const
-        ply = 6;
+        ply = 4;
         qs = 3;
     var
         f: text;
         logFn, fenstr, s, move: string;
-        n, count: integer;
+        n, count, success: integer;
     begin
-        assign (f, '/home/goose/Downloads/BK.pos');
+        assign (f, fn);
         reset (f);
-        count := 1;
+        readln (f, s);
+        writeln (s);
+        count := 0;
+        success := 0;
         while not eof (f) do
             begin
                 readln (f, s);
@@ -55,10 +71,11 @@ procedure BratkoKopecTest;
                 inc (count);
 //                logFn := 'DSK0.KP-' + logFn + '.log';
                 logFn := '';
-                testPosition (fenstr, move, logFn, ply, qs);
-                writeln
+                if testPosition (fenstr, move, logFn, ply, qs) then
+                    inc (success);
             end;
-        close (f)
+        close (f);
+        writeln ('Passed ', success, ' of ', count)
     end;
 
 
@@ -87,7 +104,7 @@ procedure evalTests;
 
   
 begin
-    BratkoKopecTest;
+    readTestPositions (ParamStr (1));
 //    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
 //    evalTests
 end.
