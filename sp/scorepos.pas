@@ -145,7 +145,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                             {doubled pawns penalty}
                             if (row > 0) and (getBit (sideBoards.pawnBitboard, pLoc - 8) <> 0) then
                                 dec (evalScore, 25);
-                            inc (evalScore, getPieceScoreValue (BlackPawnScore, pLoc))
+                            inc (evalScore, getPieceScoreValue (WhitePawnScore, (7 - row) shl 3 + col))
                         end
                 end
         end;
@@ -170,14 +170,18 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                 end
         end;
         
-    procedure evaluateKnightsBishops (var bits: bitboard; scoreType: TPieceScoreType);
+    procedure evaluateKnightsBishops (var bits: bitboard; scoreType: TPieceScoreType; pieceValue: integer);
         var
             locArray: bitarray;
             i: integer;
         begin
             BitPos (bits, locArray);
-            for i := 1 to locArray [0] do
-                inc (evalScore, KnightValue + getPieceScoreValue (scoreType, locArray [i]))
+            if side = 0 then
+                for i := 1 to locArray [0] do
+                    inc (evalScore, pieceValue + getPieceScoreValue (scoreType, locArray [i]))
+            else
+                for i := 1 to locArray [0] do
+                    inc (evalScore, pieceValue + getPieceScoreValue (scoreType, (7 - locArray [i] shr 3) shl 3 + locArray [i] and 7))
         end;
         
     procedure evaluateQueen;
@@ -196,11 +200,11 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
         var
             bits: bitboard;
             locArray: bitarray;
-            ownPos: integer;
+            ownPos, evalPos: integer;
         begin
 (*        
 
-should not happen
+            should not happen
 
             if isClear (ownKing) then
                 begin
@@ -212,15 +216,16 @@ should not happen
             BitPos (ownKing, locArray);
             ownPos := locArray [1];
             
-            if endGame > 0 then
-                inc (evalScore, getPieceScoreValue (KingEndScore, ownPos))
+            if side = 0 then
+                evalPos := ownPos
             else
-                inc (evalScore, getPieceScoreValue (KingMidScore, ownPos));
+                evalPos := (7 - ownPos shr 3) shl 3 + ownPos and 7;
+            
+            if endGame > 0 then
+                inc (evalScore, getPieceScoreValue (KingEndScore, evalPos))
+            else
+                inc (evalScore, getPieceScoreValue (KingMidScore, evalPos));
                 
-            {bonus for checking opposite king}
-//            if isClear (opponentKing) then
-//                inc (evalScore, 50)
-//            else if side = gameSide then
             if (side = gameSide) and (endGame > 0) then
                 begin
                     {encourage moving opposite king to board edge}
@@ -238,8 +243,8 @@ should not happen
         
         evaluatePawns;
         evaluateRooks;
-        evaluateKnightsBishops (sideBoards.knightBitboard, KnightScore);
-        evaluateKnightsBishops (sideBoards.bishopBitboard, BishopScore);
+        evaluateKnightsBishops (sideBoards.knightBitboard, KnightScore, KnightValue);
+        evaluateKnightsBishops (sideBoards.bishopBitboard, BishopScore, BishopValue);
         evaluateQueen;
         evaluateKing (board.sides [side].kingBitboard, board.sides [1 - side].kingBitBoard);
             

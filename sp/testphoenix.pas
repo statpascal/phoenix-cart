@@ -46,8 +46,8 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
 
 procedure readTestPositions (fn: string);
     const
-        ply = 4;
-        qs = 3;
+        ply = 6;
+        qs = 5;
     var
         f: text;
         logFn, fenstr, s, move: string;
@@ -95,6 +95,8 @@ procedure evalTests;
     disableAlphaBetaPruning := false;
 
     testPosition ('7R/1q3p1k/7p/8/P1b5/K1P5/5P1P/8 b - - 0 140', 'KH7-H8', 'DSK0.king-capture.log', 6, 4);    
+    // TODO: why don't we save knight?
+    testPosition ('8/4R2p/6kP/3p4/1p6/1P1n4/8/4nK2 b - - 0 48', '', 'DSKO.two-knights.log', 6, 4);
 
 //    testPosition ('r3k2r/1pp2ppp/p2bbn2/4N3/4P3/2N1B3/PPP1B1PP/R1K4R b kq - 0 12', 'BD6-E5', 'DSK0.ticket1.log', 4, 7);
 //    testPosition ('rn1qkb1r/ppp1pppp/4b3/4P3/2pP2n1/N4N2/PP3PPP/R1BQKB1R b KQkq - 2 6', 'PC7-C5', 'DSK0.ticket2.log', 4, 7);
