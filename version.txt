@@ -84,3 +84,6 @@
 
 - Updated mate scoring
 
+2026-01-28-19-00
+
+- corrected black queen side castling

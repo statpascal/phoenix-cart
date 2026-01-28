@@ -296,7 +296,7 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
             end
         else
             begin
-                if bytearray (board.allPieces) [7] and $07 <> 0 then
+                if bytearray (board.allPieces) [7] and $70 <> 0 then
                     result := result and not blackLeftCastle;
                 if bytearray (board.allPieces) [7] and $06 <> 0 then
                     result := result and not blackRightCastle;
