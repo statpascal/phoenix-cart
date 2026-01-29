@@ -71,8 +71,8 @@ type
         flags: int16;			 // EP/castling flag
     end;
 
-procedure setInitPosition (var board: TBoardRecord; var gameSide, gameMove: integer);
-procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integer; s: string);
+procedure setInitPosition (var board: TBoardRecord; var side, moveNr: integer);
+procedure setFENPosition (var board: TBoardRecord; var side, moveNr: integer; s: string);
 
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
@@ -332,7 +332,7 @@ procedure placePiece (var board: TBoardRecord; row, col: integer; piece: char);
                     setBit (board.sides [s].bitboards [pieceType], row * 8 + col)
    end;
 
-procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integer; s: string);
+procedure setFENPosition (var board: TBoardRecord; var side, moveNr: integer; s: string);
     var
         index, row, col, factor: integer;
         ch: char;
@@ -375,7 +375,7 @@ procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integ
 *)        
         
         skipBlank;
-        gameSide := ord (s [index] = 'b');
+        side := ord (s [index] = 'b');
         inc (index);
         
         skipBlank;
@@ -413,20 +413,20 @@ procedure setFENPosition (var board: TBoardRecord; var gameSide, gameMove: integ
             
         // TODO: half move count
         index := length (s);
-        gameMove := 0;
+        moveNr := 0;
         factor := 1;
         while s [index] in ['0'..'9'] do
             begin
-                inc (gameMove, factor * (ord (s [index]) - ord ('0')));
+                inc (moveNr, factor * (ord (s [index]) - ord ('0')));
                 factor := factor * 10;
                 dec (index)
             end;
             
     end;
 
-procedure setInitPosition (var board: TBoardRecord; var gameSide, gameMove: integer);
+procedure setInitPosition (var board: TBoardRecord; var side, moveNr: integer);
     begin    
-        setFENPosition (board, gameSide, gameMove, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+        setFENPosition (board, side, moveNr, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
     end;
            
 end.

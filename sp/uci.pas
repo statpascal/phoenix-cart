@@ -30,6 +30,8 @@ procedure calcMove (side: integer);
         write ('bestmove ');
         writeCoord (move.startSq);
         writeCoord (move.endSq);
+        if move.flags and $f0 <> 0 then
+            write (figure [1, move.flags shr 4]);
         writeln
     end;
 

@@ -3,7 +3,7 @@ unit utility;
 interface
 
 procedure saveGame (gname: string; showMsg: boolean);
-procedure Utility(var switch: integer);
+procedure Utility (var humanSide: integer);
 
 
 implementation
@@ -144,7 +144,7 @@ procedure saveGame (gname: string; showMsg: boolean);
 *)        
     end;
 
-procedure Utility(var switch: integer);
+procedure Utility(var humanSide: integer);
     label 
         l_1, l_2;
     var 
@@ -160,7 +160,6 @@ procedure Utility(var switch: integer);
     begin
 //        tempGPointer := gamePointer;
         utilFlag := FALSE;
-        switch := 0;
 //        startPage := BASE2;
         offset := 4000;
 //        DataOps(2, startPage, dataSize, offset, storePtr);
@@ -389,11 +388,7 @@ procedure Utility(var switch: integer);
                 end;
                 55: 
                 begin {switch sides}
-                    if humanSide = 0 then
-                        humanSide := 1
-                    else
-                        humanSide := 0;
-                    switch := 1;
+                    humanSide := 1 - humanSide;
                     goto l_1;
                 end;
                 56: 
@@ -444,10 +439,7 @@ procedure Utility(var switch: integer);
                         ans := getKeyInt;
                     until ans in[89, 78];
                     if ans = 89 then
-                        begin
-                            pieceCount := -1;
-                            utilFlag := TRUE;
-                        end;
+                        halt;
                     ClearFields;
                 end;
             end;

@@ -4,7 +4,7 @@ interface
 
 uses globals, board;
 
-procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer; var humanSide: integer);
 
 implementation
 
@@ -18,11 +18,11 @@ procedure clearEntryField;
         gotoxy (whereX - 2, whereY)
     end;
             
-procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer; var humanSide: integer);
     label 
         l_1, l_2;
     var 
-        i, j, k, iLoc, eLoc, switchState, ans: integer;
+        i, j, k, iLoc, eLoc, ans: integer;
         validSq, foundFlag: boolean;
         fn: string [20];
         castleRights, epCapDummy: integer;
@@ -48,11 +48,8 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
       {utility menu}
             if ans = 85 then
                 begin
-                    Utility(switchState);
-                    if switchState = 1 then
-                        if humanSide <> gameSide then
-                            exit;
-                    if pieceCount = -1 then
+                    Utility(humanSide);
+                    if humanSide <> turn then
                         exit;
                     goto l_1;
                 end;

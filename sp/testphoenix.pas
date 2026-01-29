@@ -11,7 +11,7 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
     var 
         mainBoard: TBoardRecord;
         lastMove, playMove: TMoveRecord;
-        moveScore: integer;
+        side, moveScore: integer;
         calcMove: string;
         
     function makeCoord (sq: integer): string;
@@ -20,7 +20,7 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
         end;
     
     begin
-        setFENPosition (mainBoard, gameSide, gameMove, fenStr);
+        setFENPosition (mainBoard, side, gameMove, fenStr);
         gamePly := ply;
         plyQS := 1 - qsdeepening;
         fillChar (lastMove, sizeof (lastMove), 0);
@@ -28,8 +28,10 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
         write (fenStr);
         if log <> '' then
             startLogging (log);
-        generateMove (ply, gameSide, mainBoard, playMove, moveScore);
+        generateMove (ply, side, mainBoard, playMove, moveScore);
         calcMove := makeCoord (playMove.startSq) + makeCoord (playMove.endSq);
+        if playMove.flags and $f0 <> 0 then
+            calcMove := calcMove + figure [1, playMove.flags shr 4];
         
         write (' ': 90 - length (fenStr));
         write (move, ' ', calcMove, ' ');
@@ -83,18 +85,18 @@ procedure evalTests;
     begin
     writeln ('Starting tests');
     
-    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', 'PD5-E4', 'DSK0.opening-ply3.log', 3, 2);    
-    testPosition ('r1b4r/pp1p2pp/7k/5Q2/8/2PB4/P4PPP/2K1R2R w - - 0 40', 'QF5-H3', 'DSK0.queen-h5-ply4.log', 3, 2);
-    testPosition ('4k3/8/8/8/8/8/1B2P3/R3K3 b Q - 0 40', '', 'DSK0.castle-ply3.log', 3, 2);
-    testPosition ('rnb1kb1r/ppp1pppp/4qn2/8/3P4/2N5/PPP1BPPP/R1BQK1NR w KQkq - 0 40', '', 'DSK0.knight-lost-ply4.log', 3, 2);
-    testPosition ('8/P7/8/8/8/4k3/8/4K3 w - - 0 40', 'PA/-A8Q', 'DSK0.promotion-1.log', 2, 0);
-    testPosition ('b7/k1P5/p7/8/8/8/3K4/1R6 w - - 0 40', '', 'DSK0.promotion-knight.log', 4, 0);
-    testPosition ('8/4k3/8/8/8/8/p6K/8 w - - 0 40', '', 'DSK0.promotion-2.log', 4, 0);
+    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', 'd5e4', 'DSK0.opening-ply3.log', 3, 2);    
+    testPosition ('r1b4r/pp1p2pp/7k/5Q2/8/2PB4/P4PPP/2K1R2R w - - 0 40', 'f5h3', 'DSK0.queen-h5-ply4.log', 3, 2);
+    testPosition ('4k3/8/8/8/8/8/1B2P3/R3K3 b Q - 0 40', 'e8f7', 'DSK0.castle-ply3.log', 3, 2);
+    testPosition ('rnb1kb1r/ppp1pppp/4qn2/8/3P4/2N5/PPP1BPPP/R1BQK1NR w KQkq - 0 40', 'c1f4', 'DSK0.knight-lost-ply4.log', 3, 2);
+    testPosition ('8/P7/8/8/8/4k3/8/4K3 w - - 0 40', 'a7a8q', 'DSK0.promotion-1.log', 2, 0);
+    testPosition ('b7/k1P5/p7/8/8/8/3K4/1R6 w - - 0 40', 'c7c8n', 'DSK0.promotion-knight.log', 4, 0);
+    testPosition ('8/4k3/8/8/8/8/p6K/8 w - - 0 40', 'h2g3', 'DSK0.promotion-2.log', 4, 0);
     disableAlphaBetaPruning := true;
-    testPosition ('4k3/p1p3p1/8/1P5P/1p1p4/8/P1P1P3/4K3 w - - 0 10', '', 'DSK0.ep-test.log', 3, 0);
+    testPosition ('4k3/p1p3p1/8/1P5P/1p1p4/8/P1P1P3/4K3 w - - 0 10', 'e1d2', 'DSK0.ep-test.log', 3, 0);
     disableAlphaBetaPruning := false;
 
-    testPosition ('7R/1q3p1k/7p/8/P1b5/K1P5/5P1P/8 b - - 0 140', 'KH7-H8', 'DSK0.king-capture.log', 6, 4);    
+    testPosition ('7R/1q3p1k/7p/8/P1b5/K1P5/5P1P/8 b - - 0 140', 'h7h8', 'DSK0.king-capture.log', 6, 4);    
     // TODO: why don't we save knight?
     testPosition ('8/4R2p/6kP/3p4/1p6/1P1n4/8/4nK2 b - - 0 48', '', 'DSKO.two-knights.log', 6, 4);
 

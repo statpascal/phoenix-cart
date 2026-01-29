@@ -8,12 +8,19 @@ const
     MoveQueenExchangeWhite = 1;
     MoveQueenExchangeBlack = 2;
     MoveEndGame = 4;
-    
+  
+(*    
     PawnValue = 150;
     RookValue = 525;
     KnightValue = 400;
     BishopValue = 400;
     QueenValue = 973;
+*)    
+    PawnValue = 100;
+    RookValue = 505;
+    KnightValue = 300;
+    BishopValue = 300;
+    QueenValue = 900;
     
     EndGameReached = 3000;
 
@@ -34,10 +41,10 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
     const
         captureBonus: array [0..5, 0..5] of uint8 = (
         //     P    R    N    B    Q    K
-            ( 10, 100, 100, 100, 100, 100),         // pawn
-            (  0,  50,   0,   0,  50,   0),         // rook
-            (  0,  50,  25,  25,  50,   0),         // knight
-            (  0,  50,  25,  25,  50,   0),         // bishop
+            ( 10,  50,  50,  50,  50,  50),         // pawn
+            (  0,   0,   0,   0,  50,   0),         // rook
+            (  0,  25,   0,   0,  50,   0),         // knight
+            (  0,  25,   0,   0,  50,   0),         // bishop
             (  0,   0,   0,   0,   0,   0),         // queen
             (  0,   0,   0,   0,   0,   0));   	    // king
     var
@@ -195,24 +202,10 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
         end;
         
     procedure evaluateKing (var ownKing, opponentKing: bitboard);
-        const
-            KingEdge: array [0..7] of uint8 = ($ff, $81, $81, $81, $81, $81, $81, $ff);
         var
-            bits: bitboard;
             locArray: bitarray;
             ownPos, evalPos: integer;
         begin
-(*        
-
-            should not happen
-
-            if isClear (ownKing) then
-                begin
-                    evalScore := -20000;
-                    exit
-                end;
-*)                
-                
             BitPos (ownKing, locArray);
             ownPos := locArray [1];
             
@@ -222,20 +215,14 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                 evalPos := (7 - ownPos shr 3) shl 3 + ownPos and 7;
             
             if endGame > 0 then
-                inc (evalScore, getPieceScoreValue (KingEndScore, evalPos))
-            else
-                inc (evalScore, getPieceScoreValue (KingMidScore, evalPos));
-                
-            if (side = gameSide) and (endGame > 0) then
                 begin
-                    {encourage moving opposite king to board edge}
-                    bits := opponentKing and bitboard (KingEdge);
-                    if not isClear (bits) then
-                        inc (evalScore, 100);
+                    inc (evalScore, getPieceScoreValue (KingEndScore, evalPos));
                     {move own king toward opposite king}
                     BitPos (opponentKing, locArray);
-                    inc (evalScore, (15 - distance (ownPos, locArray [1])) * 15);
+                    inc (evalScore, (15 - distance (ownPos, locArray [1])) * 15)
                 end
+            else
+                inc (evalScore, getPieceScoreValue (KingMidScore, evalPos))
         end;    
 
     begin 

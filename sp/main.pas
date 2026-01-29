@@ -11,7 +11,7 @@ uses
     globals, genmove, trimprocs, ui, pmove, utility, resources, logger;
 
 var 
-    i, j, moveScore, aVal, bVal: integer;
+    i, j, moveScore, cWarning, gameSide, humanSide: integer;
     lastMove, playMove: TMoveRecord;
 
 
@@ -24,7 +24,6 @@ procedure initGame (var mainBoard: TBoardRecord);
         ans: integer;
     begin
         // Randomize;	// TODO
-        pieceCount := 0;
 //        gameSide := 0;
 //        gameMove := 1;
 
@@ -258,28 +257,13 @@ procedure chainMain;
             moveNumLo := 0;
             moveNumHi := 0;
 
-            aVal := -20000;
-            bVal := 20000;
             moveScore := 0;
 
 
             if humanSide = gameSide then
-                begin
-
-        {save current game state}
-// TODO: move to VDP                    SaveMove;
-
-                    playerMove (mainBoard, playMove, gameSide);
-//                    if humanSide <> gameSide then
-//				TODO: handle side change
-                    if pieceCount = -1 then
-                        begin
-                            writeln;
-                            writeln ('pieceCount = -11, exiting');
-                            exit
-                        end
-                end
-            else
+                {TODO: save current game state}
+                playerMove (mainBoard, playMove, gameSide, humanSide);	// may change game side
+            if humanSide <> gameSide then
                 begin
                     gotoxy(20, 7);
                     write('thinking...');
@@ -324,7 +308,7 @@ procedure chainMain;
                         Utility(i);
                         exit;
                     end
-                else if abs(moveScore) = 20000 then
+                else if abs(moveScore) > 19900 then
                     begin
                         gotoxy(20, 1);
                         write(chr(7), chr(7), 'resign!');

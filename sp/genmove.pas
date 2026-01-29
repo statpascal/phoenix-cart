@@ -366,7 +366,7 @@ procedure generateMove (ply, turn: integer; var board: TBoardRecord; var move: T
                 i := Random (i);
                 move.startSq := moves [i] shr 6;
                 move.endSq := moves [i] and $3f;
-                move.pieceType := findPieceType (board, gameSide, move.startSq)
+                move.pieceType := findPieceType (board, turn, move.startSq)
             end
         else
             begin

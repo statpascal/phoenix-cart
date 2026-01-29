@@ -9,14 +9,13 @@ uses bitops
 ;
 
 const    
-    versionString = '2026-01-28-19-00';
+    versionString = '2026-01-30-17-00';
     bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
     maxPly = 9;
     
 var
-    gameMove, gameSide: integer;
-    pieceCount, cWarning: integer;
-    gamePly, humanSide: integer;
+    gameMove: integer;
+    gamePly: integer;
     moveNumHi, moveNumLo: integer;
     plyQS: integer;
     disableAlphaBetaPruning: boolean;
