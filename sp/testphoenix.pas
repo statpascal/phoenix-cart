@@ -99,6 +99,9 @@ procedure evalTests;
     testPosition ('7R/1q3p1k/7p/8/P1b5/K1P5/5P1P/8 b - - 0 140', 'h7h8', 'DSK0.king-capture.log', 6, 4);    
     // TODO: why don't we save knight?
     testPosition ('8/4R2p/6kP/3p4/1p6/1P1n4/8/4nK2 b - - 0 48', '', 'DSKO.two-knights.log', 6, 4);
+    
+    // rook lost vs TSCP
+    testPosition ('4r3/5p2/1R3b2/3Pk2p/2pN2p1/p1P5/P5PP/3K4 b - - 0 35', '', 'DSK0.root-lost.log', 6, 5);
 
 //    testPosition ('r3k2r/1pp2ppp/p2bbn2/4N3/4P3/2N1B3/PPP1B1PP/R1K4R b kq - 0 12', 'BD6-E5', 'DSK0.ticket1.log', 4, 7);
 //    testPosition ('rn1qkb1r/ppp1pppp/4b3/4P3/2pP2n1/N4N2/PP3PPP/R1BQKB1R b KQkq - 2 6', 'PC7-C5', 'DSK0.ticket2.log', 4, 7);
@@ -108,7 +111,7 @@ procedure evalTests;
 
   
 begin
-    readTestPositions (ParamStr (1));
+//    readTestPositions (ParamStr (1));
 //    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
-//    evalTests
+    evalTests
 end.

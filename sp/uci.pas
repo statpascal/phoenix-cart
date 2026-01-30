@@ -127,7 +127,7 @@ var
     cmd, v: string;
 
 begin
-    plyQs := -3;
+    plyQs := -4;
     gamePly := 6;
     
     for i := 0 to pred (ParamCount div 2) do
