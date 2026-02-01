@@ -9,19 +9,18 @@ const
     MoveQueenExchangeBlack = 2;
     MoveEndGame = 4;
   
-(*    
     PawnValue = 150;
     RookValue = 525;
     KnightValue = 400;
     BishopValue = 400;
     QueenValue = 973;
-*)    
+(*    
     PawnValue = 100;
     RookValue = 505;
     KnightValue = 300;
     BishopValue = 300;
     QueenValue = 900;
-    
+*)    
     EndGameReached = 3000;
 
 type
@@ -41,10 +40,10 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
     const
         captureBonus: array [0..5, 0..5] of uint8 = (
         //     P    R    N    B    Q    K
-            ( 10,  50,  50,  50,  50,  50),         // pawn
-            (  0,   0,   0,   0,  50,   0),         // rook
-            (  0,  25,   0,   0,  50,   0),         // knight
-            (  0,  25,   0,   0,  50,   0),         // bishop
+            ( 10, 100, 100, 100, 100, 100),         // pawn
+            (  0,  50,   0,   0,  50,   0),         // rook
+            (  0,  50,  25,  25,  50,   0),         // knight
+            (  0,  50,  25,  25,  50,   0),         // bishop
             (  0,   0,   0,   0,   0,   0),         // queen
             (  0,   0,   0,   0,   0,   0));   	    // king
     var
@@ -83,9 +82,9 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
         if (move.pieceType = Queen) and (gameMove < 5) then
             dec (bonus, 100);
             
-        {check bonus}
-//        if isKingChecked (1 - turn, board) then
-//            inc (bous, 200);
+//        {check bonus}
+//        if isKingChecked (1 - turn, prevBoard) then
+//            inc (bonus, 200);
 
         if turn = 0 then
             inc (moveScore.bonus, bonus)
@@ -207,7 +206,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             ownPos, evalPos: integer;
         begin
             BitPos (ownKing, locArray);
-            ownPos := locArray [1];
+             ownPos := locArray [1];
             
             if side = 0 then
                 evalPos := ownPos
