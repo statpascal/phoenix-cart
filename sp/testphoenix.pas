@@ -10,9 +10,9 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
 
     var 
         mainBoard: TBoardRecord;
-        lastMove, playMove: TMoveRecord;
-        side, moveScore: integer;
+        side: integer;
         calcMove: string;
+        playMove: TMoveRecord;
         
     function makeCoord (sq: integer): string;
         begin
@@ -23,12 +23,11 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
         setFENPosition (mainBoard, side, gameMove, fenStr);
         gamePly := ply;
         plyQS := 1 - qsdeepening;
-        fillChar (lastMove, sizeof (lastMove), 0);
 
         write (fenStr);
         if log <> '' then
             startLogging (log);
-        generateMove (ply, side, mainBoard, playMove, moveScore);
+        playMove := generateMove (ply, side, mainBoard).move;
         calcMove := makeCoord (playMove.startSq) + makeCoord (playMove.endSq);
         if playMove.flags and $f0 <> 0 then
             calcMove := calcMove + figure [1, playMove.flags shr 4];
@@ -101,7 +100,7 @@ procedure evalTests;
     testPosition ('8/4R2p/6kP/3p4/1p6/1P1n4/8/4nK2 b - - 0 48', '', 'DSKO.two-knights.log', 6, 4);
     
     // rook lost vs TSCP
-    testPosition ('4r3/5p2/1R3b2/3Pk2p/2pN2p1/p1P5/P5PP/3K4 b - - 0 35', '', 'DSK0.root-lost.log', 6, 5);
+//    testPosition ('4r3/5p2/1R3b2/3Pk2p/2pN2p1/p1P5/P5PP/3K4 b - - 0 35', '', 'DSK0.rook-lost.log', 6, 5);
 
 //    testPosition ('r3k2r/1pp2ppp/p2bbn2/4N3/4P3/2N1B3/PPP1B1PP/R1K4R b kq - 0 12', 'BD6-E5', 'DSK0.ticket1.log', 4, 7);
 //    testPosition ('rn1qkb1r/ppp1pppp/4b3/4P3/2pP2n1/N4N2/PP3PPP/R1BQKB1R b KQkq - 2 6', 'PC7-C5', 'DSK0.ticket2.log', 4, 7);

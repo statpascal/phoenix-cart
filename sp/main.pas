@@ -12,7 +12,6 @@ uses
 
 var 
     i, j, moveScore, cWarning, gameSide, humanSide: integer;
-    lastMove, playMove: TMoveRecord;
 
 
 procedure SaveMove;
@@ -26,10 +25,6 @@ procedure initGame (var mainBoard: TBoardRecord);
         // Randomize;	// TODO
 //        gameSide := 0;
 //        gameMove := 1;
-
-        lastMove.pieceType := InvalidPiece;
-        lastMove.startSq := 0;
-        lastMove.endSq := 0;
 
         write(chr(7), 'enter ply: [1-6] ');
         repeat
@@ -65,7 +60,7 @@ procedure initGame (var mainBoard: TBoardRecord);
                {look for check condition}
                
 (* TODO: check cehck               
-                lastMove.id := 0;
+                lastMove .id := 0;
                 lastMove.startSq := 0;
                 lastMove.endSq := 0;
                 CombineTrim(bit3, bit5, lastMove, mainBoard);
@@ -230,6 +225,7 @@ procedure chainMain;
     var mainBoard: TBoardRecord;
         compressedBoard: TCompressedBoard;
         checkFlag: boolean;
+        playMove: TMoveScoreRecord;
 
     begin
 //        mainBoard := getInitPosition;
@@ -262,12 +258,12 @@ procedure chainMain;
 
             if humanSide = gameSide then
                 {TODO: save current game state}
-                playerMove (mainBoard, playMove, gameSide, humanSide);	// may change game side
+                playerMove (mainBoard, playMove.move, gameSide, humanSide);	// may change game side
             if humanSide <> gameSide then
                 begin
                     gotoxy(20, 7);
                     write('thinking...');
-                    generateMove (gamePly, gameSide, mainBoard, playMove, moveScore)
+                    playMove := generateMove (gamePly, gameSide, mainBoard)
                 end;
 
             {update move list}
@@ -283,8 +279,7 @@ procedure chainMain;
             DataOps(1, sPage, dataSize, offset, moveStore);
 *)            
 
-            lastMove := playMove;
-            enterMoveSimple (gameSide, mainBoard, playMove);
+            enterMoveSimple (gameSide, mainBoard, playMove.move);
 
             {convert move to coordinates}
             BoardDisplay (mainBoard);
@@ -300,7 +295,7 @@ procedure chainMain;
 
             {look for checkmate or stalemate condition}
             if checkFlag then
-                if isOpponentMate (gameSide, mainBoard, playMove) then
+                if isOpponentMate (gameSide, mainBoard, playMove.move) then
                     begin
                         gotoxy(20, 1);
                         write(chr(7), chr(7), 'checkmate!');
@@ -318,7 +313,7 @@ procedure chainMain;
                     end;
                 
             inc (gameMove, gameSide);	// add 1 if black
-            showMove (moveScore, playMove.startSq, playMove.endSq, gameSide = humanSide);
+            showMove (playMove, gameSide = humanSide);
             gameSide := 1 - gameSide;
 
 //            check3Rep;

@@ -42,6 +42,12 @@ type
         pieceType: uint8;	// moved piece
         flags: uint8		// high nibble: pawn promotion piece
     end;
+    
+    TMoveScoreRecord = packed record
+        score: integer;
+        move: TMoveRecord
+    end;
+
 
 (*    
     moverec = record

@@ -7,7 +7,7 @@ uses globals, board;
 procedure PrintGame;
 procedure BoardDisplay (var board: TBoardRecord);
 procedure EnterPos (var board: TBoardRecord; var turn: integer);
-procedure showMove (score, iLoc, eLoc: integer; isHumanMove: boolean);
+procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
 
 function getKeyInt: integer;
 
@@ -372,20 +372,17 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
         readln(gameMove)
     end;
 
-//var
-//    rs232: text;
-
-procedure showMove (score, iLoc, eLoc: integer; isHumanMove: boolean);
+procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
     var 
         iLocString, eLocString: string [2];
 
     begin
         iLocString [0] := #2;
         eLocString [0] := #2;
-        iLocString [1] := chr (65 + (iLoc mod 8));
-        iLocString [2] := chr (49 + (iLoc div 8));
-        eLocString [1] := chr (65 + (eLoc mod 8));
-        eLocString [2] := chr (49 + (eLoc div 8));
+        iLocString [1] := chr (65 + (moveScore.move.startSq mod 8));
+        iLocString [2] := chr (49 + (moveScore.move.startSq div 8));
+        eLocString [1] := chr (65 + (moveScore.move.endSq mod 8));
+        eLocString [2] := chr (49 + (moveScore.move.endSq div 8));
         gotoxy(20, 4);
         writeln('last move: ', iLocString, ' to ', eLocString);
         if not isHumanMove then
@@ -407,12 +404,8 @@ procedure showMove (score, iLoc, eLoc: integer; isHumanMove: boolean);
                     end
                 else
                     writeln (moveNumLo);
-                write('position score: ', score);
-    //            writeln (rs232, iLocString, eLocString)
+                write('position score: ', moveScore.score);
             end;
     end;
 
-begin
-//    assign (rs232, 'RS232');
-//    rewrite (rs232)
 end.
