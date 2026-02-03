@@ -16,7 +16,8 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
         
     function makeCoord (sq: integer): string;
         begin
-            makeCoord := chr (97 + sq mod 8) + chr (49 + sq div 8)
+            result := chr (97 + sq mod 8);
+            result := result + chr (49 + sq div 8)
         end;
     
     begin
@@ -97,7 +98,7 @@ procedure evalTests;
 
     testPosition ('7R/1q3p1k/7p/8/P1b5/K1P5/5P1P/8 b - - 0 140', 'h7h8', 'DSK0.king-capture.log', 6, 4);    
     // TODO: why don't we save knight?
-    testPosition ('8/4R2p/6kP/3p4/1p6/1P1n4/8/4nK2 b - - 0 48', '', 'DSKO.two-knights.log', 6, 4);
+    testPosition ('8/4R2p/6kP/3p4/1p6/1P1n4/8/4nK2 b - - 0 48', '', 'DSK0.two-knights.log', 6, 4);
     
     // rook lost vs TSCP
 //    testPosition ('4r3/5p2/1R3b2/3Pk2p/2pN2p1/p1P5/P5PP/3K4 b - - 0 35', '', 'DSK0.rook-lost.log', 6, 5);

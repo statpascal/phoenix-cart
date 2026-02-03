@@ -177,19 +177,31 @@ procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: in
         
     end;
     
-function MoveGen (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, ply, turn: integer): TMoveScoreRecord; forward;
-                   
-function iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endIndex: integer; moveScore: TMoveScore; alpha, beta: integer; var validMoveCount, bestScore: integer; var bestMove: TMoveRecord): boolean;
-    var
-        isAttack: boolean;
+function MoveGen (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, ply, turn: integer): TMoveScoreRecord;
+    var 
+        evalScore: integer;
+        validMoveCount: integer;
+        switchFlag: integer;
+        savedMoveStackPointer: integer;
         capId, currentMoveindex: integer;
-        evalScore, evalMove: integer;
-        resultMove, tempMove: TMoveRecord;
+        isAttack: boolean;
         workBoard: TBoardRecord;
         workMoveScore: TMoveScore;
+        tempMove: TMoveRecord;
+        
     begin
-        iterateMoveList := true;
-        for currentMoveIndex := startIndex to endIndex do
+        savedMoveStackPointer := moveStackPointer;
+        createAllMoves (board, ply, turn, savedMoveStackPointer);
+        result.move.pieceType := InvalidPiece;
+
+        if turn = 0 then
+            result.score := -19970 - ply
+        else
+            result.score := 19970 + ply;
+
+        validMoveCount := 0;
+        
+        for currentMoveIndex := savedMoveStackPointer to pred (moveStackPointer) do
             begin
                 tempMove := moveStack [currentMoveIndex];
                 isAttack := boolean (tempMove.flags and AttackMove);
@@ -233,12 +245,12 @@ function iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endInd
                         {alpha/beta selection}
                         if turn = 0 then
                             begin
-                                if evalScore >= bestScore then
+                                if evalScore >= result.score then
                                     begin
-                                        bestScore := evalScore;
-                                        bestMove := tempMove
+                                        result.Score := evalScore;
+                                        result.Move := tempMove
                                     end;
-                                if not disableAlphaBetaPruning and (bestScore > beta) then
+                                if not disableAlphaBetaPruning and (result.Score > beta) then
                                     begin
                                         {save killer move}
                                         if not isAttack and (ply >= MinPly) and (compareByte (tempMove, killerMoves [ply, 0], sizeof (TMoveRecord)) <> 0) then
@@ -246,20 +258,25 @@ function iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endInd
                                                 killerMoves [ply, 1] := killerMoves [ply, 0];
                                                 killerMoves [ply, 0] := tempMove;
                                             end;
+                                        if doLogging then begin
+                                            indent (pred (ply)); 
+                                            writeln (logFile, 'Pruned')
+                                        end;
+                                        moveStackPointer := savedMoveStackPointer;
                                         exit
                                     end
                                 else
-                                    if bestScore > alpha then
-                                        alpha := bestScore;
+                                    if result.Score > alpha then
+                                        alpha := result.Score;
                             end
                         else
                             begin
-                                if evalScore <= bestScore then
+                                if evalScore <= result.Score then
                                     begin
-                                        bestScore := evalScore;
-                                        bestMove := tempMove
+                                        result.Score := evalScore;
+                                        result.move := tempMove
                                     end;
-                                if not disableAlphaBetaPruning and (bestScore < alpha) then
+                                if not disableAlphaBetaPruning and (result.score < alpha) then
                                     begin
                                         {save killer move}
                                         if not isAttack and (ply >= MinPly) and (compareByte (tempMove, killerMoves [ply, 0], sizeof (TMoveRecord)) <> 0) then
@@ -267,37 +284,20 @@ function iterateMoveList (var board: TBoardRecord; turn, ply, startIndex, endInd
                                                 killerMoves [ply, 1] := killerMoves [ply, 0];
                                                 killerMoves [ply, 0] := tempMove;
                                             end;
+                                        if doLogging then begin
+                                            indent (pred (ply)); 
+                                            writeln (logFile, 'Pruned')
+                                        end;
+                                        moveStackPointer := savedMoveStackPointer;
                                         exit
                                     end
                                 else
-                                    if bestScore < beta then
-                                        beta := bestScore;
+                                    if result.score < beta then
+                                        beta := result.score;
                             end
                     end
             end;
-        iterateMoveList := false
-    end;
-    
-function MoveGen (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, ply, turn: integer): TMoveScoreRecord;
-    var 
-        validMoveCount: integer;
-        switchFlag: integer;
-        savedMoveStackPointer: integer;
-        pruned: boolean;
-    begin
-        savedMoveStackPointer := moveStackPointer;
-        createAllMoves (board, ply, turn, savedMoveStackPointer);
-        result.move.pieceType := InvalidPiece;
-
-        if turn = 0 then
-            result.score := -19970 - ply
-        else
-            result.score := 19970 + ply;
-
-        validMoveCount := 0;
-        pruned := iterateMoveList (board, turn, ply, savedMoveStackPointer, pred (moveStackPointer), moveScore, alpha, beta, validMoveCount, result.score, result.move);
-
-        {stalemate condition}
+        
         if (validMoveCount = 0) and not isKingChecked (turn, board) then
             begin
                 if ply = gamePly then
@@ -317,14 +317,9 @@ function MoveGen (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
 
         if doLogging then begin
             indent (pred (ply)); 
-            if pruned then
-                writeln (logFile, 'Pruned')
-            else
-                begin
-                    write (logFile, 'Best: '); 
-                    printMove (logFile, result.Move); 
-                    writeln (logfile, ': ', result.score:6)
-                end
+            write (logFile, 'Best: '); 
+            printMove (logFile, result.Move); 
+            writeln (logfile, ': ', result.score:6)
         end;
 
         moveStackPointer := savedMoveStackPointer;
