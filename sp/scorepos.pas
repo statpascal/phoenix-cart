@@ -29,7 +29,7 @@ type
     end;
 
 procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; capId: integer; var moveScore: TMoveScore);
-function evaluatePosition (turn: integer; var board: TBoardRecord; moveScore: TMoveScore): integer;
+function evaluatePosition (var board: TBoardRecord; moveScore: TMoveScore): integer;
 
 
 implementation
@@ -117,8 +117,8 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                              if (endGame > 0) and (row >= 3) then
                                  inc (evalScore, row * 50);
                              {check for pawn promotion}
-                             if row = 7 then
-                                 inc (evalScore, 1000);
+//                             if row = 7 then
+//                                 inc (evalScore, 1000);
                              {check pawn support}
                              if row >= 2 then
                                  begin
@@ -138,8 +138,8 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                             if (endGame > 0) and (row <= 4) then
                                 inc (evalScore, (7 - row) * 50);
                              {check for pawn promotion}
-                            if row = 0 then
-                                inc (evalScore, 1000);
+//                            if row = 0 then
+//                                inc (evalScore, 1000);
                             {check pawn support}
                             if row <= 5 then 
                                 begin
@@ -238,12 +238,19 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
     end;
     
 
-function evaluatePosition (turn: integer; var board: TBoardRecord; moveScore: TMoveScore): integer;
+function evaluatePosition (var board: TBoardRecord; moveScore: TMoveScore): integer;
     var
         endGame: integer;
-        
-        
     begin
+        {update number of positions evaluated}
+        inc (moveNumLo);
+        if (moveNumLo = 1000) then
+            begin
+                moveNumLo := 0;
+                inc (moveNumHi)
+            end;
+        
+    
         endGame := moveScore.flags and MoveEndGame;
         
         result := evaluateSide (board.white, board, 0, endGame) 

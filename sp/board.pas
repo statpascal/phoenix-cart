@@ -84,7 +84,7 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 
 function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
-procedure enterMove (turn, attackFlag: integer; var capId: integer; var board: TBoardRecord; var move: TMoveRecord);
+procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; var move: TMoveRecord);
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
 
 procedure combinePieces (var board: TBoardRecord);
@@ -182,7 +182,7 @@ function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
         findPieceType := InvalidPiece
     end;
         
-procedure enterMove (turn, attackFlag: integer; var capId: integer; var board: TBoardRecord; var move: TMoveRecord);
+procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; var move: TMoveRecord);
         
     procedure updateBitboards (var own, opponent: TSideRecord; var ownPieces, opponentPieces: bitboard; id, startSq, endSq, flags: integer);
         var
@@ -197,7 +197,7 @@ procedure enterMove (turn, attackFlag: integer; var capId: integer; var board: T
             
             {remove attacked piece from opponent's bitboards}
             foundFlag := false;
-            if attackFlag = 1 then
+            if isAttack then
                 begin
                     j := Pawn;
                     repeat
@@ -281,7 +281,7 @@ procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMo
     var
         dummyId: integer;
     begin
-        enterMove (turn, 1, dummyId, board, move)
+        enterMove (turn, true, dummyId, board, move)
     end;
     
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
