@@ -177,6 +177,22 @@ procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: in
         
     end;
 
+procedure logResult (ply, turn: integer; isPruned: boolean; var result: TMoveScoreRecord);
+    begin
+        indent (pred (ply)); 
+        if isPruned then
+            writeln (logFile, 'Pruned')
+        else
+            begin            
+                write (logFile, 'Best: '); 
+                printMove (logFile, result.Move); 
+                if turn = 0 then
+                    writeln (logfile, ': ', result.score:6)
+                else
+                    writeln (logfile, ': ', -result.score:6)
+            end
+    end;
+    
 function MoveGen (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, ply, turn: integer): TMoveScoreRecord;
     var 
         evalScore, dummy, savedMoveStackPointer, capId, currentMoveindex: integer;
@@ -188,72 +204,72 @@ function MoveGen (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
     begin
         savedMoveStackPointer := moveStackPointer;
         createAllMoves (board, ply, turn, savedMoveStackPointer);
+        
         result.move.pieceType := InvalidPiece;
-
         result.score := -19970 - ply;
 
         hasValidMove := false;
         isPruned := false;
-        
         currentMoveIndex := savedMoveStackPointer;
         repeat
-                tempMove := moveStack [currentMoveIndex];
-                inc (currentMoveIndex);
-                isAttack := tempMove.flags and AttackMove <> 0;
-                isQuiet := not isAttack; 	// TODO: add check as condition
-                workBoard := board;
-                workMoveScore := moveScore;
-                enterMove (turn, isAttack, capId, workBoard, tempMove);
-                
-                {check if own king in check after current move}
-                if not isKingChecked (turn, workBoard) then 
-                    begin
-                        hasValidMove := true;
-                        evaluateMove (turn, board, isAttack, tempMove, capId, workMoveScore);
-                        if doLogging then begin   
-                            indent (pred (ply)); 
-                            printMove (logFile, tempMove)
-                        end;
-                        if isQuiet and (ply <= 1) or (ply = plyQS) then
-                            {terminal node check - the original NegaMax does another recursive call}
-                            begin
-                                evalScore := evaluatePosition (workBoard, workMoveScore);
-                                if doLogging then
-                                    writeln (logFile, ': ', evalScore: 6);
-                                if turn = 1 then
-                                    evalScore := -evalScore
-                            end
-                        else
-                            begin
-                                if doLogging then
-                                    if turn = 0 then
-                                        writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
-                                    else
-                                        writeln (logFile, ': alpha = ', -beta, ' beta = ', -alpha);
-                                evalScore := -MoveGen (workBoard, workMoveScore, -beta, -alpha, pred (ply), 1 - turn).score
-                            end;
-
-                        {alpha/beta selection}
-                                if evalScore >= result.score then
-                                    begin
-                                        result.Score := evalScore;
-                                        result.Move := tempMove
-                                    end;
-                                if not disableAlphaBetaPruning and (result.Score > beta) then
-                                    begin
-                                        {save killer move}
-                                        if not isAttack and (ply >= MinPly) and (compareByte (tempMove, killerMoves [ply, 0], sizeof (TMoveRecord)) <> 0) then
-                                            begin
-                                                killerMoves [ply, 1] := killerMoves [ply, 0];
-                                                killerMoves [ply, 0] := tempMove;
-                                            end;
-                                        isPruned := true
-                                    end
+            tempMove := moveStack [currentMoveIndex];
+            inc (currentMoveIndex);
+            isAttack := tempMove.flags and AttackMove <> 0;
+            isQuiet := not isAttack;        // TODO: add check as condition
+            workBoard := board;
+            workMoveScore := moveScore;
+            enterMove (turn, isAttack, capId, workBoard, tempMove);
+            
+            {check if own king in check after current move}
+            if not isKingChecked (turn, workBoard) then 
+                begin
+                    hasValidMove := true;
+                    evaluateMove (turn, board, isAttack, tempMove, capId, workMoveScore);
+                    if doLogging then begin   
+                        indent (pred (ply)); 
+                        printMove (logFile, tempMove)
+                    end;
+                    if isQuiet and (ply <= 1) or (ply = plyQS) then
+                        {terminal node check - the original NegaMax does another recursive call}
+                        begin
+                            evalScore := evaluatePosition (workBoard, workMoveScore);
+                            if doLogging then
+                                writeln (logFile, ': ', evalScore: 6);
+                            if turn = 1 then
+                                evalScore := -evalScore
+                        end
+                    else
+                        begin
+                            if doLogging then
+                                if turn = 0 then
+                                    writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
                                 else
-                                    if result.Score > alpha then
-                                        alpha := result.Score;
-                    end
+                                    writeln (logFile, ': alpha = ', -beta, ' beta = ', -alpha);
+                            evalScore := -MoveGen (workBoard, workMoveScore, -beta, -alpha, pred (ply), 1 - turn).score
+                        end;
+
+                    {alpha/beta selection}
+                    if evalScore >= result.score then
+                        begin
+                            result.Score := evalScore;
+                            result.Move := tempMove
+                        end;
+                    if not disableAlphaBetaPruning and (result.Score > beta) then
+                        begin
+                            {save killer move}
+                            if not isAttack and (ply >= MinPly) and (compareByte (tempMove, killerMoves [ply, 0], sizeof (TMoveRecord)) <> 0) then
+                                begin
+                                    killerMoves [ply, 1] := killerMoves [ply, 0];
+                                    killerMoves [ply, 0] := tempMove;
+                                end;
+                            isPruned := true
+                        end
+                    else
+                        if result.Score > alpha then
+                            alpha := result.Score;
+                end
         until isPruned or (currentMoveIndex = moveStackPointer);
+        moveStackPointer := savedMoveStackPointer;
         
         if not hasValidMove and not isKingChecked (turn, board) then
             begin
@@ -268,26 +284,10 @@ function MoveGen (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
 {$endif}                        
                     end
                 else
-                    result.score := 0;
-                exit
-            end;
-
-        if doLogging then begin
-            indent (pred (ply)); 
-            if isPruned then
-                writeln (logFile, 'Pruned')
-            else
-                begin            
-                    write (logFile, 'Best: '); 
-                    printMove (logFile, result.Move); 
-                    if turn = 0 then
-                        writeln (logfile, ': ', result.score:6)
-                    else
-                        writeln (logfile, ': ', -result.score:6)
-                end
-        end;
-
-        moveStackPointer := savedMoveStackPointer;
+                    result.score := 0
+            end
+        else if doLogging then 
+            logResult (ply, turn, isPruned, result)
     end;
     
 function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreRecord;
