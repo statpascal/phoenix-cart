@@ -193,7 +193,7 @@ procedure logResult (ply, turn: integer; isPruned: boolean; var result: TMoveSco
             end
     end;
     
-function MoveGen (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, ply, turn: integer): TMoveScoreRecord;
+function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, ply, turn: integer): TMoveScoreRecord;
     var 
         evalScore, dummy, savedMoveStackPointer, capId, currentMoveindex: integer;
         hasValidMove, isQuiet, isAttack, isPruned: boolean;
@@ -245,7 +245,7 @@ function MoveGen (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
                                     writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
                                 else
                                     writeln (logFile, ': alpha = ', -beta, ' beta = ', -alpha);
-                            evalScore := -MoveGen (workBoard, workMoveScore, -beta, -alpha, pred (ply), 1 - turn).score
+                            evalScore := -NegaMax (workBoard, workMoveScore, -beta, -alpha, pred (ply), 1 - turn).score
                         end;
 
                     {alpha/beta selection}
@@ -336,7 +336,7 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
         
                 if doLogging then
                     printBoard (logFile, board);
-                generateMove := MoveGen (board, moveScore, alpha, beta, ply, turn)
+                generateMove := NegaMax (board, moveScore, alpha, beta, ply, turn)
             end
     end;
 
