@@ -11,7 +11,7 @@ uses
     globals, genmove, trimprocs, ui, pmove, utility, resources, logger;
 
 var 
-    i, j, moveScore, cWarning, gameSide, humanSide: integer;
+    cWarning, gameSide, humanSide: integer;
 
 
 procedure SaveMove;
@@ -148,7 +148,7 @@ function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: T
     var
         moveArray: bitarray;
         bits, kingMovement, opponentMoves: bitboard;
-        kingPos, epCapDummy: integer;
+        i, kingPos, epCapDummy: integer;
         move: TMoveRecord;
         tempBoard: TBoardRecord;
     begin
@@ -226,6 +226,7 @@ procedure chainMain;
         compressedBoard: TCompressedBoard;
         checkFlag: boolean;
         playMove: TMoveScoreRecord;
+        dummy: integer;
 
     begin
 //        mainBoard := getInitPosition;
@@ -253,9 +254,6 @@ procedure chainMain;
             moveNumLo := 0;
             moveNumHi := 0;
 
-            moveScore := 0;
-
-
             if humanSide = gameSide then
                 {TODO: save current game state}
                 playerMove (mainBoard, playMove.move, gameSide, humanSide);	// may change game side
@@ -263,9 +261,18 @@ procedure chainMain;
                 begin
                     gotoxy(20, 7);
                     write('thinking...');
-                    playMove := generateMove (gamePly, gameSide, mainBoard)
+                    playMove := generateMove (gamePly, gameSide, mainBoard);
+                    
+                    if playMove.move.pieceType = InvalidPiece then
+                        begin
+                            gotoxy(20, 1);
+                            write(chr(7), chr(7), 'stalemate!');
+                            readln;
+                            Utility (dummy);
+                            exit                            
+                        end
                 end;
-
+                
             {update move list}
 (*            
         TODO: save move history
@@ -300,15 +307,15 @@ procedure chainMain;
                         gotoxy(20, 1);
                         write(chr(7), chr(7), 'checkmate!');
                         readln;
-                        Utility(i);
+                        Utility (dummy);
                         exit;
                     end
-                else if abs(moveScore) > 19900 then
+                else if abs (playMove.Score) >= infinity then
                     begin
                         gotoxy(20, 1);
                         write(chr(7), chr(7), 'resign!');
                         readln;
-                        Utility(i);
+                        Utility (dummy);
                         exit;
                     end;
                 

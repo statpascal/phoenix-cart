@@ -9,7 +9,7 @@ uses globals, board
 ;
 
 const
-    infiniy = 19970;
+    infinity = 19970;
 
 function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreRecord;
 (* if no valid move can be generated, move.pieceType is set to InvalidPiece and score
@@ -286,23 +286,6 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
         
         if not hasValidMove and not isKingChecked (turn, board) then
             result.score := 0;
-(*        
-            begin
-                if ply = gamePly then
-                    begin
-{$ifdef ti99}                    
-                        gotoxy(20, 1);
-                        write(chr(7), chr(7), 'stalemate!');
-                        readln;
-                        Utility(dummy);
-                        // TODO: where to go from here
-{$endif}                        
-                    end
-                else
-                    result.score := 0
-            end
-        else 
-*)
         if doLogging then 
             logResult (ply, turn, isPruned, result)
     end;
