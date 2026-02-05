@@ -8,7 +8,16 @@ uses globals, board
 {$endif}
 ;
 
+const
+    infiniy = 19970;
+
 function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreRecord;
+(* if no valid move can be generated, move.pieceType is set to InvalidPiece and score
+   indicates the cause:
+   abs (move.score) >= infinity : checkmate
+   move.score = 0 : draw (stalemate)
+*)
+
 
 implementation
 
@@ -182,7 +191,7 @@ procedure logResult (ply, turn: integer; isPruned: boolean; var result: TMoveSco
         indent (pred (ply)); 
         if isPruned then
             writeln (logFile, 'Pruned')
-        else
+        else if result.move.pieceType <> InvalidPiece then
             begin            
                 write (logFile, 'Best: '); 
                 printMove (logFile, result.Move); 
@@ -191,6 +200,10 @@ procedure logResult (ply, turn: integer; isPruned: boolean; var result: TMoveSco
                 else
                     writeln (logfile, ': ', -result.score:6)
             end
+        else if result.score = 0 then
+            writeln (logFile, 'Draw')
+        else
+            writeln (logFile, 'Mate')
     end;
     
 function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, ply, turn: integer): TMoveScoreRecord;
@@ -206,7 +219,7 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
         createAllMoves (board, ply, turn, savedMoveStackPointer);
         
         result.move.pieceType := InvalidPiece;
-        result.score := -19970 - ply;
+        result.score := -infinity - ply;
 
         hasValidMove := false;
         isPruned := false;
@@ -272,6 +285,8 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
         moveStackPointer := savedMoveStackPointer;
         
         if not hasValidMove and not isKingChecked (turn, board) then
+            result.score := 0;
+(*        
             begin
                 if ply = gamePly then
                     begin
@@ -286,7 +301,9 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
                 else
                     result.score := 0
             end
-        else if doLogging then 
+        else 
+*)
+        if doLogging then 
             logResult (ply, turn, isPruned, result)
     end;
     
