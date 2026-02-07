@@ -149,10 +149,10 @@ function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSqu
                         end;
 
                     { check for en passant capture }
-                    if (board.castleFlags and epMoveFlag <> 0) and (row = 4 - turn) then
+                    if (board.flags and epMoveFlag <> 0) and (row = 4 - turn) then
                         begin
-                            bits := getEnpassantBitboard (turn = 0, board.castleFlags and epColBitmask);
-                            epCapSquare := 16 + board.castleFlags and epColBitmask + 24 * ord (board.castleFlags and epWhiteFlag = 0);
+                            bits := getEnpassantBitboard (turn = 0, board.flags and epColBitmask);
+                            epCapSquare := 16 + board.flags and epColBitmask + 24 * ord (board.flags and epWhiteFlag = 0);
                             if getBit (bits, iLoc) <> 0 then
                                 setBit (result, epCapSquare)
                             else

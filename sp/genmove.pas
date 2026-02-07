@@ -304,13 +304,6 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
         
     begin
         compressBoard (board, compressedBoard);
-        if turn = 1 then
-{$ifdef ti99}
-            compressedBoard.flags := compressedBoard.flags or moveBlackFlag;
-{$endif}            
-{$ifdef fpc}
-            compressedBoard.flags := compressedBoard.flags or swapEndian (uint16 (moveBlackFlag));
-{$endif}            
         moves := searchMove (compressedBoard);
         if moves [0] <> 0 then
             begin

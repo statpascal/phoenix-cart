@@ -1,5 +1,7 @@
 unit readbook;
 
+(* Free Pascal code only *)
+
 interface
 
 uses board;

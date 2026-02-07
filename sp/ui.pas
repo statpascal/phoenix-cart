@@ -165,16 +165,16 @@ procedure BoardDisplay (var board: TBoardRecord);
                 end;
         gotoxy (0, 16);
         write ('castling: ');
-        if board.castleFlags and whiteRightCastle <> 0 then
+        if board.flags and whiteRightCastle <> 0 then
             write ('K');
-        if board.castleFlags and whiteLeftCastle <> 0 then
+        if board.flags and whiteLeftCastle <> 0 then
             write ('Q');
-        if board.castleFlags and blackRightCastle <> 0 then
+        if board.flags and blackRightCastle <> 0 then
             write ('k');
-        if board.castleFlags and blackLeftCastle <> 0 then
+        if board.flags and blackLeftCastle <> 0 then
             write ('q');
-        if board.castleFlags and epMoveFlag <> 0 then            
-            write (' EP: ', chr (ord ('A') + board.castleFlags and 7), 3 + 3 * ord (board.castleFlags and epWhiteFlag = 0));
+        if board.flags and epMoveFlag <> 0 then            
+            write (' EP: ', chr (ord ('A') + board.flags and 7), 3 + 3 * ord (board.flags and epWhiteFlag = 0));
         gotoxy(0, 14)
     end;
     
@@ -326,7 +326,7 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
                 end;
         until sideKey = 81;
 
-        board.castleFlags := 0;
+        board.flags := 0;
 
         writeln;
         writeln(chr(7), 'allow white castling? (y/n)');
@@ -336,9 +336,9 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
         if ans = 89 then
             begin
                 if getBit (board.white.rookBitboard, 0) = 1 then
-                    board.castleFlags := board.castleFlags or whiteLeftCastle;
+                    board.flags := board.flags or whiteLeftCastle;
                 if getBit (board.white.rookBitboard, 7) = 1 then
-                    board.castleFlags := board.castleFlags or whiteRightCastle
+                    board.flags := board.flags or whiteRightCastle
             end;
 
         writeln(chr(7), 'allow black castling? (y/n)');
@@ -348,9 +348,9 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
         if ans = 89 then
             begin
                 if getBit (board.black.rookBitboard, 56) = 1 then
-                    board.castleFlags := board.castleFlags or blackLeftCastle;
+                    board.flags := board.flags or blackLeftCastle;
                 if getBit (board.black.rookBitboard, 63) = 1 then
-                    board.castleFlags := board.castleFlags or blackRightCastle
+                    board.flags := board.flags or blackRightCastle
             end;
 
         writeln(chr(7), 'side to start? [w]hite/[b]lack');
@@ -366,6 +366,7 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
             begin
                 writeln('*** black to move ***');
                 turn := 1;
+                board.flags := board.flags or moveBlackFlag;
             end;
 
         write('enter move number: ');

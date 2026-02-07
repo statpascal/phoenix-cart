@@ -17,7 +17,7 @@ procedure answerUciInit;
 procedure calcMove (side: integer);
     var
         score: integer;
-        move: TMoveRecord;
+        move: TMoveScoreRecord;
         
     procedure writeCoord (sq: integer);
         begin
@@ -26,12 +26,12 @@ procedure calcMove (side: integer);
         end;
         
     begin
-        generateMove (gamePly, side, board, move, score);
+        move := generateMove (gamePly, side, board);
         write ('bestmove ');
-        writeCoord (move.startSq);
-        writeCoord (move.endSq);
-        if move.flags and $f0 <> 0 then
-            write (figure [1, move.flags shr 4]);
+        writeCoord (move.move.startSq);
+        writeCoord (move.move.endSq);
+        if move.move.flags and $f0 <> 0 then
+            write (figure [1, move.move.flags shr 4]);
         writeln
     end;
 
