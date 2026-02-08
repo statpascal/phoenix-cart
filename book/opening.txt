@@ -1,0 +1,23 @@
+# Spanish
+e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 g8f6 e1g1 f8e7
+e2e4 e7e5 g1f3 b8c6 f1b5 a7a6 b5a4 b7b5 a4b3 c8b7
+# Four knights
+e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8b4 e1g1 e8g8 d2d3 d7d6
+e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8c5 d2d3 d7d6
+# Italian
+e2e4 e7e5 g1f3 b8c6 f1c4 f8c5 d2d3 d7d6 b1c3 g8f6 c1g5 h7h6
+# French
+e2e4 e7e6 d2d4 d7d5 b1c3 g8f6 c1g5 f8e7 g5f6 e7f6 g1f3 e8g8
+# Caro-Kann
+e2e4 c7c6 d2d4 d7d5 e4d5 c6d5 c2c4 g8f6 b1c3 e7e6
+# Sicilian
+e2e4 c7c5 g1f3 e7e6 d2d4 c5d4 f3d4 g8f6 b1c3 b8c6
+# Tarrasch
+d2d4 d7d5 c2c4 e7e6 b1c3 c7c5 g1f3 c5d4 f3d4 e6e6 d4b5 d5d4
+# Queen pawn
+d2d4 d7d5 g1f3 g8f6 e2e3 e7e6 f1d3 c7c5 c2c3 b8d7 b1d2 f8d6 e1g1 e8g8
+# Blackmar gambit
+d2d4 d7d5 e2e4 d5e4 b1c3 g8f6 f2f3 e4f3 g1f3 g7g6 f1c4 f8g7 e1g1 e8g8
+
+
+
