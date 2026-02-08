@@ -1,7 +1,7 @@
 # Phoenix-Cart
 
 Native code version of Walid Maalouli's UCSD-Pascal chess engine for the
-TI99/4A (https://www.https://github.com/wmaalouli/Phoenix-Chess).
+TI99/4A (https://github.com/wmaalouli/Phoenix-Chess).
 
 The repository contains a port of the UCSD sources to StatPascal, enabling
 native 9900 code running in a bank switched cart. To build the
@@ -30,29 +30,23 @@ to 20 moves for each position (the actual move is picked randomly). A
 minimal book is stored in the file book/opening.txt: it consists of lines
 with moves in coordinate notation and optional comments starting with #:
 
-''
-# Four knights
-e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8b4 e1g1 e8g8 d2d3 d7d6
-e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8c5 d2d3 d7d6
-''
+    # Four knights
+    e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8b4 e1g1 e8g8 d2d3 d7d6
+    e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8c5 d2d3 d7d6
 
 For inclusion in the cart, it must be converted to an internal hash format by
 changing to the book directory and executing the script compile.sh:
 
-''
-cd book
-bash compile.sh opening.txt
-''
+    cd book
+    bash compile.sh opening.txt
 
 This generates the source file sp/cartbook.pas and one or more binary files
 book0.dat, book1.dat, ... in the book directory.
 
 After that, return to the previous directory and build the cart with
 
-''
-cd ..
-bash build.sh
-''
+    cd ..
+    bash build.sh
 
 The last step produces a bank switched cart (phoenix.bin) that can
 be loaded in an emulator or executed on the real hardware with an FG99.
