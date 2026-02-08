@@ -27,7 +27,7 @@ faster than the original UCSD version.
 
 The cart uses an opening book that may contain up to 20000 positions, with up
 to 20 moves for each position (the actual move is picked randomly). A
-minimal book is stored in the file book/opening.txt: it consists of lines
+simple example is stored in the file book/opening.txt: the file consists of lines
 with moves in coordinate notation and optional comment lines starting with #:
 
     # Four knights
