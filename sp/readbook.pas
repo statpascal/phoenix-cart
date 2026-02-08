@@ -168,10 +168,12 @@ procedure loadOpeningBook (fn: string);
         maxPosMoves := 0;
         while not eof (f) do
             begin
-                readln (f, desc);
                 readln (f, line);
-                setInitPosition (mainBoard, side, move);
-                handlePositions (mainBoard, line)
+                if (length (line) <> 0) and (line [1] <> '#') then 
+                    begin
+                        setInitPosition (mainBoard, side, move);
+                        handlePositions (mainBoard, line)
+                    end
             end;
         close (f);
         sortOpenings
