@@ -96,7 +96,7 @@ procedure evalTests;
     testPosition ('4k3/p1p3p1/8/1P5P/1p1p4/8/P1P1P3/4K3 w - - 0 10', 'e1d2', 'DSK0.ep-test.log', 3, 0);
     disableAlphaBetaPruning := false;
 
-    testPosition ('7R/1q3p1k/7p/8/P1b5/K1P5/5P1P/8 b - - 0 140', 'h7h8', 'DSK0.king-capture.log', 6, 4);    
+    testPosition ('7R/1q3p1k/7p/8/P1b5/K1P5/5P1P/8 b - - 0 40', 'h7h8', 'DSK0.king-capture.log', 6, 4);    
     // TODO: why don't we save knight?
     testPosition ('8/4R2p/6kP/3p4/1p6/1P1n4/8/4nK2 b - - 0 48', '', 'DSK0.two-knights.log', 6, 4);
     

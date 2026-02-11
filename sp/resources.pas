@@ -12,7 +12,7 @@ function getKnightMovementBitboard (loc: integer): bitboard;
 function getKingMovementBitboard (loc: integer): bitboard;
 
 type
-    TPieceScoreType = (WhitePawnScore, BlackPawnScore, KnightScore, BishopScore, KingMidScore, KingEndScore);
+    TPieceScoreType = (PawnScore, KnightScore, BishopScore, KingMidScore, KingEndScore);
 
 function getPieceScoreValue (pieceScoreType: TPieceScoreType; loc: integer): integer;
 

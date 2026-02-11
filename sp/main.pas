@@ -144,81 +144,20 @@ procedure check3Rep;
 *)    
     
     
-function isOpponentMate (gameSide: integer; var board: TBoardRecord; playMove: TMoveRecord): boolean;
+function isMate (turn: integer; var board: TBoardRecord): boolean;
     var
-        moveArray: bitarray;
-        bits, kingMovement, opponentMoves: bitboard;
-        i, kingPos, epCapDummy: integer;
-        move: TMoveRecord;
         tempBoard: TBoardRecord;
     begin
-        isOpponentMate := false;
-        
-        {get opposite king position}
-        if gameSide = 0 then
-            BitPos (board.black.kingBitboard, moveArray)
-        else
-            BitPos (board.white.kingBitboard, moveArray);
-        kingPos := moveArray [1];
-
-        {obtain list of all possible opposite king movement}
-        kingMovement := Trim (1 - gameSide, King, kingPos, board, epCapDummy);
-        BitPos (kingMovement, moveArray);
-        
-        move.pieceType := King;
-        move.startSq := kingPos;
-        for i := 1 to moveArray [0] do
+        result := true;
+        createAllMoves (board, 1, turn, 0);
+        while result and (moveStackPointer > 0) do
             begin
                 tempBoard := board;
-                move.endSq := moveArray [i];
-                enterMoveSimple (1 - gameSide, tempBoard, move);
-                if not isKingChecked (1 - gameSide, tempBoard) then
-                    exit
-            end;
-
-        {remove opposite king from all opposite boards}
-        tempBoard := board;
-        if gameSide = 0 then
-            begin
-                clearBit (tempBoard.black.kingBitboard, kingPos);
-                clearBit (tempBoard.black.pieces, kingPos);
+                dec (moveStackPointer);
+                enterMoveSimple (turn, tempBoard, moveStack [moveStackPointer]);
+                result := isKingChecked (turn, tempBoard)
             end
-        else
-            begin
-                clearBit (tempBoard.white.kingBitboard, kingPos);
-                clearBit (tempBoard.white.pieces, kingPos);
-            end;
-        clearBit (tempBoard.allPieces, kingPos);
-        
-        {check if attacking piece can be captured}
-        opponentMoves := combineTrimSide (gameSide = 0, tempBoard);
-        if getBit (opponentMoves, playMove.endSq) <> 0 then
-            exit;
-        
-        {generate trim board for attacking piece}
-        bits := Trim (gameSide, playMove.pieceType, playMove.endSq, tempBoard, epCapDummy); 
-
-        {check if any opposite piece movement blocks it}
-        BitAnd (bits, opponentMoves, bits);
-
-        {update bitboards with opposite combined movement trim board}
-        // TODO: could we use opponentMoves directly to block all movevemnt?
-        BitOr (bits, tempBoard.allPieces, tempBoard.allPieces);
-        if gameside = 0 then
-            BitOr (bits, tempBoard.black.pieces, tempBoard.black.pieces)
-        else
-            BitOr (bits, tempBoard.white.pieces, tempBoard.white.pieces);
-
-        {regenerate Trim board for attacking piece}
-        bits := Trim (gameSide, playMove.pieceType, playMove.endSq, tempBoard, epCapDummy);
-
-        {check if overalp with opposite king}
-        if getBit (bits, kingPos) = 0 then
-            exit;
-            
-        isOpponentMate := true
-end;                        
-    
+    end;
 
 procedure chainMain;
 
@@ -229,9 +168,7 @@ procedure chainMain;
         dummy: integer;
 
     begin
-//        mainBoard := getInitPosition;
         setInitPosition (mainboard, gameSide, gameMove);
-//        setFENPosition (mainBoard, gameSide, gameMove, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
         initGame (mainBoard);
 
      {start game}
@@ -302,7 +239,7 @@ procedure chainMain;
 
             {look for checkmate or stalemate condition}
             if checkFlag then
-                if isOpponentMate (gameSide, mainBoard, playMove.move) then
+                if isMate (1 - gameSide, mainBoard) then
                     begin
                         gotoxy(20, 1);
                         write(chr(7), chr(7), 'checkmate!');

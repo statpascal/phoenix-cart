@@ -116,9 +116,6 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                              {promote pawn advancement in end game}
                              if (endGame > 0) and (row >= 3) then
                                  inc (evalScore, row * 50);
-                             {check for pawn promotion}
-//                             if row = 7 then
-//                                 inc (evalScore, 1000);
                              {check pawn support}
                              if row >= 2 then
                                  begin
@@ -130,16 +127,13 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                              {doubled pawns penalty}
                              if (row < 7) and (getBit (sideBoards.pawnBitboard, pLoc + 8) <> 0) then
                                  dec (evalScore, 25);
-                             inc (evalScore, getPieceScoreValue (WhitePawnScore, pLoc))
+                             inc (evalScore, getPieceScoreValue (PawnScore, pLoc))
                         end
                     else
                         begin
                             {promote pawn advancement in endgame}
                             if (endGame > 0) and (row <= 4) then
                                 inc (evalScore, (7 - row) * 50);
-                             {check for pawn promotion}
-//                            if row = 0 then
-//                                inc (evalScore, 1000);
                             {check pawn support}
                             if row <= 5 then 
                                 begin
@@ -151,7 +145,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                             {doubled pawns penalty}
                             if (row > 0) and (getBit (sideBoards.pawnBitboard, pLoc - 8) <> 0) then
                                 dec (evalScore, 25);
-                            inc (evalScore, getPieceScoreValue (WhitePawnScore, (7 - row) shl 3 + col))
+                            inc (evalScore, getPieceScoreValue (PawnScore, (7 - row) shl 3 + col))
                         end
                 end
         end;
@@ -206,7 +200,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             ownPos, evalPos: integer;
         begin
             BitPos (ownKing, locArray);
-             ownPos := locArray [1];
+            ownPos := locArray [1];
             
             if side = 0 then
                 evalPos := ownPos

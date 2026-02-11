@@ -20,7 +20,7 @@ conventions for assembly modules.
 
 Current development is done on the development branch, which only requires a
 32K memory extension. Dropping the rather time-consuming SAMS memory management
-required with TI's UCSD system and using native 9900 code it is about 50 times 
+required to interoperate with TI's UCSD system and using native 9900 code it is about 50 times 
 faster than the original UCSD version.
 
 ## Building the cart
@@ -34,7 +34,7 @@ with moves in coordinate notation and optional comment lines starting with #:
     e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8b4 e1g1 e8g8 d2d3 d7d6
     e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8c5 d2d3 d7d6
 
-For inclusion in the cart, it must be converted to an internal hash format by
+For inclusion into the cart, it must be converted to an internal hash format by
 changing to the book directory and executing the script compile.sh:
 
     cd book

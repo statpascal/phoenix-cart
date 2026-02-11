@@ -3,13 +3,13 @@ unit resvals;
 interface
 
 type
-    TPieceScoreData = array [0..5, 0..63] of int16;
+    TPieceScoreData = array [0..4, 0..63] of int16;
     TPieceMovementBitboard = array [0..63, 0..7] of uint8;
     TEnPassantBitboard = array [boolean, 0..7, 0..7] of uint8;
     
 const
     data_score: TPieceScoreData = (
-       // White Pawn
+        // Pawn
        (0,    0,    0,    0,    0,    0,    0,    0,
         5,   10,   10,  -40,  -40,   10,   10,    5,
         5,   -5,  -10,    0,    0,  -10,   -5,    5,
@@ -17,16 +17,6 @@ const
         5,    5,   10,   27,   27,   10,    5,    5,
        10,   10,   20,   30,   30,   20,   10,   10,
        50,   50,   50,   50,   50,   50,   50,   50,
-        0,    0,    0,    0,    0,    0,    0,    0),
-
-       // Black pawn
-       (0,    0,    0,    0,    0,    0,    0,    0,
-       50,   50,   50,   50,   50,   50,   50,   50,
-       10,   10,   20,   30,   30,   20,   10,   10,
-        5,    5,   10,   27,   27,   10,    5,    5,
-        0,    0,    0,   25,   25,    0,    0,    0,
-        5,   -5,  -10,    0,    0,  -10,   -5,    5,
-        5,   10,   10,  -25,  -25,   10,   10,    5,
         0,    0,    0,    0,    0,    0,    0,    0),
 
       // Knight

@@ -10,6 +10,20 @@ uses globals, board
 
 const
     infinity = 19970;
+    
+const
+    MoveStackSize = 2047;
+    
+var
+{$ifdef ti99}
+    moveStack: array [0..MoveStackSize] of TMoveRecord absolute $2000;
+{$endif}
+{$ifdef fpc}
+    moveStack: array [0..MoveStackSize] of TMoveRecord;
+{$endif}
+    moveStackPointer: integer;
+    
+procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
 
 function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreRecord;
 (* if no valid move can be generated, move.pieceType is set to InvalidPiece and score
@@ -27,18 +41,6 @@ utility,
 {$endif}
 resources, logger, bitops, openbook;
 
-const
-    MoveStackSize = 2047;
-    
-var
-{$ifdef ti99}
-    moveStack: array [0..MoveStackSize] of TMoveRecord absolute $2000;
-{$endif}
-{$ifdef fpc}
-    moveStack: array [0..MoveStackSize] of TMoveRecord;
-{$endif}
-    moveStackPointer: integer;
-    
 procedure pushMoveStack (var move: TMoveRecord); overload;
     begin
         if moveStackPointer <= moveStackSize then
