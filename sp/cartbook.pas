@@ -8,7 +8,7 @@ uses board, globals;
 
 const
     BankSize = 100;
-    OpeningPositions = 87;
+    OpeningPositions = 2853;
 
 type
     TBookEntry = record
@@ -27,10 +27,206 @@ function getMove0 (n: integer): TBookEntry;
         result := TOpeningBook (addr(book_0)) [n]
     end;
 
+function getMove1 (n: integer): TBookEntry;
+    procedure book_1; external '../book/book1.dat';
+    begin
+        result := TOpeningBook (addr(book_1)) [n]
+    end;
+
+function getMove2 (n: integer): TBookEntry;
+    procedure book_2; external '../book/book2.dat';
+    begin
+        result := TOpeningBook (addr(book_2)) [n]
+    end;
+
+function getMove3 (n: integer): TBookEntry;
+    procedure book_3; external '../book/book3.dat';
+    begin
+        result := TOpeningBook (addr(book_3)) [n]
+    end;
+
+function getMove4 (n: integer): TBookEntry;
+    procedure book_4; external '../book/book4.dat';
+    begin
+        result := TOpeningBook (addr(book_4)) [n]
+    end;
+
+function getMove5 (n: integer): TBookEntry;
+    procedure book_5; external '../book/book5.dat';
+    begin
+        result := TOpeningBook (addr(book_5)) [n]
+    end;
+
+function getMove6 (n: integer): TBookEntry;
+    procedure book_6; external '../book/book6.dat';
+    begin
+        result := TOpeningBook (addr(book_6)) [n]
+    end;
+
+function getMove7 (n: integer): TBookEntry;
+    procedure book_7; external '../book/book7.dat';
+    begin
+        result := TOpeningBook (addr(book_7)) [n]
+    end;
+
+function getMove8 (n: integer): TBookEntry;
+    procedure book_8; external '../book/book8.dat';
+    begin
+        result := TOpeningBook (addr(book_8)) [n]
+    end;
+
+function getMove9 (n: integer): TBookEntry;
+    procedure book_9; external '../book/book9.dat';
+    begin
+        result := TOpeningBook (addr(book_9)) [n]
+    end;
+
+function getMove10 (n: integer): TBookEntry;
+    procedure book_10; external '../book/book10.dat';
+    begin
+        result := TOpeningBook (addr(book_10)) [n]
+    end;
+
+function getMove11 (n: integer): TBookEntry;
+    procedure book_11; external '../book/book11.dat';
+    begin
+        result := TOpeningBook (addr(book_11)) [n]
+    end;
+
+function getMove12 (n: integer): TBookEntry;
+    procedure book_12; external '../book/book12.dat';
+    begin
+        result := TOpeningBook (addr(book_12)) [n]
+    end;
+
+function getMove13 (n: integer): TBookEntry;
+    procedure book_13; external '../book/book13.dat';
+    begin
+        result := TOpeningBook (addr(book_13)) [n]
+    end;
+
+function getMove14 (n: integer): TBookEntry;
+    procedure book_14; external '../book/book14.dat';
+    begin
+        result := TOpeningBook (addr(book_14)) [n]
+    end;
+
+function getMove15 (n: integer): TBookEntry;
+    procedure book_15; external '../book/book15.dat';
+    begin
+        result := TOpeningBook (addr(book_15)) [n]
+    end;
+
+function getMove16 (n: integer): TBookEntry;
+    procedure book_16; external '../book/book16.dat';
+    begin
+        result := TOpeningBook (addr(book_16)) [n]
+    end;
+
+function getMove17 (n: integer): TBookEntry;
+    procedure book_17; external '../book/book17.dat';
+    begin
+        result := TOpeningBook (addr(book_17)) [n]
+    end;
+
+function getMove18 (n: integer): TBookEntry;
+    procedure book_18; external '../book/book18.dat';
+    begin
+        result := TOpeningBook (addr(book_18)) [n]
+    end;
+
+function getMove19 (n: integer): TBookEntry;
+    procedure book_19; external '../book/book19.dat';
+    begin
+        result := TOpeningBook (addr(book_19)) [n]
+    end;
+
+function getMove20 (n: integer): TBookEntry;
+    procedure book_20; external '../book/book20.dat';
+    begin
+        result := TOpeningBook (addr(book_20)) [n]
+    end;
+
+function getMove21 (n: integer): TBookEntry;
+    procedure book_21; external '../book/book21.dat';
+    begin
+        result := TOpeningBook (addr(book_21)) [n]
+    end;
+
+function getMove22 (n: integer): TBookEntry;
+    procedure book_22; external '../book/book22.dat';
+    begin
+        result := TOpeningBook (addr(book_22)) [n]
+    end;
+
+function getMove23 (n: integer): TBookEntry;
+    procedure book_23; external '../book/book23.dat';
+    begin
+        result := TOpeningBook (addr(book_23)) [n]
+    end;
+
+function getMove24 (n: integer): TBookEntry;
+    procedure book_24; external '../book/book24.dat';
+    begin
+        result := TOpeningBook (addr(book_24)) [n]
+    end;
+
+function getMove25 (n: integer): TBookEntry;
+    procedure book_25; external '../book/book25.dat';
+    begin
+        result := TOpeningBook (addr(book_25)) [n]
+    end;
+
+function getMove26 (n: integer): TBookEntry;
+    procedure book_26; external '../book/book26.dat';
+    begin
+        result := TOpeningBook (addr(book_26)) [n]
+    end;
+
+function getMove27 (n: integer): TBookEntry;
+    procedure book_27; external '../book/book27.dat';
+    begin
+        result := TOpeningBook (addr(book_27)) [n]
+    end;
+
+function getMove28 (n: integer): TBookEntry;
+    procedure book_28; external '../book/book28.dat';
+    begin
+        result := TOpeningBook (addr(book_28)) [n]
+    end;
+
 function getMove (n: integer): TBookEntry;
     begin
         case n div BankSize of
-             0: result := getMove0 (n mod BankSize)
+             0: result := getMove0 (n mod BankSize);
+             1: result := getMove1 (n mod BankSize);
+             2: result := getMove2 (n mod BankSize);
+             3: result := getMove3 (n mod BankSize);
+             4: result := getMove4 (n mod BankSize);
+             5: result := getMove5 (n mod BankSize);
+             6: result := getMove6 (n mod BankSize);
+             7: result := getMove7 (n mod BankSize);
+             8: result := getMove8 (n mod BankSize);
+             9: result := getMove9 (n mod BankSize);
+            10: result := getMove10 (n mod BankSize);
+            11: result := getMove11 (n mod BankSize);
+            12: result := getMove12 (n mod BankSize);
+            13: result := getMove13 (n mod BankSize);
+            14: result := getMove14 (n mod BankSize);
+            15: result := getMove15 (n mod BankSize);
+            16: result := getMove16 (n mod BankSize);
+            17: result := getMove17 (n mod BankSize);
+            18: result := getMove18 (n mod BankSize);
+            19: result := getMove19 (n mod BankSize);
+            20: result := getMove20 (n mod BankSize);
+            21: result := getMove21 (n mod BankSize);
+            22: result := getMove22 (n mod BankSize);
+            23: result := getMove23 (n mod BankSize);
+            24: result := getMove24 (n mod BankSize);
+            25: result := getMove25 (n mod BankSize);
+            26: result := getMove26 (n mod BankSize);
+            27: result := getMove27 (n mod BankSize);
+            28: result := getMove28 (n mod BankSize)
         end
     end;
 

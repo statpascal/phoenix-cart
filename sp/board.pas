@@ -154,10 +154,25 @@ procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord)
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
     var
         res: bitboard;
+        posArray: bitarray;
+        kingPos, epDummy, pieceType: integer;
+        bits: bitboard;
     begin
         {check if own king attacked by opposite trim board}
-        res := board.sides [turn].kingBitboard and combineTrimSide (turn = 0, board);
-        isKingChecked := not isClear (res)
+//        res := board.sides [turn].kingBitboard and combineTrimSide (turn = 0, board);
+//        isKingChecked := not isClear (res);
+        
+        result := false;
+        BitPos (board.sides [turn].kingBitboard, posArray);
+        kingPos := posArray [1];
+        
+        {impersonate all piece types and check if opoonent piece of same type can be captured}
+        pieceType := succ (King);
+        repeat
+            dec (pieceType);
+            bits := Trim (turn, pieceType, kingPos, board, epDummy) and board.sides [1 - turn].bitboards [pieceType];
+            result := not isClear (bits)
+        until result or (pieceType = Pawn)
     end;
 
 function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
