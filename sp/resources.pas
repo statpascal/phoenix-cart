@@ -63,7 +63,7 @@ function getEnPassantBitboard (isBlack: boolean; col: integer): bitboard;
     begin
         result := TBitboardData (addr (data_ep)) [isBlack, col]
     end;
-    
+
 function getPieceScoreValue (pieceScoreType: TPieceScoreType; loc: integer): integer;
     type
         TPieceScoreData = array [TPieceScoreType, 0..63] of integer;
@@ -71,6 +71,7 @@ function getPieceScoreValue (pieceScoreType: TPieceScoreType; loc: integer): int
     begin
         result := TPieceScoreData (addr (data_score)) [pieceScoreType, loc]
     end;
+    
 {$endif}
 
 {$ifdef fpc}

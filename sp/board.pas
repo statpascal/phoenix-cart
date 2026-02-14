@@ -153,7 +153,6 @@ procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord)
                     
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
     var
-        res: bitboard;
         posArray: bitarray;
         kingPos, epDummy, pieceType: integer;
         bits: bitboard;
@@ -170,8 +169,12 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
         pieceType := succ (King);
         repeat
             dec (pieceType);
-            bits := Trim (turn, pieceType, kingPos, board, epDummy) and board.sides [1 - turn].bitboards [pieceType];
-            result := not isClear (bits)
+            bits := board.sides [1 - turn].bitboards [pieceType];
+            if not isClear (bits) then
+                begin
+                    bits := Trim (turn, pieceType, kingPos, board, epDummy) and bits;
+                    result := not isClear (bits)
+                end
         until result or (pieceType = Pawn)
     end;
 

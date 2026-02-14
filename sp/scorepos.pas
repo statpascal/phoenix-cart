@@ -145,7 +145,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                             {doubled pawns penalty}
                             if (row > 0) and (getBit (sideBoards.pawnBitboard, pLoc - 8) <> 0) then
                                 dec (evalScore, 25);
-                            inc (evalScore, getPieceScoreValue (PawnScore, (7 - row) shl 3 + col))
+                            inc (evalScore, getPieceScoreValue (PawnScore, pLoc xor 56))
                         end
                 end
         end;
@@ -181,7 +181,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                     inc (evalScore, pieceValue + getPieceScoreValue (scoreType, locArray [i]))
             else
                 for i := 1 to locArray [0] do
-                    inc (evalScore, pieceValue + getPieceScoreValue (scoreType, (7 - locArray [i] shr 3) shl 3 + locArray [i] and 7))
+                    inc (evalScore, pieceValue + getPieceScoreValue (scoreType, locArray [i] xor 56));
         end;
         
     procedure evaluateQueen;
@@ -205,7 +205,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             if side = 0 then
                 evalPos := ownPos
             else
-                evalPos := (7 - ownPos shr 3) shl 3 + ownPos and 7;
+                evalPos := ownPos xor 56;
             
             if endGame > 0 then
                 begin
