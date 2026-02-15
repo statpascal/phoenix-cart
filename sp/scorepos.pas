@@ -94,9 +94,15 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
     end;
     
 function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; side, endGame: integer): integer;
+{$ifdef ti99}
+    procedure ext_psd; external '../resources/piecescore.dat';
+    var
+        pieceScoreData: TPieceScoreData absolute ext_psd;
+{$endif}
+
     var
         evalScore: integer;
-        
+
     procedure evaluatePawns;
         var
             row, col: integer;
@@ -127,7 +133,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                              {doubled pawns penalty}
                              if (row < 7) and (getBit (sideBoards.pawnBitboard, pLoc + 8) <> 0) then
                                  dec (evalScore, 25);
-                             inc (evalScore, getPieceScoreValue (PawnScore, pLoc))
+                             inc (evalScore, pieceScoreData [PawnScore, pLoc])
                         end
                     else
                         begin
@@ -145,7 +151,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                             {doubled pawns penalty}
                             if (row > 0) and (getBit (sideBoards.pawnBitboard, pLoc - 8) <> 0) then
                                 dec (evalScore, 25);
-                            inc (evalScore, getPieceScoreValue (PawnScore, pLoc xor 56))
+                            inc (evalScore, pieceScoreData [PawnScore, pLoc xor 56])
                         end
                 end
         end;
@@ -178,10 +184,10 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             BitPos (bits, locArray);
             if side = 0 then
                 for i := 1 to locArray [0] do
-                    inc (evalScore, pieceValue + getPieceScoreValue (scoreType, locArray [i]))
+                    inc (evalScore, pieceValue + pieceScoreData [scoreType, locArray [i]])
             else
                 for i := 1 to locArray [0] do
-                    inc (evalScore, pieceValue + getPieceScoreValue (scoreType, locArray [i] xor 56));
+                    inc (evalScore, pieceValue + pieceScoreData [scoreType, locArray [i] xor 56]);
         end;
         
     procedure evaluateQueen;
@@ -209,13 +215,13 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             
             if endGame > 0 then
                 begin
-                    inc (evalScore, getPieceScoreValue (KingEndScore, evalPos));
+                    inc (evalScore, pieceScoreData [KingEndScore, evalPos]);
                     {move own king toward opposite king}
                     BitPos (opponentKing, locArray);
                     inc (evalScore, (15 - distance (ownPos, locArray [1])) * 15)
                 end
             else
-                inc (evalScore, getPieceScoreValue (KingMidScore, evalPos))
+                inc (evalScore, pieceScoreData [KingMidScore, evalPos])
         end;    
 
     begin 

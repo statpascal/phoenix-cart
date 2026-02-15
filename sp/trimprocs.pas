@@ -126,6 +126,20 @@ function makeMovementBitboard (pos, ptype: integer; var ownPieces, opponentPiece
     end;
     
 function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSquare: integer): bitboard;
+{$ifdef ti99}
+    procedure ext_panmove; external '../resources/pawnmove.dat';
+    procedure ext_pancapture; external '../resources/pawncapture.dat';
+    procedure ext_knightmove; external '../resources/knightmove.dat';    
+    procedure ext_kingmove; external '../resources/kingmove.dat';    
+    procedure ext_epcapture; external '../resources/epcapture.dat';
+    
+    var
+        pawnMovementBitboards: TPawnBitboards absolute ext_panmove;
+        pawnCaptureBitboards: TPawnBitboards absolute ext_pancapture;
+        knightMovementBitboards: TPieceBitboards absolute ext_knightmove;
+        kingMovementBitboards: TPieceBitboards absolute ext_kingmove;
+        enPassantBitboards: TEnPassantBitboards absolute ext_epcapture;
+{$endif}
     var 
         row: integer;
         bits: bitboard;
@@ -135,8 +149,8 @@ function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSqu
             Pawn:
                 begin
                     row := iLoc shr 3;
-                    result := getPawnMovementBitboard (turn, iLoc) and not board.allPieces or
-                              getPawnCaptureBitboard (turn, iLoc) and board.sides [1 - turn].pieces;
+                    result := pawnMovementBitboards [turn, iLoc] and not board.allPieces or
+                              pawnCaptureBitboards [turn, iLoc] and board.sides [1 - turn].pieces;
                     if turn = 0 then
                         begin
                             if (row = 1) and (getBit (result, iLoc + 8) = 0) then
@@ -151,7 +165,7 @@ function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSqu
                     { check for en passant capture }
                     if (board.flags and epMoveFlag <> 0) and (row = 4 - turn) then
                         begin
-                            bits := getEnpassantBitboard (turn = 0, board.flags and epColBitmask);
+                            bits := enPassantBitboards [1 - turn, board.flags and epColBitmask];
                             epCapSquare := 16 + board.flags and epColBitmask + 24 * ord (board.flags and epWhiteFlag = 0);
                             if getBit (bits, iLoc) <> 0 then
                                 setBit (result, epCapSquare)
@@ -160,9 +174,9 @@ function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSqu
                         end
                 end;
             Knight:
-                result := getKnightMovementBitboard (iLoc) and not board.sides [turn].pieces;
+                result := knightMovementBitboards [iLoc] and not board.sides [turn].pieces;
             King:
-                result := getKingMovementBitboard (iLoc) and not board.sides [turn].pieces
+                result := kingMovementBitboards [iLoc] and not board.sides [turn].pieces
             else
                 result := makeMovementBitboard (iLoc, piece, board.sides [turn].pieces, board.sides [1 - turn].pieces)
         end;
