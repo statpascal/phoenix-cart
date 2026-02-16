@@ -84,7 +84,7 @@ procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord)
 
 implementation
 
-uses trimprocs;
+uses trimprocs, resources;
 
 procedure combinePieces (var board: TBoardRecord);
     var
@@ -152,19 +152,32 @@ procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord)
     end;        
                     
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
+{$ifdef ti99}
+    { map relevant movement boards locally }
+    procedure ext_pancapture_1; external '../resources/pawncapture.dat';
+    procedure ext_knightmove_1; external '../resources/knightmove.dat';
+    procedure ext_kingmove_1; external '../resources/kingmove.dat';
+
+    var
+        pawnCaptureBitboards: TPawnBitboards absolute ext_pancapture_1;
+        knightMovementBitboards: TPieceBitboards absolute ext_knightmove_1;
+        kingMovementBitboards: TPieceBitboards absolute ext_kingmove_1;
+{$endif}
     var
         posArray: bitarray;
         kingPos, epDummy, pieceType: integer;
-        bits: bitboard;
+        bits, bitsRook, bitsBishop, bitsOpponent: bitboard;
+        checkQueen: boolean;
     begin
         {check if own king attacked by opposite trim board}
 //        res := board.sides [turn].kingBitboard and combineTrimSide (turn = 0, board);
 //        isKingChecked := not isClear (res);
         
+(*        
         result := false;
         BitPos (board.sides [turn].kingBitboard, posArray);
         kingPos := posArray [1];
-        
+
         {impersonate all piece types and check if opoonent piece of same type can be captured}
         pieceType := succ (King);
         repeat
@@ -176,6 +189,53 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
                     result := not isClear (bits)
                 end
         until result or (pieceType = Pawn)
+*)
+
+        result := true;
+        BitPos (board.sides [turn].kingBitboard, posArray);
+        kingPos := posArray [1];
+        
+        {impersonate all piece types and check if opoonent piece of same type can be captured}
+        bits := kingMovementBitboards [kingPos] and board.sides [1 - turn].kingBitboard;
+        if not isClear (bits) then
+            exit;
+            
+        bits := knightMovementBitboards [kingPos] and board.sides [1 - turn].knightBitboard;
+        if not isClear (bits) then
+            exit;
+        
+        bits := pawnCaptureBitboards [turn, kingPos] and board.sides [1 - turn].pawnBitboard;
+        if not isClear (bits) then
+            exit;
+            
+        checkQueen := not isClear (board.sides [1 - turn].queenBitboard);
+
+        bitsOpponent := board.sides [1 - turn].rookBitboard;
+        if not isClear (bitsOpponent) or checkQueen then
+            begin
+                bitsRook := Trim (turn, Rook, kingPos, board, epDummy);
+                bits := bitsRook and bitsOpponent;
+                if not isClear (bits) then
+                    exit
+            end;
+
+        bitsOpponent := board.sides [1 - turn].bishopBitboard;
+        if not isClear (bitsOpponent) or checkQueen then
+            begin        
+                bitsBishop := Trim (turn, Bishop, kingPos, board, epDummy);
+                bits := bitsBishop and bitsOpponent;
+                if not isClear (bits) then
+                    exit
+            end;
+            
+        if checkQueen then 
+            begin            
+                bits := (bitsRook or bitsBishop) and board.sides [1 - turn].queenBitboard;
+                if not isClear (bits) then
+                    exit
+            end;
+            
+        result := false
     end;
 
 function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;

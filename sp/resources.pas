@@ -3,7 +3,7 @@ unit resources;
 (* 
    Definitions for piece score tables and movevment bitboards.
    Execute dumpresources.pas to generate the binary files in resources
-   that are linked into the cart from the arrays below.
+   that are linked into the cart.
 *)   
 
 interface
