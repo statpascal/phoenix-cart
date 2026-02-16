@@ -153,7 +153,7 @@ procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord)
                     
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 {$ifdef ti99}
-    { map relevant movement boards locally }
+    { load relevant movement boards locally }
     procedure ext_pancapture_1; external '../resources/pawncapture.dat';
     procedure ext_knightmove_1; external '../resources/knightmove.dat';
     procedure ext_kingmove_1; external '../resources/kingmove.dat';
@@ -165,41 +165,36 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 {$endif}
     var
         posArray: bitarray;
-        kingPos, epDummy, pieceType: integer;
-        bits, bitsRook, bitsBishop, bitsOpponent: bitboard;
-        checkQueen: boolean;
+        kingPos: integer;
+        bits, bitsOpponent: bitboard;
     begin
         {check if own king attacked by opposite trim board}
 //        res := board.sides [turn].kingBitboard and combineTrimSide (turn = 0, board);
 //        isKingChecked := not isClear (res);
         
-(*        
-        result := false;
-        BitPos (board.sides [turn].kingBitboard, posArray);
-        kingPos := posArray [1];
-
-        {impersonate all piece types and check if opoonent piece of same type can be captured}
-        pieceType := succ (King);
-        repeat
-            dec (pieceType);
-            bits := board.sides [1 - turn].bitboards [pieceType];
-            if not isClear (bits) then
-                begin
-                    bits := Trim (turn, pieceType, kingPos, board, epDummy) and bits;
-                    result := not isClear (bits)
-                end
-        until result or (pieceType = Pawn)
-*)
-
         result := true;
         BitPos (board.sides [turn].kingBitboard, posArray);
         kingPos := posArray [1];
         
         {impersonate all piece types and check if opoonent piece of same type can be captured}
-        bits := kingMovementBitboards [kingPos] and board.sides [1 - turn].kingBitboard;
-        if not isClear (bits) then
-            exit;
+        bitsOpponent := board.sides [1 - turn].bishopBitboard or board.sides [1 - turn].queenBitboard;
+        if not isClear (bitsOpponent) then
+            begin        
+                bits := makeMovementBitboard (kingPos, Bishop, board.sides [turn].pieces, board.sides [1 - turn].pieces) and bitsOpponent;
+//                Trim (turn, Bishop, kingPos, board, epDummy) and bitsOpponent;
+                if not isClear (bits) then
+                    exit
+            end;
             
+        bitsOpponent := board.sides [1 - turn].rookBitboard or board.sides [1 - turn].queenBitboard;
+        if not isClear (bitsOpponent) then
+            begin
+                bits := makeMovementBitboard (kingPos, Rook, board.sides [turn].pieces, board.sides [1 - turn].pieces) and bitsOpponent;
+//                Trim (turn, Rook, kingPos, board, epDummy) and bitsOpponent;
+                if not isClear (bits) then
+                    exit
+            end;
+
         bits := knightMovementBitboards [kingPos] and board.sides [1 - turn].knightBitboard;
         if not isClear (bits) then
             exit;
@@ -208,32 +203,9 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
         if not isClear (bits) then
             exit;
             
-        checkQueen := not isClear (board.sides [1 - turn].queenBitboard);
-
-        bitsOpponent := board.sides [1 - turn].rookBitboard;
-        if not isClear (bitsOpponent) or checkQueen then
-            begin
-                bitsRook := Trim (turn, Rook, kingPos, board, epDummy);
-                bits := bitsRook and bitsOpponent;
-                if not isClear (bits) then
-                    exit
-            end;
-
-        bitsOpponent := board.sides [1 - turn].bishopBitboard;
-        if not isClear (bitsOpponent) or checkQueen then
-            begin        
-                bitsBishop := Trim (turn, Bishop, kingPos, board, epDummy);
-                bits := bitsBishop and bitsOpponent;
-                if not isClear (bits) then
-                    exit
-            end;
-            
-        if checkQueen then 
-            begin            
-                bits := (bitsRook or bitsBishop) and board.sides [1 - turn].queenBitboard;
-                if not isClear (bits) then
-                    exit
-            end;
+        bits := kingMovementBitboards [kingPos] and board.sides [1 - turn].kingBitboard;
+        if not isClear (bits) then
+            exit;
             
         result := false
     end;

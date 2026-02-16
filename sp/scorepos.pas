@@ -92,6 +92,9 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
             dec (moveScore.bonus, bonus)
             
     end;
+
+var    
+    sideCache: array [0..1] of bitboard;
     
 function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; side, endGame: integer): integer;
 {$ifdef ti99}
@@ -108,52 +111,65 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             row, col: integer;
             pLoc, i: integer;            
             locArray: bitarray;
+        const
+            sideVals: array [0..1] of integer = (0, 0);
         begin
+            if compareByte (sideCache [side], sideBoards.pawnBitboard, sizeof (bitboard)) = 0 then
+                begin
+                    inc (evalScore, sideVals [side]);
+                    exit
+                end;
+                
+            sideCache [side] := sideBoards.pawnBitboard;
+            sideVals [side] := 0;
+        
             BitPos (sideBoards.pawnBitboard, locArray);
             for i := 1 to locArray [0] do
                 begin
                     pLoc := locArray [i];
                     row := pLoc shr 3;
                     col := pLoc and 7;
-                    inc (evalScore, PawnValue);
+                    inc (sideVals [side], PawnValue);
                     
                     if side = 0 then
                         begin
                              {promote pawn advancement in end game}
                              if (endGame > 0) and (row >= 3) then
-                                 inc (evalScore, row * 50);
+                                 inc (sideVals [side], row * 50);
                              {check pawn support}
                              if row >= 2 then
                                  begin
                                      if (col <> 0) and (getBit (sideBoards.pawnBitboard, pLoc - 9) <> 0) then
-                                         inc (evalScore, 15);
+                                         inc (sideVals [side], 15);
                                      if (col <> 7) and (getBit (sideBoards.pawnBitboard, ploc - 7) <> 0) then
-                                         inc (evalScore, 15)
+                                         inc (sideVals [side], 15)
                                   end;
                              {doubled pawns penalty}
                              if (row < 7) and (getBit (sideBoards.pawnBitboard, pLoc + 8) <> 0) then
-                                 dec (evalScore, 25);
-                             inc (evalScore, pieceScoreData [PawnScore, pLoc])
+                                 dec (sideVals [side], 25);
+                             inc (sideVals [side], pieceScoreData [PawnScore, pLoc])
                         end
                     else
                         begin
                             {promote pawn advancement in endgame}
                             if (endGame > 0) and (row <= 4) then
-                                inc (evalScore, (7 - row) * 50);
+                                inc (sideVals [side], (7 - row) * 50);
                             {check pawn support}
                             if row <= 5 then 
                                 begin
                                     if (col <> 0) and (getBit (sideBoards.pawnBitboard, ploc + 7) <> 0) then
-                                        inc (evalScore, 15);
+                                        inc (sideVals [side], 15);
                                     if (col <> 7) and (getBit (sideBoards.pawnBitboard, ploc + 9) <> 0) then
-                                        inc (evalScore, 15)
+                                        inc (sideVals [side], 15)
                                  end;
                             {doubled pawns penalty}
                             if (row > 0) and (getBit (sideBoards.pawnBitboard, pLoc - 8) <> 0) then
-                                dec (evalScore, 25);
-                            inc (evalScore, pieceScoreData [PawnScore, pLoc xor 56])
+                                dec (sideVals [side], 25);
+                            inc (sideVals [side], pieceScoreData [PawnScore, pLoc xor 56])
                         end
-                end
+                end;
+                
+            inc (evalScore, sideVals [side])
         end;
         
     procedure evaluateRooks;
@@ -262,5 +278,7 @@ function evaluatePosition (var board: TBoardRecord; moveScore: TMoveScore): inte
         else if (result <= -50) and (moveScore.flags and MoveQueenExchangeBlack <> 0) then
             dec (result, 75)
     end;
-    
+
+begin
+    fillChar (sideCache, sizeof (sideCache), 0);    
 end.

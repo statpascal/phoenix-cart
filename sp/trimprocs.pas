@@ -4,6 +4,8 @@ interface
 
 uses bitops, globals, board;
 
+function makeMovementBitboard (pos, ptype: integer; var ownPieces, opponentPieces: bitboard): bitboard;
+
 function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSquare: integer): bitboard;
 function combineTrimSide (isBlack: boolean; var board: TBoardRecord): bitboard;
 
