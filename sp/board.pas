@@ -74,8 +74,8 @@ procedure setFENPosition (var board: TBoardRecord; var side, moveNr: integer; s:
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 
-function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
-procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; var move: TMoveRecord);
+function findPieceType (var board: TBoardRecord; turn, square: integer): integer;
+procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
 
 procedure combinePieces (var board: TBoardRecord);
@@ -210,17 +210,14 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
         result := false
     end;
 
-function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
-    var
-        pieceType: integer;
+function findPieceType (var board: TBoardRecord; turn, square: integer): integer;
     begin
-        for pieceType := Pawn to King do
-            if getBit (board.sides [turn].bitboards [pieceType], pos) <> 0 then
-                begin
-                    findPieceType := pieceType;
-                    exit
-                end;
-        findPieceType := InvalidPiece
+        result := Pawn;
+        repeat
+            if getBit (board.sides [turn].bitboards [result], square) <> 0 then
+                exit;
+            inc (result)
+        until result = InvalidPiece
     end;
     
 procedure clearSquare (var board: TBoardRecord; side, piece, square: integer);
@@ -237,7 +234,7 @@ procedure enterSquare (var board: TBoardRecord; side, piece, square: integer);
         setBit (board.allPieces, square)
     end;
         
-procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; var move: TMoveRecord);
+procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
         
     procedure castleRook (startSq, endSq: integer);
         begin
@@ -245,32 +242,19 @@ procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var b
             enterSquare (board, turn, Rook, endSq)
         end;            
         
-    var
-        foundFlag: boolean;
-        id: integer;
-    
     begin
         board.flags := board.flags and not (epMoveFlag + epWhiteFlag + epColBitmask + moveBlackFlag);
         clearSquare (board, turn, move.pieceType, move.startSq);
         
         {remove attacked piece from opponent's bitboards}
-        foundFlag := false;
         if isAttack then
             begin
-                capId := Pawn;
-                repeat
-                    if getBit (board.sides [1 - turn].bitboards [capId], move.endSq) <> 0 then
-                        begin
-                            foundFlag := true;
-                            clearSquare (board, 1 - turn, capId, move.endSq);
-                        end
-                    else
-                        inc (capId)
-                until foundFlag or (capId > King);
-
-                {en passant capture handling}
-                if not foundFlag and (move.pieceType = Pawn) and (abs (move.startSq - move.endSq) in [7, 9]) then
+                capId := findPieceType (board, 1 - turn, move.endSq);
+                if capId <> InvalidPiece then
+                    clearSquare (board, 1 - turn, capId, move.endSq)
+                else if (move.pieceType = Pawn) and (abs (move.startSq - move.endSq) in [7, 9]) then
                     begin
+                        {en passant capture handling}
                         clearSquare (board, 1 - turn, Pawn, move.endSq - 8 + 16 * (turn and 1));
                         capId := pawn
                     end
@@ -279,13 +263,11 @@ procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var b
         {place piece at end position}
         if (move.pieceType = Pawn) and (move.endSq in [0..7, 56..63]) then
             begin
-                id := move.flags shr 4;
-                if id = 0 then
-                    id := Queen
-            end
-        else
-            id := move.pieceType;
-        enterSquare (board, turn, id, move.endSq);
+                move.pieceType := move.flags shr 4;
+                if move.pieceType = 0 then
+                    move.pieceType := Queen
+            end;
+        enterSquare (board, turn, move.pieceType, move.endSq);
             
         {set EP rights in board}  
         if (move.pieceType = Pawn) and (abs (move.startSq - move.endSq) = 16) then
