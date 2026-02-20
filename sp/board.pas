@@ -163,10 +163,12 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
         knightMovementBitboards: TPieceBitboards absolute ext_knightmove_1;
         kingMovementBitboards: TPieceBitboards absolute ext_kingmove_1;
 {$endif}
+
     var
         posArray: bitarray;
         kingPos: integer;
         bits, bitsOpponent: bitboard;
+        
     begin
         {check if own king attacked by opposite trim board}
 //        res := board.sides [turn].kingBitboard and combineTrimSide (turn = 0, board);
@@ -181,7 +183,6 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
         if not isClear (bitsOpponent) then
             begin        
                 bits := makeMovementBitboard (kingPos, Bishop, board.sides [turn].pieces, board.sides [1 - turn].pieces) and bitsOpponent;
-//                Trim (turn, Bishop, kingPos, board, epDummy) and bitsOpponent;
                 if not isClear (bits) then
                     exit
             end;
@@ -190,7 +191,6 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
         if not isClear (bitsOpponent) then
             begin
                 bits := makeMovementBitboard (kingPos, Rook, board.sides [turn].pieces, board.sides [1 - turn].pieces) and bitsOpponent;
-//                Trim (turn, Rook, kingPos, board, epDummy) and bitsOpponent;
                 if not isClear (bits) then
                     exit
             end;
@@ -222,93 +222,92 @@ function findPieceType (var board: TBoardRecord; turn, pos: integer): integer;
                 end;
         findPieceType := InvalidPiece
     end;
+    
+procedure clearSquare (var board: TBoardRecord; side, piece, square: integer);
+    begin
+        clearBit (board.sides [side].bitboards [piece], square);
+        clearBit (board.sides [side].pieces, square);
+        clearBit (board.allPieces, square)
+    end;
+    
+procedure enterSquare (var board: TBoardRecord; side, piece, square: integer);
+    begin
+        setBit (board.sides [side].bitboards [piece], square);
+        setBit (board.sides [side].pieces, square);
+        setBit (board.allPieces, square)
+    end;
         
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; var move: TMoveRecord);
         
-    procedure updateBitboards (var own, opponent: TSideRecord; var ownPieces, opponentPieces: bitboard; id, startSq, endSq, flags: integer);
-        var
-            foundFlag: boolean;
-            epSquare: integer;
-            j: integer;
+    procedure castleRook (startSq, endSq: integer);
         begin
-            {erase piece at starting position}
-            clearBit (board.allPieces, startSq);
-            clearBit (ownPieces, startSq);
-            clearBit (own.bitboards [id], startSq);
-            
-            {remove attacked piece from opponent's bitboards}
-            foundFlag := false;
-            if isAttack then
-                begin
-                    j := Pawn;
-                    repeat
-                        if getBit (opponent.bitboards [j], endSq) <> 0 then
-                            begin
-                                foundFlag := true;
-                                capId := j;
-                                clearBit (opponent.bitboards [j], endSq);
-                                clearBit (opponentPieces, endSq)
-                            end;
-                        inc (j)
-                    until (foundFlag) or (j > King);
-
-                    {en passant capture handling}
-                    if not foundFlag and (id = Pawn) and (abs (startSq - endSq) in [7, 9]) then
-                        begin
-                            if turn = 0 then
-                                epSquare := endSq - 8
-                            else
-                                epSquare := endSq + 8;
-                            clearBit (opponent.pawnBitboard, epSquare);
-                            clearBit (opponentPieces, epSquare);
-                            clearBit (board.allPieces, epSquare);
-                            capId := pawn
-                        end
-                end;
-
-            {place piece at end position}
-            setBit (board.allPieces, endSq);
-            setBit (ownPieces, endSq);
-            if (id = Pawn) and (endSq in [0..7, 56..63]) then
-                if flags shr 4 <> 0 then
-                    setBit (own.bitboards [flags shr 4], endSq)
-                else
-                    setBit (own.queenBitboard, endSq)
-            else
-                setBit (own.bitboards [id], endSq);
-              
-            {set EP rights in board}  
-            if (id = Pawn) and (abs (startSq - endSq) = 16) then
-                begin
-                    board.flags := board.flags or (startSq and 7) or epMoveFlag;
-                    if endSq in [24..31] then 
-                        board.flags := board.flags or epWhiteFlag
-                end
-        end;
+            clearSquare (board, turn, Rook, startSq);
+            enterSquare (board, turn, Rook, endSq)
+        end;            
+        
+    var
+        foundFlag: boolean;
+        id: integer;
     
     begin
         board.flags := board.flags and not (epMoveFlag + epWhiteFlag + epColBitmask + moveBlackFlag);
-        if turn = 0 then
+        clearSquare (board, turn, move.pieceType, move.startSq);
+        
+        {remove attacked piece from opponent's bitboards}
+        foundFlag := false;
+        if isAttack then
             begin
-                updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, move.pieceType, move.startSq, move.endSq, move.flags);
-                if (move.pieceType = King) and (move.startSq = 4) and (move.endSq = 6) then
-                    updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 7, 5, 0);
-                if (move.pieceType = King) and (move.startSq = 4) and (move.endSq = 2) then
-                    updateBitboards (board.white, board.black, board.white.pieces, board.black.pieces, Rook, 0, 3, 0);
-                if move.pieceType = King then
-                    board.flags := board.flags and not (whiteLeftCastle or whiteRightCastle);
-                board.flags := board.flags or moveBlackFlag;
+                capId := Pawn;
+                repeat
+                    if getBit (board.sides [1 - turn].bitboards [capId], move.endSq) <> 0 then
+                        begin
+                            foundFlag := true;
+                            clearSquare (board, 1 - turn, capId, move.endSq);
+                        end
+                    else
+                        inc (capId)
+                until foundFlag or (capId > King);
+
+                {en passant capture handling}
+                if not foundFlag and (move.pieceType = Pawn) and (abs (move.startSq - move.endSq) in [7, 9]) then
+                    begin
+                        clearSquare (board, 1 - turn, Pawn, move.endSq - 8 + 16 * (turn and 1));
+                        capId := pawn
+                    end
+            end;
+
+        {place piece at end position}
+        if (move.pieceType = Pawn) and (move.endSq in [0..7, 56..63]) then
+            begin
+                id := move.flags shr 4;
+                if id = 0 then
+                    id := Queen
             end
         else
+            id := move.pieceType;
+        enterSquare (board, turn, id, move.endSq);
+            
+        {set EP rights in board}  
+        if (move.pieceType = Pawn) and (abs (move.startSq - move.endSq) = 16) then
             begin
-                updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, move.pieceType, move.startSq, move.endSq, move.flags);
-                if (move.pieceType = King) and (move.startSq = 60) and (move.endSq = 58) then
-                    updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 56, 59, 0);
-                if (move.pieceType = King) and (move.startSq = 60) and (move.endSq = 62) then
-                    updateBitboards (board.black, board.white, board.black.pieces, board.white.pieces, Rook, 63, 61, 0);
-                if move.pieceType = King then
+                board.flags := board.flags or (move.startSq and 7) or epMoveFlag;
+                if move.endSq in [24..31] then 
+                    board.flags := board.flags or epWhiteFlag
+            end;
+        
+        {handle castling move and rights}
+        if move.pieceType = King then 
+            begin
+                if move.endSq = move.startSq + 2 then
+                    castleRook (move.startSq or 7, move.endSq - 1)
+                else if move.endSq = move.startSq - 2 then
+                    castleRook (move.startSq and not 7, move.endSq + 1);
+                if turn = 0 then
+                    board.flags := board.flags and not (whiteLeftCastle or whiteRightCastle)
+                else
                     board.flags := board.flags and not (blackLeftCastle or blackRightCastle)
             end;
+            
         if getBit (board.white.rookBitBoard, 0) = 0 then
             board.flags := board.flags and not whiteLeftCastle;
         if getBit (board.white.rookBitboard, 7) = 0 then
