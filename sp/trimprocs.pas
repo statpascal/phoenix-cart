@@ -168,7 +168,7 @@ function Trim (turn, piece, iLoc: integer; var board: TBoardRecord; var epCapSqu
                     if (board.flags and epMoveFlag <> 0) and (row = 4 - turn) then
                         begin
                             bits := enPassantBitboards [1 - turn, board.flags and epColBitmask];
-                            epCapSquare := 16 + board.flags and epColBitmask + 24 * ord (board.flags and epWhiteFlag = 0);
+                            epCapSquare := 40 + board.flags and epColBitmask - 24 * turn;
                             if getBit (bits, iLoc) <> 0 then
                                 setBit (result, epCapSquare)
                             else

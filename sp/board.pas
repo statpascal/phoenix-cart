@@ -18,15 +18,15 @@ const
     InvalidPiece = 6;
 
     epColBitmask = 7;
-    epWhiteFlag = 8;
-    epMoveFlag = 16;
+    epMoveFlag = 8;
     
-    whiteLeftCastle = 32;
-    whiteRightCastle = 64;
-    blackLeftCastle = 128;
-    blackRightCastle = 256;
+    whiteLeftCastle = 16;
+    whiteRightCastle = 32;
+    blackLeftCastle = 64;
+    blackRightCastle = 128;
+    allCastleRights = whiteLeftCastle + whiteRightCastle + blackLeftCastle + blackRightCastle;
     
-    moveBlackFlag = 512;
+    moveBlackFlag = 256;
     
     (* Move Flags *)
     
@@ -69,7 +69,7 @@ type
     end;
 
 procedure setInitPosition (var board: TBoardRecord; var side, moveNr: integer);
-procedure setFENPosition (var board: TBoardRecord; var side, moveNr: integer; s: string);
+procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: string);
 
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
@@ -227,23 +227,54 @@ procedure clearSquare (var board: TBoardRecord; side, piece, square: integer);
         clearBit (board.allPieces, square)
     end;
     
-procedure enterSquare (var board: TBoardRecord; side, piece, square: integer);
+procedure setSquare (var board: TBoardRecord; side, piece, square: integer);
     begin
         setBit (board.sides [side].bitboards [piece], square);
         setBit (board.sides [side].pieces, square);
         setBit (board.allPieces, square)
     end;
-        
+    
+procedure clearCastleFlag (var board: TBoardRecord; flag: integer);
+    begin
+        board.flags := board.flags and not flag
+    end;
+    
+procedure setCastleFlag (var board: TBoardRecord; flag: integer);
+    begin
+        board.flags := board.flags or flag
+    end;
+    
+procedure clearEnPassantRights (var board: TBoardRecord);
+    begin
+        board.flags := board.flags and not (epMoveFlag + epColBitmask)
+    end;
+    
+procedure setEnPassantRights (var board: TBoardRecord; col: integer);
+    begin
+        board.flags := board.flags or col or epMoveFlag;
+    end;
+    
+procedure setMoveFlag (var board: TBoardRecord; side: integer);
+    begin
+        if side = 1 then
+            board.flags := board.flags or moveBlackFlag
+        else
+            board.flags := board.flags and not moveBlackFlag
+    end;
+    
+const 
+    castleFlags: array [0..1, 0..1] of integer = ((whiteLeftCastle, whiteRightCastle), (blackLeftCastle, blackRightCastle));
+    
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
         
     procedure castleRook (startSq, endSq: integer);
         begin
             clearSquare (board, turn, Rook, startSq);
-            enterSquare (board, turn, Rook, endSq)
+            setSquare (board, turn, Rook, endSq)
         end;            
         
     begin
-        board.flags := board.flags and not (epMoveFlag + epWhiteFlag + epColBitmask + moveBlackFlag);
+        clearEnPassantRights (board);
         clearSquare (board, turn, move.pieceType, move.startSq);
         
         {remove attacked piece from opponent's bitboards}
@@ -267,15 +298,10 @@ procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var b
                 if move.pieceType = 0 then
                     move.pieceType := Queen
             end;
-        enterSquare (board, turn, move.pieceType, move.endSq);
+        setSquare (board, turn, move.pieceType, move.endSq);
             
-        {set EP rights in board}  
         if (move.pieceType = Pawn) and (abs (move.startSq - move.endSq) = 16) then
-            begin
-                board.flags := board.flags or (move.startSq and 7) or epMoveFlag;
-                if move.endSq in [24..31] then 
-                    board.flags := board.flags or epWhiteFlag
-            end;
+            setEnPassantRights (board, move.startSq and 7);
         
         {handle castling move and rights}
         if move.pieceType = King then 
@@ -284,20 +310,24 @@ procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var b
                     castleRook (move.startSq or 7, move.endSq - 1)
                 else if move.endSq = move.startSq - 2 then
                     castleRook (move.startSq and not 7, move.endSq + 1);
-                if turn = 0 then
-                    board.flags := board.flags and not (whiteLeftCastle or whiteRightCastle)
-                else
-                    board.flags := board.flags and not (blackLeftCastle or blackRightCastle)
+                clearCastleFlag (board, castleFlags [turn, 0]);
+                clearCastleFlag (board, castleFlags [turn, 1])
             end;
             
-        if getBit (board.white.rookBitBoard, 0) = 0 then
-            board.flags := board.flags and not whiteLeftCastle;
-        if getBit (board.white.rookBitboard, 7) = 0 then
-            board.flags := board.flags and not whiteRightCastle;
-        if getBit (board.black.rookBitBoard, 56) = 0 then
-            board.flags := board.flags and not blackLeftCastle;
-        if getBit (board.black.rookBitboard, 63) = 0 then
-            board.flags := board.flags and not blackRightCastle
+        {check if rook is missing from start position}
+        if board.flags and allCastleRights <> 0 then
+            begin
+                if getBit (board.white.rookBitBoard, 0) = 0 then
+                    clearCastleFlag (board, whiteLeftCastle);
+                if getBit (board.white.rookBitboard, 7) = 0 then
+                    clearCastleFlag (board, whiteRightCastle);
+                if getBit (board.black.rookBitBoard, 56) = 0 then
+                    clearCastleFlag (board, blackLeftCastle);
+                if getBit (board.black.rookBitboard, 63) = 0 then
+                    clearCastleFlag (board, blackRightCastle)
+            end;
+            
+        setMoveFlag (board, 1 - turn);
     end;    
     
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
@@ -309,59 +339,44 @@ procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMo
     
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
     var
+        castleRights: integer;
         bits: bitboard;
+        
+    procedure checkBits (var bits: bitboard; row, mask0, mask1: integer);
+        begin
+            if bytearray (bits) [row] and mask0 <> 0 then
+                castleRights := castleRights and not castleFlags [turn, 0];
+            if bytearray (bits) [row] and mask1 <> 0 then
+                castleRights := castleRights and not castleFlags [turn, 1]
+        end;
+
     begin
-        result := board.flags;
-            
-        {check back row interposing pieces}
-        if turn = 0 then 
+        castleRights := board.flags and allCastleRights;
+        if castleRights <> 0 then
             begin
-                if bytearray (board.allPieces) [0] and $70 <> 0 then
-                    result := result and not whiteLeftCastle;
-                if bytearray (board.allPieces) [0] and $06 <> 0 then
-                    result := result and not whiteRightCastle;
-                if result and (whiteLeftCastle or whiteRightCastle) = 0 then
-                   exit
-            end
-        else
-            begin
-                if bytearray (board.allPieces) [7] and $70 <> 0 then
-                    result := result and not blackLeftCastle;
-                if bytearray (board.allPieces) [7] and $06 <> 0 then
-                    result := result and not blackRightCastle;
-                if result and (blackLeftCastle or blackRightCastle) = 0 then
-                    exit
+                {check back row interposing pieces}
+                checkBits (board.allPieces, 7 * turn, $70, $06);
+                if castleRights and (castleFlags [turn, 0] or castleFlags [turn, 1]) <> 0 then
+                    begin
+                        {check for back row attack}
+                        bits := combineTrimSide (turn = 0, board);
+                        checkBits (bits, 7 * turn, $38, $0e)
+                    end
             end;
-            
-        {check for back row attack and remove affected rights}
-        bits := combineTrimSide (turn = 0, board);
-        if turn = 0 then
-            begin
-                if bytearray (bits) [0] and $38 <> 0 then		// not correct - rook may be attacked
-                    result := result and not whiteLeftCastle;
-                if bytearray (bits) [0] and $0e <> 0 then
-                    result := result and not whiteRightCastle
-            end
-        else
-            begin
-                if bytearray (bits) [7] and $38 <> 0 then
-                    result := result and not blackLeftCastle;
-                if bytearray (bits) [7] and $0e <> 0 then
-                    result := result and not blackRightCastle
-            end
-    end;        
+        result := castleRights
+    end;
     
 procedure placePiece (var board: TBoardRecord; row, col: integer; piece: char);
     var
-        s, pieceType: integer;
+        side, pieceType: integer;
     begin
-        for s := 0 to 1 do
-            for pieceType := 0 to 5 do
-                if piece = Figure [s, pieceType] then
-                    setBit (board.sides [s].bitboards [pieceType], row * 8 + col)
+        for side := 0 to 1 do
+            for pieceType := Pawn to King do
+                if piece = Figure [side, pieceType] then
+                    setSquare (board, side, pieceType, row * 8 + col)
    end;
 
-procedure setFENPosition (var board: TBoardRecord; var side, moveNr: integer; s: string);
+procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: string);
     var
         index, row, col, factor: integer;
         ch: char;
@@ -396,17 +411,9 @@ procedure setFENPosition (var board: TBoardRecord; var side, moveNr: integer; s:
                 end;
                 inc (index)
             end;
-        combinePieces (board);
-(*        
-        combineBoards (board.white, board.white.pieces);
-        combineBoards (board.black, board.black.pieces);
-        board.allpieces := board.white.pieces or board.black.pieces;
-*)        
         
         skipBlank;
-        side := ord (s [index] = 'b');
-        if side = 1 then 
-            board.flags := board.flags or moveBlackFlag;
+        setMoveFlag (board, ord (s [index] = 'b'));
         inc (index);
         
         skipBlank;
@@ -414,13 +421,13 @@ procedure setFENPosition (var board: TBoardRecord; var side, moveNr: integer; s:
             begin
                 case s [index] of 
                     'Q':
-                        board.flags := board.flags or whiteLeftCastle;
+                        setCastleFlag (board, whiteLeftCastle);
                     'K':
-                        board.flags := board.flags or whiteRightCastle;
+                        setCastleFlag (board, whiteRightCastle);
                     'q':
-                        board.flags := board.flags or blackLeftCastle;
+                        setCastleFlag (board, blackLeftCastle);
                     'k':
-                        board.flags := board.flags or blackRightCastle
+                        setCastleFlag (board, blackRightCastle)
                 end;
                 inc (index);
             end;
@@ -435,11 +442,7 @@ procedure setFENPosition (var board: TBoardRecord; var side, moveNr: integer; s:
                 row := ord (s [index]) - ord ('0');
                 inc (index);
                 if (col in [0..7]) and (row in [3, 7]) then
-                    begin
-                        board.flags := board.flags or epMoveFlag or col;
-                        if row = 3 then
-                            board.flags := board.flags or epWhiteFlag;
-                    end
+                    setEnPassantRights (board, col);
             end;
             
         // TODO: half move count
@@ -457,7 +460,8 @@ procedure setFENPosition (var board: TBoardRecord; var side, moveNr: integer; s:
 
 procedure setInitPosition (var board: TBoardRecord; var side, moveNr: integer);
     begin    
-        setFENPosition (board, side, moveNr, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+        setFENPosition (board, moveNr, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+        side := 0;
     end;
            
 end.

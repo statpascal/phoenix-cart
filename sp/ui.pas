@@ -174,7 +174,7 @@ procedure BoardDisplay (var board: TBoardRecord);
         if board.flags and blackLeftCastle <> 0 then
             write ('q');
         if board.flags and epMoveFlag <> 0 then            
-            write (' EP: ', chr (ord ('A') + board.flags and 7), 3 + 3 * ord (board.flags and epWhiteFlag = 0));
+            write (' EP: ', chr (ord ('A') + board.flags and 7), 6 - 3 * ord (board.flags and MoveBlackFlag <> 0));
         gotoxy(0, 14)
     end;
     
@@ -190,9 +190,10 @@ procedure loadFENData (var board: TBoardRecord; var turn, gameMove: integer);
         reset (f);
         readln (f, s);
         if s <> '' then
-            setFENPosition (board, turn, gameMove, s)
+            setFENPosition (board, gameMove, s)
         else
             writeln ('Cannot read ', fn);
+        turn := ord (board.flags and moveBlackFlag <> 0);
         close (f)
     end;
 
