@@ -210,7 +210,7 @@ procedure logResult (ply, turn: integer; isPruned: boolean; var result: TMoveSco
     
 function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, ply, turn: integer): TMoveScoreRecord;
     var 
-        evalScore, dummy, savedMoveStackPointer, capId, currentMoveindex: integer;
+        evalScore, savedMoveStackPointer, capId, currentMoveindex: integer;
         hasValidMove, isQuiet, isAttack, isPruned: boolean;
         workBoard: TBoardRecord;
         workMoveScore: TMoveScore;
@@ -307,18 +307,18 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
     begin
         compressBoard (board, compressedBoard);
         moves := searchMove (compressedBoard);
+        result.move.pieceType := InvalidPiece;
         if moves [0] <> 0 then
             begin
                 i := 1;
                 while (i < MaxMoves) and (moves [i] <> 0) do
                     inc (i);
                 i := Random (i);
-                result.move.startSq := moves [i] shr 6;
-                result.move.endSq := moves [i] and $3f;
-                result.move.pieceType := findPieceType (board, turn, result.move.startSq);
-                result.score := 0
-            end
-        else
+                result.score := 0;
+                result.move := makeMoveRecord (board, turn, moves [i] shr 6, moves [i] and $3f)
+            end;
+            
+        if result.move.pieceType = InvalidPiece then
             begin
                 fillChar (killerMoves, sizeof (killerMoves), 0);
                 fillChar (moveScore, sizeof (moveScore), 0);
@@ -331,7 +331,7 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
         
                 if doLogging then
                     printBoard (logFile, board);
-                generateMove := NegaMax (board, moveScore, alpha, beta, ply, turn)
+                result := NegaMax (board, moveScore, alpha, beta, ply, turn)
             end
     end;
 

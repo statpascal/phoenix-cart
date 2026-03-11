@@ -74,6 +74,9 @@ procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: strin
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 
+function makeMoveRecord (var board: TBoardRecord; turn, startSq, endSq: integer): TMoveRecord;
+// sets pieceType in TMoveRecord to Invalid to indicate illegal move
+
 function findPieceType (var board: TBoardRecord; turn, square: integer): integer;
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
@@ -85,6 +88,9 @@ procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord)
 implementation
 
 uses trimprocs, resources;
+
+const 
+    castleFlags: array [0..1, 0..1] of integer = ((whiteLeftCastle, whiteRightCastle), (blackLeftCastle, blackRightCastle));
 
 procedure combinePieces (var board: TBoardRecord);
     var
@@ -209,6 +215,36 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
             
         result := false
     end;
+    
+function makeMoveRecord (var board: TBoardRecord; turn, startSq, endSq: integer): TMoveRecord;
+    var
+        epCapDummy: integer;
+        bits: bitboard;
+    
+    function exposesKing (tempBoard: TBoardRecord; var move: TMoveRecord): boolean;
+        begin
+            enterMoveSimple (turn, tempBoard, move);
+            exposesKing := isKingChecked (turn, tempBoard)
+        end;
+        
+    begin
+        result.pieceType := InvalidPiece;
+        if getBit (board.sides [turn].bitboards [SidePieces], startSq) = 0 then
+            exit;
+            
+        result.startSq := startSq;
+        result.endSq := endSq;
+        result.pieceType := findPieceType (board, turn, startSq);
+        result.flags := 0;
+        
+        if (result.pieceType = King) and (abs (startSq - endSq) = 2) and (checkCastleRights (board, turn) and castleFlags [turn, ord (endSq > startSq)] <> 0) then
+            exit;
+            
+        {trim movement to blocks}
+        bits := Trim (turn, result.pieceType, startSq, board, epCapDummy);
+        if (getBit (bits, endSq) = 0) or exposesKing (board, result) then
+            result.pieceType := InvalidPiece
+    end;
 
 function findPieceType (var board: TBoardRecord; turn, square: integer): integer;
     begin
@@ -261,9 +297,6 @@ procedure setMoveFlag (var board: TBoardRecord; side: integer);
         else
             board.flags := board.flags and not moveBlackFlag
     end;
-    
-const 
-    castleFlags: array [0..1, 0..1] of integer = ((whiteLeftCastle, whiteRightCastle), (blackLeftCastle, blackRightCastle));
     
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
         

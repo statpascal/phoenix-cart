@@ -6,134 +6,87 @@ uses globals, board;
 
 procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer; var humanSide: integer);
 
+
 implementation
 
 uses trimprocs, ui, utility;
 
-procedure clearEntryField;
-    begin
-        soundBell;
-        gotoxy (whereX - 2, whereY);
-        write ('  ');
-        gotoxy (whereX - 2, whereY)
-    end;
-            
 procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer; var humanSide: integer);
-    label 
-        l_1, l_2;
     var 
-        i, j, k, iLoc, eLoc, ans: integer;
-        validSq, foundFlag: boolean;
-        fn: string [20];
-        castleRights, epCapDummy: integer;
-        playerPieces, bits: bitboard;
-        testBoard: TBoardRecord;
+        state: integer;
+        square: array [0..1] of integer;
+        key: char;
+        
+    function readKey (state: integer): char;
+        var
+            validKey: set of char;
+        begin
+            if odd (state) then
+                validKey := ['1'..'8', 'U', 'R']
+            else
+                validKey := ['A'..'H', 'U', 'R'];
+            repeat
+                result := upcase (GetKey)
+            until result in validKey
+        end;
                 
     begin
-        l_1: 
-        gotoxy(20, 6);
-        write(chr(7), 'enter move');
-        gotoxy(20, 7);
-        write('              ');
-        gotoxy(20, 7);
-     {get start square}
-        validSq := FALSE;
-        repeat
-            gotoxy(20, 7);
-            write('from: ');
-            repeat
-                ans := getKeyInt;
-            until ans in[65..72, 84, 85];
-
-      {utility menu}
-            if ans = 85 then
-                begin
-                    Utility(humanSide);
-                    if humanSide <> turn then
-                        exit;
-                    goto l_1;
-                end;
-
-            iLoc := ans - 65;
-            write(chr(ans));
-            repeat
-                ans := getKeyInt;
-            until ans in[49..56, 82];
-            if ans = 82 then
-                goto l_1;
-            iLoc := iLoc + ((ans - 49) * 8);
-            write(chr(ans));
-
-            {validate square}
-            validSq := getBit (board.sides [turn].bitboards [SidePieces], iLoc) <> 0;
-            if not validSq then
-                clearEntryField
-        until validSq;
-
-        playMove.startSq := iLoc;
-        playMove.pieceType := findPieceType (board, turn, iLoc);
-        playMove.flags := 0;
-
-        l_2: 
-     {get end square}
-        validSq := FALSE;
-        repeat
-            gotoxy(30, 7);
-            write('to: ');
-            repeat
-                ans := getKeyInt;
-            until ans in[65..72, 82];
-            if ans = 82 then
-                goto l_1;
-            eLoc := ans - 65;
-            write(chr(ans));
-            repeat
-                ans := getKeyInt;
-            until ans in[49..56, 82];
-            if ans = 82 then
-                goto l_1;
-            eLoc := eLoc + ((ans - 49) * 8);
-            write(chr(ans));
-
-            {validate end square}
-            if (playMove.pieceType = King) and (abs(iLoc - eLoc) = 2) then
-                begin
-                    castleRights := checkCastleRights (board, turn);
-                    if turn = 0 then
-                        begin
-                            if (((iLoc - eLoc) > 0) and (castleRights and whiteLeftCastle <> 0)) or
-                               (((iLoc - eLoc) < 0) and (castleRights and whiteRightCastle <> 0)) then
-                                validSq := true
-                        end
-                    else
-                        begin
-                            if (((iLoc - eLoc) > 0) and (castleRights and blackLeftCastle <> 0)) or
-                               (((iLoc - eLoc) < 0) and (castleRights and blackRightCastle <> 0)) then
-                                validSq := true
-                        end
-
-                end
-            else
-                begin
-                    {trim movement to blocks}
-                    bits := Trim (turn, playMove.pieceType, iLoc, board, epCapDummy);
-                    validSq := getBit (bits, eLoc) <> 0
-                end;
-
-            {verify if own king in check after move}
-            if validSq then 
-                begin
-                    playMove.endSq := eLoc;
-                    testBoard := board;
-                    enterMoveSimple (turn, testBoard, playMove);
-                    if isKingChecked (turn, testBoard) then
-                        validSq := false;
-                end;
-                
-            if not validSq then
-                clearEntryField
-        until validSq;
+        state := 0;
         
+        repeat
+            case state of
+                0:
+                    begin
+                        square [0] := 0;
+                        gotoxy (20, 6);
+                        write (chr (7), 'enter move');
+                        gotoxy (20, 7);
+                        write ('from:           ');
+                        gotoxy (26, 7)
+                    end;
+                2:
+                    begin
+                        square [1] := 0;
+                        gotoxy (30, 7);
+                        write ('to:   ');
+                        gotoxy (34, 7)
+                    end
+            end;
+                
+            key := readKey (state);
+            if not (key in ['U', 'R']) then 
+                write (key);
+            inc (state);
+            case key of
+                'R':
+                    state := 0;
+                'U':
+                    begin
+                        Utility (humanSide);
+                        playMove.pieceType := InvalidPiece;
+                        if humanSide <> turn then
+                            exit;
+                        state := 0
+                    end;
+                'A'..'H':
+                    inc (square [pred (state) div 2], ord (key) - ord ('A'));
+                '1'..'8':
+                    inc (square [pred (state) div 2], 8 * (ord (key) - ord ('1')))
+            end;
+            
+            case state of
+                2:
+                    if getBit (board.sides [turn].bitboards [SidePieces], square [0]) = 0 then
+                        state := 0;
+                4:
+                    begin
+                        playMove := makeMoveRecord (board, turn, square [0], square [1]);
+                        if playMove.pieceType = InvalidPiece then
+                            state := 2
+                    end
+            end
+        until state = 4;
+                        
         {promote pawn if applicable}
         if (playMove.pieceType = pawn) and (playMove.endSq in [0..7, 56..63]) then
             begin
@@ -148,9 +101,9 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
                 gotoxy (22, 12);
                 writeln ('4- queen');
                 repeat
-                    ans := GetKeyInt
-                until ans in [49..52];
-                playMove.flags := (ans - 48) shl 4
+                    key := GetKey
+                until key in ['1'..'4'];
+                playMove.flags := (ord (key) - ord ('0')) shl 4
             end
 
     end;

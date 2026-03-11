@@ -178,7 +178,7 @@ procedure Utility(var humanSide: integer);
             gotoxy(20, 6);
             write('[4] forward');
             gotoxy(20, 7);
-            write('[5] first move');
+            write('[5] first move ');
             gotoxy(20, 8);
             write('[6] last move');
             gotoxy(20, 9);
