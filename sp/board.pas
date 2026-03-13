@@ -75,15 +75,24 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 
 function makeMoveRecord (var board: TBoardRecord; turn, startSq, endSq: integer): TMoveRecord;
-// sets pieceType in TMoveRecord to Invalid to indicate illegal move
+// sets pieceType in TMoveRecord to InvalidPiece to indicate illegal move
 
 function findPieceType (var board: TBoardRecord; turn, square: integer): integer;
+
+procedure setSquare (var board: TBoardRecord; side, piece, square: integer);
+procedure clearSquare (var board: TBoardRecord; side, piece, square: integer);
+procedure setCastleFlag (var board: TBoardRecord; flag: integer);
+procedure clearCastleFlag (var board: TBoardRecord; flag: integer);
+procedure setMoveFlag (var board: TBoardRecord; side: integer);
+
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
 
 procedure combinePieces (var board: TBoardRecord);
 procedure compressBoard (var board: TBoardRecord; var res: TCompressedBoard);
 procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord);
+
+
 
 implementation
 

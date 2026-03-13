@@ -118,28 +118,26 @@ end;
 (* PrintGame *)
 
 procedure NewBoard;
-
-var 
-    y, row : integer;
-
-begin
-    clrscr;
-    writeln('Phoenix Chess ', versionString);
-    writeln('ply : ', gamePly, '-', succ (gamePly - plyQS));
-    writeln;
-    y := 4;
-    row := 8;
-    writeln('------------------');
-    repeat
-        gotoxy(0, y);
-        writeln(row, '| |=| |=| |=| |=|');
-        writeln(pred(row), '|=| |=| |=| |=| |');
-        y := y + 2;
-        row := row - 2;
-    until y > 10;
-    writeln('------------------');
-    writeln('  A B C D E F G H');
-end; {NewBoard}
+    var 
+        y, row : integer;
+    begin
+        clrscr;
+        writeln ('Phoenix Chess ', versionString);
+        writeln ('ply : ', gamePly, '-', succ (gamePly - plyQS));
+        writeln;
+        y := 4;
+        row := 8;
+        writeln ('------------------');
+        repeat
+            gotoxy (0, y);
+            writeln (row, '| |=| |=| |=| |=|');
+            writeln (pred (row), '|=| |=| |=| |=| |');
+            y := y + 2;
+            row := row - 2
+        until y > 10;
+        writeln ('------------------');
+        writeln ('  A B C D E F G H');
+    end; {NewBoard}
 
 procedure showSquare (row, col: integer; ch: char);
     const 
@@ -301,74 +299,65 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
                         until ans in[67, 68, 82];
                     until ans <> 82;
                     
-                    if ans = 67 then
-                        showSquare (row, column, Figure [side, pieceType])
-                    else 
-                        if odd (row) = odd (column) then
-                            showSquare (row, column, '=')
-                        else
-                            showSquare (row, column,' ');
-                    
                     pLoc := 8 * row + column;
-                    bitval := ord (ans = 67);
-                    if side = 0 then
+                    if ans = 67 then
                         begin
-                            setBit (board.white.bitboards [pieceType], pLoc, bitval);
-                            setBit (board.white.pieces, pLoc, bitval)
+                            showSquare (row, column, Figure [side, pieceType]);
+                            setSquare (board, side, pieceType, pLoc)
                         end
-                    else
-                        begin
-                            setBit (board.black.bitboards [pieceType], pLoc, bitval);
-                            setBit (board.black.pieces, pLoc, bitval)
+                    else 
+                       begin
+                            if odd (row) = odd (column) then
+                                showSquare (row, column, '=')
+                            else
+                                showSquare (row, column,' ');
+                            clearSquare (board, side, pieceType, pLoc)
                         end;
-                    setBit (board.allPieces, pLoc, bitval);
-                    
                     showHChar (0, 14, 32, 7 * screenWidth)
                 end;
         until sideKey = 81;
 
-        board.flags := 0;
-
         writeln;
-        writeln(chr(7), 'allow white castling? (y/n)');
-        repeat
-            ans := GetKeyInt;
-        until ans in[78, 89];
-        if ans = 89 then
+        if getBit (board.white.kingBitboard, 4) = 1 then
             begin
-                if getBit (board.white.rookBitboard, 0) = 1 then
-                    board.flags := board.flags or whiteLeftCastle;
-                if getBit (board.white.rookBitboard, 7) = 1 then
-                    board.flags := board.flags or whiteRightCastle
+                writeln(chr(7), 'allow white castling? (y/n)');
+                repeat
+                    ans := GetKeyInt;
+                until ans in[78, 89];
+                if ans = 89 then
+                    begin
+                        if getBit (board.white.rookBitboard, 0) = 1 then
+                            setCastleFlag (board, whiteLeftCastle);
+                        if getBit (board.white.rookBitboard, 7) = 1 then
+                            setCastleFlag (board, whiteRightCastle)
+                    end
             end;
 
-        writeln(chr(7), 'allow black castling? (y/n)');
-        repeat
-            ans := GetKeyInt;
-        until ans in[78, 89];
-        if ans = 89 then
+        if getBit (board.black.kingBitboard, 60) = 1 then
             begin
-                if getBit (board.black.rookBitboard, 56) = 1 then
-                    board.flags := board.flags or blackLeftCastle;
-                if getBit (board.black.rookBitboard, 63) = 1 then
-                    board.flags := board.flags or blackRightCastle
+                writeln(chr(7), 'allow black castling? (y/n)');
+                repeat
+                    ans := GetKeyInt;
+                until ans in[78, 89];
+                if ans = 89 then
+                    begin
+                        if getBit (board.black.rookBitboard, 56) = 1 then
+                            setCastleFlag (board, blackLeftCastle);
+                        if getBit (board.black.rookBitboard, 63) = 1 then
+                           setCastleFlag (board, blackRightCastle)
+                    end
             end;
 
-        writeln(chr(7), 'side to start? [w]hite/[b]lack');
+        writeln ('side to start? [w]hite/[b]lack');
         repeat
-            ans := GetKeyInt;
-        until ans in[87, 66];
-        if ans = 87 then
-            begin
-                writeln('*** white to move ***');
-                turn := 0;
-            end
+            ch := upcase (getKey)
+        until ch in ['W', 'B'];
+        turn := ord (ch = 'B');
+        setMoveFlag (board, turn);
+        if turn = 0 then
+            writeln('*** white to move ***')
         else
-            begin
-                writeln('*** black to move ***');
-                turn := 1;
-                board.flags := board.flags or moveBlackFlag;
-            end;
+            writeln('*** black to move ***');
 
         write('enter move number: ');
         readln(gameMove)
