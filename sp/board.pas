@@ -55,6 +55,7 @@ type
     end;
     
     TBoardRecord = record
+        hash: uint64;
         flags: int16;
         allPieces: bitboard;
         case boolean of
@@ -81,8 +82,7 @@ function findPieceType (var board: TBoardRecord; turn, square: integer): integer
 
 procedure setSquare (var board: TBoardRecord; side, piece, square: integer);
 procedure clearSquare (var board: TBoardRecord; side, piece, square: integer);
-procedure setCastleFlag (var board: TBoardRecord; flag: integer);
-procedure clearCastleFlag (var board: TBoardRecord; flag: integer);
+procedure enterCastleFlag (var board: TBoardRecord; flag: integer; setflg: boolean);
 procedure setMoveFlag (var board: TBoardRecord; side: integer);
 
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
@@ -265,47 +265,77 @@ function findPieceType (var board: TBoardRecord; turn, square: integer): integer
         until result = InvalidPiece
     end;
     
+// board updates and Zobrist hashes
+
+{$bank:on}
+
+{$ifdef ti99}
+procedure ext_zobristkeys; external '../resources/zobristkeys.dat';
+
+var
+    zobristKeys: TZobristKeys absolute ext_zobristkeys;
+{$endif}    
+    
 procedure clearSquare (var board: TBoardRecord; side, piece, square: integer);
     begin
         clearBit (board.sides [side].bitboards [piece], square);
         clearBit (board.sides [side].pieces, square);
-        clearBit (board.allPieces, square)
+        clearBit (board.allPieces, square);
+        board.hash := board.hash xor zobristKeys.pieces [side, piece, square]
     end;
     
 procedure setSquare (var board: TBoardRecord; side, piece, square: integer);
     begin
         setBit (board.sides [side].bitboards [piece], square);
         setBit (board.sides [side].pieces, square);
-        setBit (board.allPieces, square)
+        setBit (board.allPieces, square);
+        board.hash := board.hash xor zobristKeys.pieces [side, piece, square]
     end;
     
-procedure clearCastleFlag (var board: TBoardRecord; flag: integer);
+procedure enterCastleFlag (var board: TBoardRecord; flag: integer; setflg: boolean);
+    var
+        index: integer;
     begin
-        board.flags := board.flags and not flag
-    end;
-    
-procedure setCastleFlag (var board: TBoardRecord; flag: integer);
-    begin
-        board.flags := board.flags or flag
+        if setflg then 
+            board.flags := board.flags or flag
+        else
+            board.flags := board.flags and not flag;
+        index := 0;
+        case flag of
+            whiteRightCastle:
+                index := 1;
+            blackLeftCastle:
+                index := 2;
+            blackRightCastle:
+                index := 3
+        end;
+        board.hash := board.hash xor zobristKeys.castling [index]
     end;
     
 procedure clearEnPassantRights (var board: TBoardRecord);
     begin
+        if board.flags and epMoveFlag <> 0 then
+            board.hash := board.hash xor zobristKeys.epfile [board.flags and epColBitmask];
         board.flags := board.flags and not (epMoveFlag + epColBitmask)
     end;
     
 procedure setEnPassantRights (var board: TBoardRecord; col: integer);
     begin
         board.flags := board.flags or col or epMoveFlag;
+        board.hash := board.hash xor zobristKeys.epfile [col]
     end;
     
 procedure setMoveFlag (var board: TBoardRecord; side: integer);
     begin
+        if (side = 1) = (board.flags and moveBlackFlag = 0) then
+           board.hash := board.hash xor zobristKeys.turn;
         if side = 1 then
             board.flags := board.flags or moveBlackFlag
         else
             board.flags := board.flags and not moveBlackFlag
     end;
+    
+{$bank:off}
     
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
         
@@ -352,21 +382,21 @@ procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var b
                     castleRook (move.startSq or 7, move.endSq - 1)
                 else if move.endSq = move.startSq - 2 then
                     castleRook (move.startSq and not 7, move.endSq + 1);
-                clearCastleFlag (board, castleFlags [turn, 0]);
-                clearCastleFlag (board, castleFlags [turn, 1])
+                enterCastleFlag (board, castleFlags [turn, 0], false);
+                enterCastleFlag (board, castleFlags [turn, 1], false)
             end;
             
         {check if rook is missing from start position}
         if board.flags and allCastleRights <> 0 then
             begin
                 if getBit (board.white.rookBitBoard, 0) = 0 then
-                    clearCastleFlag (board, whiteLeftCastle);
+                    enterCastleFlag (board, whiteLeftCastle, false);
                 if getBit (board.white.rookBitboard, 7) = 0 then
-                    clearCastleFlag (board, whiteRightCastle);
+                    enterCastleFlag (board, whiteRightCastle, false);
                 if getBit (board.black.rookBitBoard, 56) = 0 then
-                    clearCastleFlag (board, blackLeftCastle);
+                    enterCastleFlag (board, blackLeftCastle, false);
                 if getBit (board.black.rookBitboard, 63) = 0 then
-                    clearCastleFlag (board, blackRightCastle)
+                    enterCastleFlag (board, blackRightCastle, false)
             end;
             
         setMoveFlag (board, 1 - turn);
@@ -463,13 +493,13 @@ procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: strin
             begin
                 case s [index] of 
                     'Q':
-                        setCastleFlag (board, whiteLeftCastle);
+                        enterCastleFlag (board, whiteLeftCastle, true);
                     'K':
-                        setCastleFlag (board, whiteRightCastle);
+                        enterCastleFlag (board, whiteRightCastle, true);
                     'q':
-                        setCastleFlag (board, blackLeftCastle);
+                        enterCastleFlag (board, blackLeftCastle, true);
                     'k':
-                        setCastleFlag (board, blackRightCastle)
+                        enterCastleFlag (board, blackRightCastle, true)
                 end;
                 inc (index);
             end;

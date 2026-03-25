@@ -302,11 +302,9 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
         i, totalValue: integer;
         side, piece: integer;
         moves: TBookMoves;
-        compressedBoard: TCompressedBoard;
         
     begin
-        compressBoard (board, compressedBoard);
-        moves := searchMove (compressedBoard);
+        moves := searchMove (board.hash);
         result.move.pieceType := InvalidPiece;
         if moves [0] <> 0 then
             begin

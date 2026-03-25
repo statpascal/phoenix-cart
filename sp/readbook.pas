@@ -12,7 +12,7 @@ const
     
 type
     THashedPosition = record
-        compressed: TCompressedBoard;
+        hash: uint64;
         count: integer;
         nextMoves: array [1..maxMoves] of TMoveRecord;
         moveWeights: array [1..maxMoves] of integer;
@@ -24,26 +24,21 @@ var
     maxPosMoves: integer;
 
 procedure loadOpeningBook (fn: string);
-function makehexstr (var s: TCompressedBoard): string;
 
 
 implementation
 
 procedure registerMove (var board: TBoardRecord; turn: integer; var move: TMoveRecord);
     var
-        compressed: TCompressedBoard;
         index, moveIndex: integer;
     begin
-        compressBoard (board, compressed);
         index := 1;
-        if turn = 1 then
-            compressed.flags := compressed.flags or swapEndian (moveBlackFlag);
-        while (index <= posCount) and (compareByte (compressed, openings [index].compressed, sizeof (compressed)) <> 0) do
+        while (index <= posCount) and (openings [index].hash <> board.hash) do
             inc (index);
         if (index = succ (posCount)) and (posCount < maxPositions) then
             begin
                 inc (posCount);
-                openings [index].compressed := compressed;
+                openings [index].hash := board.hash;
                 openings [index].count := 0
             end;
         if posCount <> maxPositions then
@@ -97,19 +92,6 @@ procedure handlePositions (var mainBoard: TBoardRecord; line: string);
             end
     end;
     
-function makehexstr (var s: TCompressedBoard): string;
-    type
-        bytearr = array [0..100] of uint8;
-    var 
-        i: integer;
-        b: bytearr;
-    begin
-        move (s, b, sizeof (s));
-        result := '';
-        for i := 0 to pred (sizeof (s)) do
-            result := result + hexstr (b [i], 2)
-    end; 
-    
 procedure sortOpenings;
 
     procedure swap (i, j: integer);
@@ -124,15 +106,15 @@ procedure sortOpenings;
     procedure qsort (left, right: integer);
         var
             i, j: integer;
-            m: TCompressedBoard;
+            m: uint64;
         begin
-            m := openings [(left + right) div 2].compressed;
+            m := openings [(left + right) div 2].hash;
             i := Left; 
             j := right;
             repeat
-                while compareByte (openings [i].compressed, m, sizeof (TCompressedBoard)) < 0 do
+                while openings [i].hash < m do
                     inc (i);
-                while compareByte (openings [j].compressed, m, sizeof (TCompressedBoard)) > 0 do
+                while openings [j].hash > m do
                     dec (j);
                 if i <= j then
                     begin

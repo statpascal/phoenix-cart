@@ -11,6 +11,8 @@ var
     j: integer;
     f: file of uint16;
     g: file;
+    h: file of uint64;
+    p: ^uint64;
     
 begin
     assign (f, 'resources/piecescore.dat');
@@ -43,5 +45,13 @@ begin
     assign (g, 'resources/epcapture.dat');
     rewrite (g, 1);
     blockwrite (g, enPassantBitboards, sizeof (enPassantBitboards));
-    close (g)
+    close (g);
+
+    {$pointermath on}    
+    assign (h, 'resources/zobristkeys.dat');
+    rewrite (h);
+    p := addr (zobristKeys);
+    for j := 0 to sizeof (zobristKeys) div 8 do
+        write (h, swapEndian (p [j]));
+    close (h)
 end.

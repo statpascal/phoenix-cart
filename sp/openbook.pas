@@ -4,7 +4,7 @@ interface
 
 uses board, globals;
     
-function searchMove (var compressed: TCompressedBoard): TBookMoves;
+function searchMove (hash: uint64): TBookMoves;
     
     
 implementation
@@ -12,7 +12,7 @@ implementation
 {$ifdef ti99}
 uses cartbook;
 
-function searchMove (var compressed: TCompressedBoard): TBookMoves;
+function searchMove (hash: uint64): TBookMoves;
     var
         hi, lo, mid: integer;
         bookEntry: TBookEntry;
@@ -24,7 +24,7 @@ function searchMove (var compressed: TCompressedBoard): TBookMoves;
         repeat
             mid := (hi + lo) shr 1;
             bookEntry := getMove (mid);
-            case compareWord (compressed, bookEntry.compressedBoard, sizeof (TCompressedBoard) div 2) of
+            case compareWord (hash, bookEntry.hash, sizeof (uint64) div 2) of
                 1:
                     lo := mid + 1;
                 -1:
@@ -42,7 +42,7 @@ function searchMove (var compressed: TCompressedBoard): TBookMoves;
 {$ifdef fpc}
 uses readbook;
 
-function searchMove (var compressed: TCompressedBoard): TBookMoves;
+function searchMove (hash: uint64): TBookMoves;
     var
         i, diff, hi, lo, mid: integer;
         move: TMoveRecord;
@@ -54,10 +54,9 @@ function searchMove (var compressed: TCompressedBoard): TBookMoves;
                 hi := posCount;
                 repeat
                     mid := (hi + lo) shr 1;
-                    diff := compareByte (compressed, openings [mid].compressed, sizeof (TCompressedBoard));
-                    if diff > 0 then
+                    if hash > openings [mid].hash then
                         lo := mid + 1
-                    else if diff < 0 then
+                    else if hash < openings [mid].hash then
                         hi := mid - 1
                     else                            
                         begin

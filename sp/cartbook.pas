@@ -7,12 +7,12 @@ interface
 uses board, globals;
 
 const
-    BankSize = 100;
+    BankSize = 165;
     OpeningPositions = 2853;
 
 type
     TBookEntry = record
-        compressedBoard: TCompressedBoard;
+        hash: uint64;
         bookMoves: TBookMoves
     end;
     TOpeningBook = array [0..BankSize - 1] of TBookEntry;
@@ -129,72 +129,6 @@ function getMove17 (n: integer): TBookEntry;
         result := TOpeningBook (addr(book_17)) [n]
     end;
 
-function getMove18 (n: integer): TBookEntry;
-    procedure book_18; external '../book/book18.dat';
-    begin
-        result := TOpeningBook (addr(book_18)) [n]
-    end;
-
-function getMove19 (n: integer): TBookEntry;
-    procedure book_19; external '../book/book19.dat';
-    begin
-        result := TOpeningBook (addr(book_19)) [n]
-    end;
-
-function getMove20 (n: integer): TBookEntry;
-    procedure book_20; external '../book/book20.dat';
-    begin
-        result := TOpeningBook (addr(book_20)) [n]
-    end;
-
-function getMove21 (n: integer): TBookEntry;
-    procedure book_21; external '../book/book21.dat';
-    begin
-        result := TOpeningBook (addr(book_21)) [n]
-    end;
-
-function getMove22 (n: integer): TBookEntry;
-    procedure book_22; external '../book/book22.dat';
-    begin
-        result := TOpeningBook (addr(book_22)) [n]
-    end;
-
-function getMove23 (n: integer): TBookEntry;
-    procedure book_23; external '../book/book23.dat';
-    begin
-        result := TOpeningBook (addr(book_23)) [n]
-    end;
-
-function getMove24 (n: integer): TBookEntry;
-    procedure book_24; external '../book/book24.dat';
-    begin
-        result := TOpeningBook (addr(book_24)) [n]
-    end;
-
-function getMove25 (n: integer): TBookEntry;
-    procedure book_25; external '../book/book25.dat';
-    begin
-        result := TOpeningBook (addr(book_25)) [n]
-    end;
-
-function getMove26 (n: integer): TBookEntry;
-    procedure book_26; external '../book/book26.dat';
-    begin
-        result := TOpeningBook (addr(book_26)) [n]
-    end;
-
-function getMove27 (n: integer): TBookEntry;
-    procedure book_27; external '../book/book27.dat';
-    begin
-        result := TOpeningBook (addr(book_27)) [n]
-    end;
-
-function getMove28 (n: integer): TBookEntry;
-    procedure book_28; external '../book/book28.dat';
-    begin
-        result := TOpeningBook (addr(book_28)) [n]
-    end;
-
 function getMove (n: integer): TBookEntry;
     begin
         case n div BankSize of
@@ -215,18 +149,7 @@ function getMove (n: integer): TBookEntry;
             14: result := getMove14 (n mod BankSize);
             15: result := getMove15 (n mod BankSize);
             16: result := getMove16 (n mod BankSize);
-            17: result := getMove17 (n mod BankSize);
-            18: result := getMove18 (n mod BankSize);
-            19: result := getMove19 (n mod BankSize);
-            20: result := getMove20 (n mod BankSize);
-            21: result := getMove21 (n mod BankSize);
-            22: result := getMove22 (n mod BankSize);
-            23: result := getMove23 (n mod BankSize);
-            24: result := getMove24 (n mod BankSize);
-            25: result := getMove25 (n mod BankSize);
-            26: result := getMove26 (n mod BankSize);
-            27: result := getMove27 (n mod BankSize);
-            28: result := getMove28 (n mod BankSize)
+            17: result := getMove17 (n mod BankSize)
         end
     end;
 

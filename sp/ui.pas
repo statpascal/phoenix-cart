@@ -149,6 +149,8 @@ procedure showSquare (row, col: integer; ch: char);
     end;
 
 procedure BoardDisplay (var board: TBoardRecord);
+    type
+        TByteArray = array [0..7] of uint8;
     var 
         s, piece, i: integer;
         posArray: bitarray;
@@ -173,6 +175,10 @@ procedure BoardDisplay (var board: TBoardRecord);
             write ('q');
         if board.flags and epMoveFlag <> 0 then            
             write (' EP: ', chr (ord ('A') + board.flags and 7), 6 - 3 * ord (board.flags and MoveBlackFlag <> 0));
+        writeln;
+        write ('hash: ');
+        for i := 0 to 7 do 
+            write (hexstr2 (TByteArray (board.hash) [i]));
         gotoxy(0, 14)
     end;
     
@@ -327,9 +333,9 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
                 if ans = 89 then
                     begin
                         if getBit (board.white.rookBitboard, 0) = 1 then
-                            setCastleFlag (board, whiteLeftCastle);
+                            enterCastleFlag (board, whiteLeftCastle, true);
                         if getBit (board.white.rookBitboard, 7) = 1 then
-                            setCastleFlag (board, whiteRightCastle)
+                            enterCastleFlag (board, whiteRightCastle, true)
                     end
             end;
 
@@ -342,9 +348,9 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
                 if ans = 89 then
                     begin
                         if getBit (board.black.rookBitboard, 56) = 1 then
-                            setCastleFlag (board, blackLeftCastle);
+                            enterCastleFlag (board, blackLeftCastle, true);
                         if getBit (board.black.rookBitboard, 63) = 1 then
-                           setCastleFlag (board, blackRightCastle)
+                           enterCastleFlag (board, blackRightCastle, true)
                     end
             end;
 
@@ -378,8 +384,8 @@ procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
         writeln('last move: ', iLocString, ' to ', eLocString);
         if not isHumanMove then
             begin
-                showHChar (0, 17, 32, 2 * screenWidth);
-                gotoxy(0, 17);
+                showHChar (0, 18, 32, 2 * screenWidth);
+                gotoxy(0, 18);
                 write('number of positions evaluated: ');
                 if moveNumHi > 0 then
                     begin
