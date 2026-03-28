@@ -1,7 +1,7 @@
 program uci;
 
 uses
-    globals, board, genmove, logger, readbook;
+    globals, board, genmove, logger, readbook, bitops;
 
 var
     board: TBoardRecord;
@@ -50,7 +50,10 @@ procedure handlePosition (s: string);
                     move.startSq := ord (t [1]) - ord ('a') + 8 * (ord (t [2]) - ord ('1'));
                     move.endSq   := ord (t [3]) - ord ('a') + 8 * (ord (t [4]) - ord ('1'));
                     move.pieceType := findPieceType (board, side, move.startSq);
-                    move.flags := 0;
+                    if getBit (board.sides [1 - side].pieces, move.endSq) <> 0 then
+                        move.flags := AttackMove
+                    else
+                        move.flags := 0;
                     if length (t) = 5 then
                         case t [5] of
                             'r': move.flags := Rook shl 4;
@@ -75,6 +78,7 @@ procedure handlePosition (s: string);
             if isMoves and interpretMove (t, side, move) then
                 begin
                     enterMoveSimple (side, board, move);
+                    enterPositionHash (move, board.hash);
                     inc (movenr, side);
                     side := 1 - side
                 end

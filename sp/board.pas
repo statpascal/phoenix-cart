@@ -76,7 +76,7 @@ function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 
 function makeMoveRecord (var board: TBoardRecord; turn, startSq, endSq: integer): TMoveRecord;
-// sets pieceType in TMoveRecord to InvalidPiece to indicate illegal move
+// returns pieceType = InvalidPiece in TMoveRecord to indicate illegal move
 
 function findPieceType (var board: TBoardRecord; turn, square: integer): integer;
 
@@ -87,6 +87,13 @@ procedure setMoveFlag (var board: TBoardRecord; side: integer);
 
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
+
+procedure clearPositionHashes;
+procedure enterPositionHash (var move: TMoveRecord; hash: uint64);
+procedure pushPositionHash (var move: TMoveRecord; hash: uint64);
+procedure popPositionHash;
+function getPositionHashCount: integer;
+function isThreeFoldRepetition: boolean;
 
 procedure combinePieces (var board: TBoardRecord);
 procedure compressBoard (var board: TBoardRecord; var res: TCompressedBoard);
@@ -253,6 +260,8 @@ function makeMoveRecord (var board: TBoardRecord; turn, startSq, endSq: integer)
         bits := Trim (turn, result.pieceType, startSq, board, epCapDummy);
         if (getBit (bits, endSq) = 0) or exposesKing (board, result) then
             result.pieceType := InvalidPiece
+        else if getBit (board.sides [1 - turn].pieces, endSq) = 1 then
+            result.flags := AttackMove
     end;
 
 function findPieceType (var board: TBoardRecord; turn, square: integer): integer;
@@ -409,6 +418,75 @@ procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMo
         enterMove (turn, true, dummyId, board, move)
     end;
     
+const
+    MaxPositionHashes = 120;
+    
+var
+    hashes: array [0..MaxPositionHashes - 1] of uint64;
+    isStop: array [0..MaxPositionHashes - 1] of boolean;
+    hashCount: integer;
+    
+procedure clearPositionHashes;
+    begin
+        hashCount := 0;
+        isStop [0] := true
+    end;
+    
+procedure enterPositionHash (var move: TMoveRecord; hash: uint64);
+    begin
+        if (move.pieceType = Pawn) or (move.flags and AttackMove <> 0) then
+            hashCount := 0;
+        if hashCount < MaxPositionHashes then
+            begin
+                hashes [hashCount] := hash;
+                isStop [hashCount] := hashCount = 0;
+                inc (hashCount)
+            end
+    end;
+    
+procedure pushPositionHash (var move: TMoveRecord; hash: uint64);
+    begin
+        if hashCount < MaxPositionHashes then 
+            begin
+                hashes [hashCount] := hash;
+                if hashCount > 0 then
+                    isStop [hashCount] := (move.pieceType = Pawn) or (move.flags and AttackMove <> 0);
+            end;
+        inc (hashCount)
+    end;
+    
+procedure popPositionHash;
+    begin
+        dec (hashCount)
+    end;
+    
+function getPositionHashCount: integer;
+    begin
+        getPositionHashCount := hashCount
+    end;
+
+function isThreeFoldRepetition: boolean;
+    var
+        count, index: integer;
+        hash: uint64;
+    begin
+        if (hashCount = 0) or (hashCount >= maxPositionHashes) then
+            isThreeFoldRepetition := false
+        else
+            begin
+                count := 1;
+                index := pred (hashCount);
+                hash := hashes [index];
+                while not isStop [index] and (count < 3) do
+                    begin
+                        dec (index);
+                        if hashes [index] = hash then 
+                            inc (count)
+                    end;
+                isThreeFoldRepetition := count = 3
+            end
+    end;    
+    
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
     var
         castleRights: integer;
@@ -528,6 +606,7 @@ procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: strin
                 dec (index)
             end;
             
+        clearPositionHashes
     end;
 
 procedure setInitPosition (var board: TBoardRecord; var side, moveNr: integer);

@@ -14,7 +14,7 @@ function getKeyInt: integer;
 
 implementation
 
-uses trimprocs;
+uses trimprocs, logger;
 
 function getKeyInt: integer;
     begin
@@ -370,18 +370,11 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
     end;
 
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
-    var 
-        iLocString, eLocString: string [2];
-
     begin
-        iLocString [0] := #2;
-        eLocString [0] := #2;
-        iLocString [1] := chr (65 + (moveScore.move.startSq mod 8));
-        iLocString [2] := chr (49 + (moveScore.move.startSq div 8));
-        eLocString [1] := chr (65 + (moveScore.move.endSq mod 8));
-        eLocString [2] := chr (49 + (moveScore.move.endSq div 8));
-        gotoxy(20, 4);
-        writeln('last move: ', iLocString, ' to ', eLocString);
+        gotoxy (20, 4);
+        write ('last move: ');
+        printMove (output, moveScore.move);
+        
         if not isHumanMove then
             begin
                 showHChar (0, 18, 32, 2 * screenWidth);

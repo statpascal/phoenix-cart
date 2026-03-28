@@ -233,34 +233,46 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
             isQuiet := not isAttack;        // TODO: add check as condition
             workBoard := board;
             workMoveScore := moveScore;
+            
             enterMove (turn, isAttack, capId, workBoard, tempMove);
+            pushPositionHash (tempMove, workBoard.hash);
             
             {check if own king in check after current move}
             if not isKingChecked (turn, workBoard) then 
                 begin
                     hasValidMove := true;
-                    evaluateMove (turn, board, isAttack, tempMove, capId, workMoveScore);
                     if doLogging then begin   
                         indent (pred (ply)); 
                         printMove (logFile, tempMove)
                     end;
-                    if isQuiet and (ply <= 1) or (ply = plyQS) then
-                        {terminal node check - the original NegaMax does another recursive call}
+                    
+                    if isThreeFoldRepetition then
                         begin
-                            evalScore := evaluatePosition (workBoard, workMoveScore);
+                            evalScore := 0;
                             if doLogging then
-                                writeln (logFile, ': ', evalScore: 6);
-                            if turn = 1 then
-                                evalScore := -evalScore
+                                writeln (logfile, ': ', 0:6, ' (3 rep)')
                         end
                     else
                         begin
-                            if doLogging then
-                                if turn = 0 then
-                                    writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
-                                else
-                                    writeln (logFile, ': alpha = ', -beta, ' beta = ', -alpha);
-                            evalScore := -NegaMax (workBoard, workMoveScore, -beta, -alpha, pred (ply), 1 - turn).score
+                            evaluateMove (turn, board, isAttack, tempMove, capId, workMoveScore);
+                            if isQuiet and (ply <= 1) or (ply = plyQS) then
+                                {terminal node check - the original NegaMax does another recursive call}
+                                begin
+                                    evalScore := evaluatePosition (workBoard, workMoveScore);
+                                    if doLogging then
+                                        writeln (logFile, ': ', evalScore: 6);
+                                    if turn = 1 then
+                                        evalScore := -evalScore
+                                end
+                            else
+                                begin
+                                    if doLogging then
+                                        if turn = 0 then
+                                            writeln (logFile, ': alpha = ', alpha, ' beta = ', beta)
+                                        else
+                                            writeln (logFile, ': alpha = ', -beta, ' beta = ', -alpha);
+                                    evalScore := -NegaMax (workBoard, workMoveScore, -beta, -alpha, pred (ply), 1 - turn).score
+                                end
                         end;
 
                     {alpha/beta selection}
@@ -282,7 +294,9 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
                     else
                         if result.Score > alpha then
                             alpha := result.Score;
-                end
+                end;
+                
+            popPositionHash
         until isPruned or (currentMoveIndex = moveStackPointer);
         moveStackPointer := savedMoveStackPointer;
         

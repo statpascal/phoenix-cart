@@ -158,9 +158,8 @@ function isMate (turn: integer; var board: TBoardRecord): boolean;
                 result := isKingChecked (turn, tempBoard)
             end
     end;
-
+    
 procedure chainMain;
-
     var mainBoard: TBoardRecord;
         compressedBoard: TCompressedBoard;
         checkFlag: boolean;
@@ -224,9 +223,15 @@ procedure chainMain;
 *)            
 
             enterMoveSimple (gameSide, mainBoard, playMove.move);
+            enterPositionHash (playMove.move, mainBoard.hash);
 
-            {convert move to coordinates}
             BoardDisplay (mainBoard);
+            
+            if isThreeFoldRepetition then
+                begin
+                    gotoxy (20, 2);
+                    write ('3-fold rep')
+                end;
 
             {look for check condition}
             checkFlag := isKingChecked (1 - gameSide, mainBoard);

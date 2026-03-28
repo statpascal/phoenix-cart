@@ -103,7 +103,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
                 repeat
                     key := GetKey
                 until key in ['1'..'4'];
-                playMove.flags := (ord (key) - ord ('0')) shl 4
+                playMove.flags := playMove.flags or (ord (key) - ord ('0')) shl 4
             end
 
     end;
