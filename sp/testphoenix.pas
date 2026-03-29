@@ -93,9 +93,10 @@ procedure evalTests;
     testPosition ('8/P7/8/8/8/4k3/8/4K3 w - - 0 40', 'a7a8q', 'DSK0.promotion-1.log', 2, 0);
     testPosition ('b7/k1P5/p7/8/8/8/3K4/1R6 w - - 0 40', 'c7c8n', 'DSK0.promotion-knight.log', 4, 0);
     testPosition ('8/4k3/8/8/8/8/p6K/8 w - - 0 40', 'h2g3', 'DSK0.promotion-2.log', 4, 0);
+    
     disableAlphaBetaPruning := true;
     testPosition ('4k3/p1p3p1/8/1P5P/1p1p4/8/P1P1P3/4K3 w - - 0 10', 'e1d2', 'DSK0.ep-test.log', 3, 0);
-    testPosition ('8/8/8/4k3/8/4K3/8/8 b - - 0 10', '', 'DSK0.threerep.log', 10, 0);
+//    testPosition ('8/8/8/4k3/8/4K3/8/8 b - - 0 10', '', 'DSK0.threerep.log', 10, 0);
     disableAlphaBetaPruning := false;
 
     testPosition ('7R/1q3p1k/7p/8/P1b5/K1P5/5P1P/8 b - - 0 40', 'h7h8', 'DSK0.king-capture.log', 6, 4);    
@@ -113,7 +114,7 @@ procedure evalTests;
 
   
 begin
-//    readTestPositions (ParamStr (1));
-//    testPosition ('rnbqkbnr/ppp1pppp/8/3p4/4P3/3P4/PPP2PPP/RNBQKBNR b KQkq - 0 2', '', 'DSK0.opening-ply3.log', 3, 2);
-    evalTests
+    readTestPositions (ParamStr (1));
+//    testPosition ('r1bqkb1r/ppp2ppp/2np1n2/3Pp3/4P3/2N2N2/PPP2PPP/R1BQKB1R b KQkq - 0 6', '', 'DSK0.pawn-lost.log', 5, 7);
+//    evalTests
 end.

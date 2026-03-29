@@ -99,51 +99,6 @@ procedure initGame (var mainBoard: TBoardRecord);
             plyQS := 1 - (ans - 48)
     end;
 
-
-(*
-
-procedure check3Rep;
-    begin
-            {check for 3-move repetition}
-        if gameMove > 6 then
-            begin
-                repFlag := TRUE;
-                sPage := BASE2;
-                tempPointer := gamePointer;
-                for i := 1 to 3 do
-                    begin
-                        tempPointer := tempPointer - 8;
-                        offset := PLAYLIST + tempPointer;
-                        DataOps(2, sPage, dataSize, offset, moveStore);
-                        offset := PLAYLIST + tempPointer - 32;
-                        DataOps(2, sPage, dataSize, offset, tempMove);
-                        // TODO: 
-                        //      if moveStore <> tempMove then
-                        if not compareWord (moveStore, tempMove, 4) then
-                            repFlag := FALSE;
-                        offset := PLAYLIST + tempPointer - 64;
-                        DataOps(2, sPage, dataSize, offset, tempMove);
-                        // TODO
-                        //      if moveStore <> tempMove then
-                        if not compareWord (moveStore, tempMove, 4) then
-                            repFlag := FALSE;
-                    end;
-                if repFlag then
-               {3x repetition. Draw}
-                    begin
-                        gotoxy(20, 0);
-                        write(chr(7), chr(7), 'draw by 3-fold repetition!');
-                        ans := GetKeyInt;
-                        readln;
-                        Utility(i);
-                        exit;
-                    end;
-            end;
-    end;
-    
-*)    
-    
-    
 function isMate (turn: integer; var board: TBoardRecord): boolean;
     var
         tempBoard: TBoardRecord;

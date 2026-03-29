@@ -9,7 +9,6 @@ type
     bitarray = array [0..64] of integer;
 
 
-// procedure BitTrim (var b: bitboard; pos, ptype, opponent: integer);
 procedure BitPos (var b1: bitboard; var posarray: bitarray);
 function BitCount (var b: bitboard): integer;
 

@@ -95,3 +95,7 @@
 2026-03-28-18-30
 
 - Added three fold repetition
+
+2026-03-28-19-00
+
+- Deactivated capture bonus

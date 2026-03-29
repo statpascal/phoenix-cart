@@ -55,7 +55,7 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
         {capture bonus}
         if attackFlag then
             begin
-                inc (bonus, captureBonus [move.pieceType, capId]);
+//                inc (bonus, captureBonus [move.pieceType, capId]);
                 if (move.pieceType = Queen) and (capId = Queen) then
                     if turn = 0 then
                         move.flags := move.flags or MoveQueenExchangeWhite
