@@ -133,6 +133,7 @@ var
 begin
     plyQs := -4;
     gamePly := 6;
+    Randomize;
     
     for i := 0 to pred (ParamCount div 2) do
         begin
