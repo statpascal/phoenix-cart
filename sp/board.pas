@@ -93,6 +93,7 @@ procedure enterPositionHash (var move: TMoveRecord; hash: uint64);
 procedure pushPositionHash (var move: TMoveRecord; hash: uint64);
 procedure popPositionHash;
 function getPositionHashCount: integer;
+procedure setPositionHashCount (val: integer);
 function isThreeFoldRepetition: boolean;
 
 procedure combinePieces (var board: TBoardRecord);
@@ -463,6 +464,11 @@ procedure popPositionHash;
 function getPositionHashCount: integer;
     begin
         getPositionHashCount := hashCount
+    end;
+
+procedure setPositionHashCount (val: integer);
+    begin
+        hashCount := val
     end;
 
 function isThreeFoldRepetition: boolean;

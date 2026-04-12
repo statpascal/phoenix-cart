@@ -5,7 +5,7 @@ uses
 
 var
     board: TBoardRecord;
-    side, movenr: integer;
+    side: integer;
     
 procedure answerUciInit;
     begin
@@ -72,14 +72,14 @@ procedure handlePosition (s: string);
             move: TMoveRecord;
         begin
             if t = 'startpos' then
-                setInitPosition (board, side, movenr);
+                setInitPosition (board, side, gameMove);
             if t = 'moves' then
                 isMoves := true;
             if isMoves and interpretMove (t, side, move) then
                 begin
                     enterMoveSimple (side, board, move);
                     enterPositionHash (move, board.hash);
-                    inc (movenr, side);
+                    inc (gameMove, side);
                     side := 1 - side
                 end
         end;
@@ -129,10 +129,12 @@ procedure commandLoop;
 var
     i, h: integer;
     cmd, v: string;
+    logging: boolean;
 
 begin
     plyQs := -4;
     gamePly := 6;
+    logging := false;
     Randomize;
     
     for i := 0 to pred (ParamCount div 2) do
@@ -146,9 +148,22 @@ begin
                     val (v, h);
                     plyQs := 1 - h
                 end;
+            if cmd = '-nodes' then
+                begin
+                    val (v, h);
+                    setMaxMoves (h)
+                end;
             if cmd = '-opening' then
-                loadOpeningBook (v)
+                loadOpeningBook (v);
+            if cmd = '-log' then
+                begin
+                    logging := true;
+                    startLogging (v)
+                end
         end;
         
-    commandLoop
+    commandLoop;
+    
+    if logging then
+        stopLogging
 end.

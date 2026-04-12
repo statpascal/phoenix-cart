@@ -142,9 +142,6 @@ procedure chainMain;
             else
                 write('turn: black');
         
-            moveNumLo := 0;
-            moveNumHi := 0;
-
             if humanSide = gameSide then
                 {TODO: save current game state}
                 playerMove (mainBoard, playMove.move, gameSide, humanSide);	// may change game side

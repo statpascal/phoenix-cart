@@ -258,15 +258,6 @@ function evaluatePosition (var board: TBoardRecord; moveScore: TMoveScore): inte
     var
         endGame: integer;
     begin
-        {update number of positions evaluated}
-        inc (moveNumLo);
-        if (moveNumLo = 1000) then
-            begin
-                moveNumLo := 0;
-                inc (moveNumHi)
-            end;
-        
-    
         endGame := moveScore.flags and MoveEndGame;
         
         result := evaluateSide (board.white, board, 0, endGame) 

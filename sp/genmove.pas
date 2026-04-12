@@ -1,3 +1,4 @@
+
 unit genmove;
 
 interface
@@ -22,7 +23,8 @@ var
     moveStack: array [0..MoveStackSize] of TMoveRecord;
 {$endif}
     moveStackPointer: integer;
-    
+
+procedure setMaxMoves (val: integer);    
 procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
 
 function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreRecord;
@@ -41,6 +43,15 @@ utility,
 {$endif}
 resources, logger, bitops, openbook;
 
+var
+    maxMoves: integer;
+    isDeepening: boolean;
+    
+procedure setMaxMoves (val: integer);
+    begin
+        maxMoves := val
+    end;
+
 procedure pushMoveStack (var move: TMoveRecord); overload;
     begin
         if moveStackPointer <= moveStackSize then
@@ -56,6 +67,7 @@ const
 var
     valueCaptureBoard: array [Pawn..Bishop] of bitboard;
     killerMoves: array [MinPly..MaxPly, 0..1] of TMoveRecord;
+    jmpbuf: jmp_buf;
 
 procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
     const
@@ -262,7 +274,17 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
                                     if doLogging then
                                         writeln (logFile, ': ', evalScore: 6);
                                     if turn = 1 then
-                                        evalScore := -evalScore
+                                        evalScore := -evalScore;
+
+                                    {update number of positions evaluated}
+                                    inc (moveNumLo);
+                                    if (moveNumLo = 1000) then
+                                        begin
+                                            moveNumLo := 0;
+                                            inc (moveNumHi);
+                                            if isDeepening and (moveNumHi >= maxMoves) then
+                                                longjmp (jmpbuf, 1)
+                                        end
                                 end
                             else
                                 begin
@@ -313,8 +335,8 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
         pieceValue: array [Pawn..Queen] of integer = (PawnValue, RookValue, KnightValue, BishopValue, QueenValue);
     var
         moveScore: TMoveScore;
-        i, totalValue: integer;
-        side, piece: integer;
+        result1: TMoveScoreRecord;
+        i, totalValue, side, piece, savedHashCount: integer;
         moves: TBookMoves;
         
     begin
@@ -335,6 +357,8 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
                 fillChar (killerMoves, sizeof (killerMoves), 0);
                 fillChar (moveScore, sizeof (moveScore), 0);
                 totalValue := 0;
+                moveStackPointer := 0;
+                
                 for piece := Pawn to Queen do
                     for side := 0 to 1 do 
                         inc (totalValue, pieceValue [piece] * BitCount (board.sides [side].bitboards [piece]));
@@ -343,10 +367,28 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
         
                 if doLogging then
                     printBoard (logFile, board);
-                result := NegaMax (board, moveScore, alpha, beta, ply, turn)
+                    
+                moveNumLo := 0;
+                moveNumHi := 0;
+                isDeepening := false;
+                result := NegaMax (board, moveScore, alpha, beta, ply, turn);
+
+                if maxMoves <> 0 then
+                    begin
+                        isDeepening := true;
+                        savedHashCount := getPositionHashCount;                
+                        if setjmp (jmpbuf) = 0 then
+                            repeat
+                                inc (ply);
+                                result1 := NegaMax (board, moveScore, alpha, beta, ply, turn);
+                                // Only use if we do not break out with longjmp
+                                result := result1;
+                            until false;
+                        setPositionHashCount (savedHashCount)
+                    end
             end
     end;
 
 begin
-    moveStackPointer := 0
+    maxMoves := 0;
 end.
