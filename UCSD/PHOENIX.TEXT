@@ -1,3 +1,4 @@
+{$R-}
 program phoenix;
 {Phoenix Chess launcher}
 uses {$U chesslib.code} globals, {$U commandio.code} commandio;
@@ -13,7 +14,7 @@ function SamsInit : integer; external;
  
 begin
  Page(OUTPUT);
- writeln('Phoenix Chess 2.7');
+ writeln('Phoenix Chess 2.8');
  n := SamsInit;
  if n = 0 then
   begin
@@ -49,7 +50,7 @@ begin
  offset := OPENLIB;
  startPage := BASE3;
  dataSize := 2;
- reset(iFile, '#9:openings.data');
+ reset(iFile, 'openings.data');
  n := iFile^;
  repeat
   DataOps(1, startPage, dataSize, offset, n);

@@ -8,19 +8,20 @@ const
     MoveQueenExchangeWhite = 1;
     MoveQueenExchangeBlack = 2;
     MoveEndGame = 4;
-  
+
+(*  
     PawnValue = 150;
     RookValue = 525;
     KnightValue = 400;
     BishopValue = 400;
     QueenValue = 973;
-(*    
+*)    
     PawnValue = 100;
     RookValue = 505;
-    KnightValue = 300;
-    BishopValue = 300;
+    KnightValue = 325;
+    BishopValue = 350;
     QueenValue = 900;
-*)    
+    
     EndGameReached = 3000;
 
 type
@@ -40,10 +41,10 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
     const
         captureBonus: array [0..5, 0..5] of uint8 = (
         //     P    R    N    B    Q    K
-            ( 10, 100, 100, 100, 100, 100),         // pawn
-            (  0,  50,   0,   0,  50,   0),         // rook
-            (  0,  50,  25,  25,  50,   0),         // knight
-            (  0,  50,  25,  25,  50,   0),         // bishop
+            ( 10,  25,  25,  25,  50,   0),         // pawn
+            (  0,  25,   0,   0,  50,   0),         // rook
+            (  0,  25,   0,   0,  50,   0),         // knight
+            (  0,  25,   0,   0,  50,   0),         // bishop
             (  0,   0,   0,   0,   0,   0),         // queen
             (  0,   0,   0,   0,   0,   0));   	    // king
     var
@@ -55,12 +56,12 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
         {capture bonus}
         if attackFlag then
             begin
-//                inc (bonus, captureBonus [move.pieceType, capId]);
+                inc (bonus, captureBonus [move.pieceType, capId]);
                 if (move.pieceType = Queen) and (capId = Queen) then
                     if turn = 0 then
-                        move.flags := move.flags or MoveQueenExchangeWhite
+                        moveScore.flags := moveScore.flags or MoveQueenExchangeWhite
                     else
-                        move.flags := move.flags or MoveQueenExchangeBlack
+                        moveScore.flags := moveScore.flags or MoveQueenExchangeBlack
             end;
 
         {bonus for castling/penalty for moving king if castling possible}
@@ -80,7 +81,7 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
   
         {penalty if moving queen too early in game}
         if (move.pieceType = Queen) and (gameMove < 5) then
-            dec (bonus, 100);
+            dec (bonus, 50);
             
 //        {check bonus}
 //        if isKingChecked (1 - turn, prevBoard) then
@@ -140,13 +141,13 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                              if row >= 2 then
                                  begin
                                      if (col <> 0) and (getBit (sideBoards.pawnBitboard, pLoc - 9) <> 0) then
-                                         inc (sideVals [side], 15);
+                                         inc (sideVals [side], 20);
                                      if (col <> 7) and (getBit (sideBoards.pawnBitboard, ploc - 7) <> 0) then
-                                         inc (sideVals [side], 15)
+                                         inc (sideVals [side], 20)
                                   end;
                              {doubled pawns penalty}
                              if (row < 7) and (getBit (sideBoards.pawnBitboard, pLoc + 8) <> 0) then
-                                 dec (sideVals [side], 25);
+                                 dec (sideVals [side], 50);
                              inc (sideVals [side], pieceScoreData [PawnScore, pLoc])
                         end
                     else
@@ -158,13 +159,13 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                             if row <= 5 then 
                                 begin
                                     if (col <> 0) and (getBit (sideBoards.pawnBitboard, ploc + 7) <> 0) then
-                                        inc (sideVals [side], 15);
+                                        inc (sideVals [side], 20);
                                     if (col <> 7) and (getBit (sideBoards.pawnBitboard, ploc + 9) <> 0) then
-                                        inc (sideVals [side], 15)
+                                        inc (sideVals [side], 20)
                                  end;
                             {doubled pawns penalty}
                             if (row > 0) and (getBit (sideBoards.pawnBitboard, pLoc - 8) <> 0) then
-                                dec (sideVals [side], 25);
+                                dec (sideVals [side], 50);
                             inc (sideVals [side], pieceScoreData [PawnScore, pLoc xor 56])
                         end
                 end;

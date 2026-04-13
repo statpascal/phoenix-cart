@@ -1,3 +1,4 @@
+{$R-}
 unit Move1;
 
 interface
@@ -39,9 +40,9 @@ begin
  dataSize := 8;
 
  if turn = 0 then
-  bestScore := -20000
+  bestScore := -19980 - ply
  else
-  bestScore := 20000;
+  bestScore := 19980 + ply;
 
  {iterate through move list}
  currentMove := attackList;
@@ -288,16 +289,6 @@ begin
       if bestScore > beta then
        begin
         pruneFlag := 1;
-        {save killer move}
-        if attackFlag = 0 then
-         begin
-          offset := 3000 + (ply * 16);
-          DataOps(2, sPage1, dataSize, offset, predMove);
-          offset := offset + 8;
-          DataOps(1, sPage1, dataSize, offset, predMove);
-          offset := offset - 8;
-          DataOps(1, sPage1, dataSize, offset, tempMove);
-         end;
        end;
       if bestScore > alpha then
        alpha := bestScore;
@@ -349,16 +340,6 @@ begin
       if bestScore > beta then
        begin
         pruneFlag := 1;
-        {save killer move}
-        if attackFlag = 0 then
-         begin
-          offset := 3000 + (ply * 16);
-          DataOps(2, sPage1, dataSize, offset, predMove);
-          offset := offset + 8;
-          DataOps(1, sPage1, dataSize, offset, predMove);
-          offset := offset - 1;
-          DataOps(1, sPage1, dataSize, offset, tempMove);
-         end;
        end;
       if bestScore > alpha then
        alpha := bestScore;

@@ -1,4 +1,4 @@
-(* version 1-9-26 v2.7)
+(* version 3-12-26 v2.8)
 (* 10-19-25: Fixed castling when rook not present *)
 (* 10-19-25: Adjusted the resign parameters *)
 (* 10-30-25: Added capture bonus in scorepos *)
@@ -38,7 +38,19 @@
 (* 1-9-26: discarded mobility score (again!). Adverse effect on pruning *)
 (* 1-9-26: moved endgame determination to main unit *)
 (* 1-9-26: discarded the en passant risk penalty from scorepos *)
+(* 1-9-26: adjusted bonuses in bonuscalc and piece weights in scorepos *)
+(* 1-10-26: removed killer moves code. Was causing play degradation *)
+(* 1-10-26: corrected bug in castling validation in MoveGen *)
+(* 1-16-26: reduced opposite king check bonus *)
+(* 1-16-26: increased castling bonus *)
+(* 1-25-26: adjusted bestScore initial value *)
+(* 1-28-26: decreased castling bonus *)
+(* 1-28-26: adjusted piece values *)
+(* 1-28-26: moved the en passant capture risk eval to bonuscalc *)
+(* 2-14-26: adjusted the castling and pawn support bonuses *)
+(* 3-12-26: various bonus adjustments in bonuscalc *)
 
+{$R-}
 Program Main;
 uses random,
 {$U chesslib.code} globals, move1,
@@ -289,23 +301,14 @@ begin (* main *)
 
   if not(endGame) then
    begin
-    i := 0;
-    offset := WPO;
-    offset1 := WPO;
-    repeat
-     repeat
-      DataOps(2, startPage, dataSize, offset1, bit1);
-      BitPos(bit1, moveArray);
-      i := i + moveArray[0];
-      offset1 := offset1 + 8;
-     until offset1 = 40;
-     offset := offset + 48;
-     offset1 := BPO;
-    until offset > BPO;
-    if i <= 3000 then
+    offset := APIECES;
+    DataOps(2, startPage, dataSize, offset, bit1);
+    BitPos(bit1, moveArray);
+    if moveArray[0] <= 10 then
      endGame := TRUE;
    end;
-  
+
+  moveScore := 0;
   i := 0;
   {$I playseq.text}
   if i = 1 then

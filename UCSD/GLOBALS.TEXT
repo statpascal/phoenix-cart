@@ -1,3 +1,4 @@
+{$R-}
 unit Globals;
 
 interface
@@ -118,7 +119,7 @@ type
  end;
 
  bitboard = array[0..3] of integer;
- bitarray = array[0..50] of integer;
+ bitarray = array[0..45] of integer;
 
 var
  startPage, sPage, dataSize, turn, gameSide, gamePointer : integer;

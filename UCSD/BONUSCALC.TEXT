@@ -1,0 +1,116 @@
+{scoring adjustments}
+    bonus := 0;
+    {capture bonus}
+    if attackFlag = 1 then
+     begin
+      case attackId of
+       0 : if capId = 0 then
+            bonus := 10
+           else
+            bonus := 100;
+       8 : if capId = 8 then
+            bonus := 50
+           else
+            if capId = 32 then
+             bonus := 500;
+       16, 24 : if capId = 8 then
+                 bonus := 200
+                else
+                 if capId = 32 then
+                  bonus := 700
+                 else
+                  if capId in[16, 24] then
+                   bonus := 50;
+       32 : if capId = 32 then
+             if ((turn = 0) and ((evalScore >= 50) or (score >= 50))) or
+                ((turn = 1) and ((evalScore <= -50) or (score <= -50))) then
+              bonus := 100;
+      end;
+     end;
+   
+    {penalty for moving king if castling possible}
+    if (tempMove.id = 40) and (cMoveFlag = 0) and 
+       (Abs(tempMove.startSq - tempMove.endSq) = 1) then
+     begin
+      if (turn = 0) and (wCastleFlag = 0) then
+       bonus := bonus - 200
+      else
+       if (turn = 1) and (bCastleFlag = 0) then
+        bonus := bonus - 200;
+     end;
+
+    {penalty for moving the rook if castling possible on its side}
+    if (tempMove.id = 8) and (gameMove < 13) then
+     begin
+      if (turn = 0) and (wCastleFlag = 0) then
+       bonus := bonus - 100
+      else
+       if (turn = 1) and (bCastleFlag = 0) then
+        bonus := bonus - 100;
+     end;
+
+    {penalty if moving queen too early in game}
+    if (tempMove.id = 32) and (gameMove < 5) then
+     bonus := bonus - 50;
+
+    {castling bonus}
+    if cMoveFlag = 1 then
+     begin
+      if attackFlag = 0 then
+       bonus := bonus + 500
+      else
+       bonus := bonus + 100;
+     end;
+
+    {apply penalty if repeat move when score favors engine}
+    if ((turn = 0) and (bestScore >= 100)) or ((turn = 1) and
+       (bestScore <= -100)) then
+     begin
+      if gameMove > 6 then
+       begin
+        {get move from 2 moves prior}
+        dataSize := 8;
+        offset := PLAYLIST + (gamePointer - 32);
+        DataOps(2, sPage1, dataSize, offset, predMove);
+        predMove.link := NIL;
+        {compare to currently considered move}
+        tempMove.link := NIL;
+        if tempMove = predMove then
+         bonus := bonus - 200;
+       end;
+     end;
+
+    {check bonus}
+    if checkFlag then
+     bonus := bonus + 10;
+
+    {en passant capture risk}
+     if (tempMove.id = 0) and (abs(tempMove.startSq - tempMove.endSq) = 16)
+        then
+      begin
+       if turn = 0 then
+        begin
+         offset1 := WEP + ((tempMove.startSq - 8) * 8);
+         offset2 := TBPO;
+        end
+       else
+        begin
+         offset1 := BEP + ((tempMove.startSq - 48) * 8);
+         offset2 := TWPO;
+        end;
+       DataOps(2, sPage1, dataSize, offset1, bit2);
+       DataOps(2, startPage, dataSize, offset2, bit3);
+       BitAnd(bit2, bit3, bit2);
+       if not(IsClear(bit2)) then
+        bonus := bonus - 50;
+      end;
+
+    {pawn advancement bonus if in endgame}
+    if (endGame) and (tempMove.id = 0) then
+     begin
+      if turn = 0 then
+       bonus := bonus + ((tempMove.endSq div 5) * 50)
+      else
+       bonus := bonus + (((63 - tempMove.endSq)  div 5) * 50);
+     end;
+

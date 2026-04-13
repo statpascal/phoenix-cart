@@ -199,13 +199,17 @@
    end
   else
    begin
-    if (abs(moveScore) = 20000) and (turn <> humanSide) then
+    if (turn <> humanSide) then
      begin
-      gotoxy(20, 1);
-      write(chr(7), chr(7), 'resign!');
-      ans := GetKey;
-      readln;
-      Utility(i);
-      exit(program);
+      if ((turn = 0) and (moveScore <= -19980)) or 
+         ((turn = 1) and (moveScore >= 19980)) then
+       begin
+        gotoxy(20, 1);
+        write(chr(7), chr(7), 'resign!');
+        ans := GetKey;
+        readln;
+        Utility(i);
+        exit(program);
+       end;
      end;
    end;

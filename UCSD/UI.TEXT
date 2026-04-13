@@ -1,3 +1,4 @@
+{$R-}
 unit ui;
 
 interface

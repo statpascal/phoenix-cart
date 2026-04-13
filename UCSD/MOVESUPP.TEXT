@@ -1,0 +1,233 @@
+ {check for back row interposing pieces}
+ if ((turn = 0) and (wCastleFlag = 0)) or
+    ((turn = 1) and (bCastleFlag = 0)) then
+  begin
+   offset := TAPIECES;
+   DataOps(2, startPage, dataSize, offset, bit1);
+   if turn = 0 then
+    begin
+     {white}
+     offset1 := WRCMASK;
+     offset2 := WLCMASK;
+     {right side}
+     if (wRAFlag = 0) and (wRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit2);
+       BitAnd(bit1, bit2, bit2);
+       if not(IsClear(bit2)) then
+        wRAFlag := 1;
+      end;
+     {left side}
+     if (wLAFlag = 0) and (wRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset2, bit2);
+       BitAnd(bit1, bit2, bit2);
+       if not(IsClear(bit2)) then
+        wLAFlag := 1;
+      end;
+    end
+   else
+    begin
+     {black}
+     offset1 := BRCMASK;
+     offset2 := BLCMASK;
+     {right side}
+     if (bRAFlag = 0) and(bRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit2);
+       BitAnd(bit1, bit2, bit2);
+       if not(IsClear(bit2)) then
+        bRAFlag := 1;
+      end;
+     {left side}
+     if (bLAFlag = 0) and (bRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset2, bit2);
+       BitAnd(bit1, bit2, bit2);
+       if not(IsClear(bit2)) then
+        bLAFlag := 1;
+      end;
+   end;
+  end;
+
+ {generate combined opposite movement trim board}
+ {save the main boards}
+ offset := WPO;
+ startPage := BASE;
+ dataSize := 120;
+ DataOps(2, startPage, dataSize, offset, buffer);
+ offset := SWPO;
+ startPage := BASE2;
+ DataOps(1, startPage, dataSize, offset, buffer);
+ {replace main boards with temp boards for current move}
+ offset := WPO;
+ offset1 := TWPO;
+ startPage := BASE;
+ DataOps(2, startPage, dataSize, offset1, buffer);
+ DataOps(1, startPage, dataSize, offset, buffer);
+ {generate combined trim boards}
+ dataSize := 8;
+ CombineTrim(bit3, bit5, lastMove);
+ {restore main boards}
+ startPage := BASE2;
+ dataSize := 120;
+ offset := SWPO;
+ DataOps(2, startPage, dataSize, offset, buffer);
+ startPage := BASE;
+ offset := WPO;
+ DataOps(1, startPage, dataSize, offset, buffer);
+ dataSize := 8;
+
+ {check if own back row attacked}
+ if ((turn = 0) and (wCastleFlag = 0)) or
+    ((turn = 1) and (bCastleFlag = 0)) then
+  begin
+   {check right and left back rows}
+   if turn = 0 then
+    begin
+     offset1 := WRBRMASK;
+     offset2 := WLBRMASK;
+     if (wRAFlag = 0) and (wRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit6);
+       BitAnd(bit5, bit6, bit6);
+       if not(IsClear(bit6)) then
+        wRAFlag := 1;
+      end;
+
+     if (wLAFlag = 0) and (wRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset2, bit6);
+       BitAnd(bit5, bit6, bit6);
+       If not(IsClear(bit6)) then
+        wLAFlag := 1;
+      end;
+    end
+   else
+    begin
+     offset1 := BRBRMASK;
+     offset2 := BLBRMASK;
+     if (bRAFlag = 0) and (bRookRFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset1, bit6);
+       BitAnd(bit3, bit6, bit6);
+       If not(IsClear(bit6)) then
+        bRAFlag := 1;
+      end;
+
+     if (bLAFlag = 0) and (bRookLFlag = 0) then
+      begin
+       DataOps(2, startPage, dataSize, offset2, bit6);
+       BitAnd(bit3, bit6, bit6);
+       if not(IsCLear(bit6)) then
+        bLAFlag := 1;
+      end;
+    end;
+  end;
+
+ {check if either rook is missing from home square}
+ if turn = 0 then
+  begin
+   offset := TWRO;
+   DataOps(2, startPage, dataSize, offset, bit1);
+   {check left home square}
+   offset := PIECELOC;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitAnd(bit1, bit2, bit6);
+   if IsClear(bit6) then
+    wLAFlag := 1;
+   {check right home square}
+   offset := PIECELOC + 56;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitAnd(bit1, bit2, bit6);
+   if IsClear(bit6) then
+    wRAFlag := 1;
+  end
+ else
+  begin
+   offset := TBRO;
+   DataOps(2, startPage, dataSize, offset, bit1);
+   {check left home square}
+   offset := PIECELOC + 448;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitAnd(bit1, bit2, bit6);
+   if IsClear(bit6) then
+    bLAFlag := 1;
+   {check right home square}
+   offset := PIECELOC + 504;
+   DataOps(2, startPage, dataSize, offset, bit2);
+   BitAnd(bit1, bit2, bit6);
+   if IsClear(bit6) then
+    bRAFlag := 1;
+  end;
+
+ {add castling moves to head of list if possible}
+ if (wCastleFlag = 0) and (turn = 0) then
+  begin
+   if (wLAFlag = 0) and (wRookLFlag = 0) then
+    begin
+     new(currentMove);
+     currentMove^.id := 8;
+     currentMove^.startSq := 0;
+     currentMove^.endSq := 3;
+     currentMove^.link := moveList;
+     moveList := currentMove;
+     new(currentMove);
+     currentMove^.id := 40;
+     currentMove^.startSq := 4;
+     currentMove^.endSq := 2;
+     currentMove^.link := moveList;
+     moveList := currentMove;
+    end;
+   if (wRAFlag = 0) and (wRookRFlag = 0) then
+    begin
+     new(currentMove);
+     currentMove^.id := 8;
+     currentMove^.startSq := 7;
+     currentMove^.endSq := 5;
+     currentMove^.link := moveList;
+     moveList := currentMove;
+     new(currentMove);
+     currentMove^.id := 40;
+     currentMove^.startSq := 4;
+     currentMove^.endSq := 6;
+     currentMove^.link := moveList;
+     moveList := currentMove;
+    end;
+  end
+ else
+  if (bCastleFlag = 0) and (turn = 1) then
+   begin
+    if (bLAFlag = 0) and (bRookLFlag = 0) then
+     begin
+      new(currentMove);
+      currentMove^.id := 8;
+      currentMove^.startSq := 56;
+      currentMove^.endSq := 59;
+      currentMove^.link := moveList;
+      moveList := currentMove;
+      new(currentMove);
+      currentMove^.id := 40;
+      currentMove^.startSq := 60;
+      currentMove^.endSq := 58;
+      currentMove^.link := moveList;
+      moveList := currentMove;
+     end;
+    if (bRAFlag = 0) and (bRookRFlag = 0) then
+     begin
+      new(currentMove);
+      currentMove^.id := 8;
+      currentMove^.startSq := 63;
+      currentMove^.endSq := 61;
+      currentMove^.link := moveList;
+      moveList := currentMove;
+      new(currentMove);
+      currentMove^.id := 40;
+      currentMove^.startSq := 60;
+      currentMove^.endSq := 62;
+      currentMove^.link := moveList;
+      moveList := currentMove;
+     end;
+   end;
+
+  

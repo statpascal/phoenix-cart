@@ -1,0 +1,68 @@
+       valCap := FALSE;
+       case j of
+        0 : begin
+             m := 8;
+             repeat
+              if turn = 0 then
+               offset2 := BPO + m
+              else
+               offset2 := WPO + m;
+              DataOps(2, startPage, dataSize, offset2, bit8);
+              offset2 := PIECELOC + (moveArray[k] * 8);
+              DataOps(2, startPage, dataSize, offset2, bit5);
+              BitAnd(bit8, bit5, bit5);
+              if not(IsClear(bit5)) then
+               valCap := TRUE
+              else
+               m := m + 8;
+             until (valCap) or (m > 32);
+            end;
+        8 : begin
+             if turn = 0 then
+              offset2 := BPO + 32
+             else
+              offset2 := WPO + 32;
+             DataOps(2, startPage, dataSize, offset2, bit8);
+             offset2 := PIECELOC + (moveArray[k] * 8);
+             DataOps(2, startPage, dataSize, offset2, bit5);
+             BitAnd(bit8, bit5, bit5);
+             if not(IsClear(bit5)) then
+              valCap := TRUE;
+            end;
+        16, 24 : begin
+                  m := 8;
+                  repeat
+                   if turn = 0 then
+                    offset2 := BPO + m
+                   else
+                    offset2 := WPO + m;
+                   DataOps(2, startPage, dataSize, offset2, bit8);
+                   offset2 := PIECELOC + (moveArray[k] * 8);
+                   DataOps(2, startPage, dataSize, offset2, bit5);
+                   BitAnd(bit8, bit5, bit5);
+                   if not(IsClear(bit5)) then
+                    valCap := TRUE
+                   else
+                    m := m + 24;
+                  until (valCap) or (m > 32);
+                 end;
+       end;
+       if valCap then
+        begin
+         new(currentMove);
+         currentMove^.id := j;
+         currentMove^.startSq := pLoc;
+         currentMove^.endSq := moveArray[k];
+         currentMove^.link := attackList;
+         attackList := currentMove;
+        end
+       else
+        begin
+         new(currentMove);
+         attackIndex^.id := j;
+         attackIndex^.startSq := pLoc;
+         attackIndex^.endSq := moveArray[k];
+         attackIndex^.link := currentMove;
+         attackIndex := currentMove;
+         attackIndex^.link := NIL;
+        end;

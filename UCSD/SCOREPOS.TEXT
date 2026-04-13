@@ -1,3 +1,4 @@
+{$R-}
 unit scorepos;
 
 interface
@@ -29,31 +30,7 @@ begin
  bScore := 0;
  startPage := BASE;
  dataSize := 8;
-(*
- {en passant capture risk}
- if (tempMove.id = 0) and (abs(tempMove.startSq - tempMove.endSq) = 16)
-    then
-  begin
-   if turn = 0 then
-    begin
-     offset1 := WEP + ((tempMove.startSq - 8) * 8);
-     offset2 := TBPO;
-    end
-   else
-    begin
-     offset1 := BEP + ((tempMove.startSq - 48) * 8);
-     offset2 := TWPO;
-    end;
-   DataOps(2, sPage1, dataSize, offset1, bit2);
-   DataOps(2, startPage, dataSize, offset2, bit3);
-   BitAnd(bit2, bit3, bit2);
-   if not(IsClear(bit2)) then
-    if turn = 0 then
-     wScore := wScore - 50
-    else
-     bScore := bScore - 50;
-  end;
-*)
+
  {determine base score for each side}
  for side := 0 to 1 do
   begin
@@ -80,13 +57,10 @@ begin
          DataOps(2, startPage, dataSize, offset2, bit2);
          case j of
           0 : begin
-               evalScore := evalScore + 150;
+               evalScore := evalScore + 100;
                if side = 0 then
                 begin
                  offset1 := WPAWN + (pLoc * 2);
-                 {promote pawn advancement in end game}
-                 if (endGame) and (pLoc >= 24) then
-                  evalScore := evalScore + ((pLoc div 5) * 50);
                  {check for pawn promotion}
                  if pLoc >= 56 then
                   evalScore := evalScore + 1000;
@@ -108,7 +82,7 @@ begin
                        DataOps(2, startPage, dataSize, initOffset, bit5);
                        BitAnd(bit5, bit4, bit4);
                        if not(IsClear(bit4)) then
-                        evalScore := evalScore + 15;
+                        evalScore := evalScore + 20;
                       end;
                     end;
                   end;
@@ -120,15 +94,12 @@ begin
                    DataOps(2, startPage, dataSize, offset2, bit4);
                    BitAnd(bit1, bit4, bit4);
                    if not(IsClear(bit4)) then
-                    evalScore := evalScore - 25;
+                    evalScore := evalScore - 50;
                   end;
                 end
                else
                 begin
                  offset1 := BPAWN + (pLoc * 2);
-                 {promote pawn advancement in endgame}
-                 if (endGame) and (pLoc <= 32) then
-                  evalScore := evalScore + (((63 - pLoc) div 5) * 50);
                  {check for pawn promotion}
                  if pLoc <= 7 then
                   evalScore := evalScore + 1000;
@@ -150,7 +121,7 @@ begin
                        DataOps(2, startPage, dataSize, initOffset, bit5);
                        BitAnd(bit5, bit4, bit4);
                        if not(IsClear(bit4)) then
-                        evalScore := evalScore + 15;
+                        evalScore := evalScore + 20;
                       end;
                     end;
                   end;
@@ -162,7 +133,7 @@ begin
                    DataOps(2, startPage, dataSize, offset2, bit4);
                    BitAnd(bit1, bit4, bit4);
                    if not(IsClear(bit4)) then
-                    evalScore := evalScore - 25;
+                    evalScore := evalScore - 50;
                   end;
                 end;
 
@@ -249,24 +220,24 @@ begin
                   end;
                  cRFlag := TRUE;
                 end;
-               evalScore := evalScore + 525;
+               evalScore := evalScore + 500;
               end;
           16: begin
-               evalScore := evalScore + 400;
+               evalScore := evalScore + 325;
                {apply piece square table offset}
                offset1 := KNIGHT + (pLoc * 2);
                DataOps(2, sPage2, dSize, offset1, l);
                evalScore := evalScore + l;
               end;
           24: begin
-               evalScore := evalScore + 400;
+               evalScore := evalScore + 350;
                {apply piece square table offset}
                offset1 := BISHOP + (pLoc * 2);
                DataOps(2, sPage2, dSize, offset1, l);
                evalScore := evalScore + l;
               end;
           32: begin
-               evalScore := evalScore + 973;
+               evalScore := evalScore + 900;
               end;
           40: begin
                {apply piece square table offset}

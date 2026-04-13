@@ -116,6 +116,6 @@ procedure evalTests;
 begin
 //    readTestPositions (ParamStr (1));
 //    testPosition ('r1bqkb1r/ppp2ppp/2np1n2/3Pp3/4P3/2N2N2/PPP2PPP/R1BQKB1R b KQkq - 0 6', '', 'DSK0.pawn-lost.log', 5, 7);
-    testPosition ('r2q1rk1/p1p1bpp1/1p1p1n1p/P1nPp3/4P3/2N2N2/1PPBQPPP/R4RK1 b - - 0 13', '', 'test1.log', 4, 2); 
-//    evalTests
+//    testPosition ('r2q1rk1/p1p1bpp1/1p1p1n1p/P1nPp3/4P3/2N2N2/1PPBQPPP/R4RK1 b - - 0 13', '', 'test1.log', 4, 2); 
+    evalTests
 end.
