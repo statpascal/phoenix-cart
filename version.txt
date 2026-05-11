@@ -109,3 +109,9 @@
 - Corrected move count in UCI
 - Added pararamter -nodes to UCI
 
+
+2026-05-11-17-00
+
+- added pawn promotion to QS
+- removed pawn weights from end game detection
+- weighted castling with ply

@@ -242,7 +242,7 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
             tempMove := moveStack [currentMoveIndex];
             inc (currentMoveIndex);
             isAttack := tempMove.flags and AttackMove <> 0;
-            isQuiet := not isAttack;        // TODO: add check as condition
+            isQuiet := not isAttack and (tempMove.flags = 0) ;        // TODO: add check as condition
             workBoard := board;
             workMoveScore := moveScore;
             
@@ -266,7 +266,7 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
                         end
                     else
                         begin
-                            evaluateMove (turn, board, isAttack, tempMove, capId, workMoveScore);
+                            evaluateMove (turn, board, isAttack, tempMove, ply, capId, workMoveScore);
                             if isQuiet and (ply <= 1) or (ply = plyQS) then
                                 {terminal node check - the original NegaMax does another recursive call}
                                 begin
@@ -359,7 +359,7 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
                 totalValue := 0;
                 moveStackPointer := 0;
                 
-                for piece := Pawn to Queen do
+                for piece := Rook to Queen do
                     for side := 0 to 1 do 
                         inc (totalValue, pieceValue [piece] * BitCount (board.sides [side].bitboards [piece]));
                 if totalValue <= EndGameReached then

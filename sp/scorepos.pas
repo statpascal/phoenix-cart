@@ -29,7 +29,7 @@ type
         bonus, flags: integer
     end;
 
-procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; capId: integer; var moveScore: TMoveScore);
+procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; ply, capId: integer; var moveScore: TMoveScore);
 function evaluatePosition (var board: TBoardRecord; moveScore: TMoveScore): integer;
 
 
@@ -37,7 +37,7 @@ implementation
 
 uses trimprocs, resources;
 
-procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; capId: integer; var moveScore: TMoveScore);
+procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: boolean; var move: TMoveRecord; ply, capId: integer; var moveScore: TMoveScore);
     const
         captureBonus: array [0..5, 0..5] of uint8 = (
         //     P    R    N    B    Q    K
@@ -67,7 +67,7 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
         {bonus for castling/penalty for moving king if castling possible}
         if move.pieceType = King then
             if abs (move.startSq - move.endSq) = 2 then
-                inc (bonus, 50)
+                inc (bonus, 50 + ply)
             else 
                 if (turn = 0) and (prevBoard.flags and (whiteLeftCastle or whiteRightCastle) <> 0) or
                    (turn = 1) and (prevBoard.flags and (blackLeftCastle or blackRightCastle) <> 0) then
