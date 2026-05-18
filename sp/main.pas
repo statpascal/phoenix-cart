@@ -105,21 +105,6 @@ procedure initGame (var mainBoard: TBoardRecord);
             plyQS := 1 - (ans - 48)
     end;
 
-function isMate (turn: integer; var board: TBoardRecord): boolean;
-    var
-        tempBoard: TBoardRecord;
-    begin
-        result := true;
-        createAllMoves (board, 1, turn, 0);
-        while result and (moveStackPointer > 0) do
-            begin
-                tempBoard := board;
-                dec (moveStackPointer);
-                enterMoveSimple (turn, tempBoard, moveStack [moveStackPointer]);
-                result := isKingChecked (turn, tempBoard)
-            end
-    end;
-    
 procedure chainMain;
     var mainBoard: TBoardRecord;
         compressedBoard: TCompressedBoard;
@@ -198,7 +183,7 @@ procedure chainMain;
 
             {look for checkmate or stalemate condition}
             if checkFlag then
-                if isMate (1 - gameSide, mainBoard) then
+                if isMovingSideMate (mainBoard) then
                     begin
                         showMessage ('checkmate!');
                         waitKeyPressed;

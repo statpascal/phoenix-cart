@@ -15,17 +15,8 @@ const
 const
     MoveStackSize = 2047;
     
-var
-{$ifdef ti99}
-    moveStack: array [0..MoveStackSize] of TMoveRecord absolute $2000;
-{$endif}
-{$ifdef fpc}
-    moveStack: array [0..MoveStackSize] of TMoveRecord;
-{$endif}
-    moveStackPointer: integer;
-
 procedure setMaxMoves (val: integer);    
-procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
+// procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
 
 function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreRecord;
 (* if no valid move can be generated, move.pieceType is set to InvalidPiece and score
@@ -33,6 +24,8 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
    abs (move.score) >= infinity : checkmate
    move.score = 0 : draw (stalemate)
 *)
+
+function isMovingSideMate (var board: TBoardRecord): boolean;
 
 
 implementation
@@ -47,6 +40,15 @@ var
     maxMovesDeepening: integer;
     isDeepening: boolean;
     
+var
+{$ifdef ti99}
+    moveStack: array [0..MoveStackSize] of TMoveRecord absolute $2000;
+{$endif}
+{$ifdef fpc}
+    moveStack: array [0..MoveStackSize] of TMoveRecord;
+{$endif}
+    moveStackPointer: integer;
+
 procedure setMaxMoves (val: integer);
     begin
         maxMovesDeepening := val
@@ -391,6 +393,26 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
                     end
             end
     end;
+    
+function isMovingSideMate (var board: TBoardRecord): boolean;
+    var
+        tempBoard: TBoardRecord;
+        turn: integer;
+    begin
+        result := true;
+        turn := ord (board.flags and moveBlackFlag <> 0);
+        moveStackPointer := 0;
+        createAllMoves (board, 1, turn, 0);
+        while result and (moveStackPointer > 0) do
+            begin
+                tempBoard := board;
+                dec (moveStackPointer);
+                enterMoveSimple (turn, tempBoard, moveStack [moveStackPointer]);
+                result := isKingChecked (turn, tempBoard)
+            end
+    end;
+    
+    
 
 begin
     maxMovesDeepening := 0;
