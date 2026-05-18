@@ -21,7 +21,7 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
         end;
     
     begin
-        setFENPosition (mainBoard, gameMove, fenStr);
+        setFENPosition (mainBoard, fenStr);
         side := ord (mainBoard.flags and MoveBlackFlag <> 0);
         gamePly := ply;
         plyQS := 1 - qsdeepening;

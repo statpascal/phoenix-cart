@@ -128,7 +128,7 @@ procedure chainMain;
         dummy: integer;
 
     begin
-        setInitPosition (mainboard, gameSide, gameMove);
+        setInitPosition (mainboard, gameSide);
         initGame (mainBoard);
 
         {start game}
@@ -142,7 +142,7 @@ procedure chainMain;
         repeat
         
             gotoxy(0, 2);
-            write ('move: ', gameMove, ' turn: ');
+            write ('move: ', mainBoard.moveNr, ' turn: ');
             if gameSide = 0 then
                 write ('white')
             else
@@ -213,7 +213,7 @@ procedure chainMain;
                         exit;
                     end;
                 
-            inc (gameMove, gameSide);	// add 1 if black
+//            inc (gameMove, gameSide);	// add 1 if black
             showMove (playMove, gameSide = humanSide);
             gameSide := 1 - gameSide
 

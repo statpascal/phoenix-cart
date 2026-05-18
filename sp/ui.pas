@@ -226,7 +226,7 @@ procedure BoardDisplay (var board: TBoardRecord);
 *)        
     end;
     
-procedure loadFENData (var board: TBoardRecord; var turn, gameMove: integer);
+procedure loadFENData (var board: TBoardRecord; var turn: integer);
     var
         fn, s: string;
         f: text;
@@ -238,7 +238,7 @@ procedure loadFENData (var board: TBoardRecord; var turn, gameMove: integer);
         reset (f);
         readln (f, s);
         if s <> '' then
-            setFENPosition (board, gameMove, s)
+            setFENPosition (board, s)
         else
             writeln ('Cannot read ', fn);
         turn := ord (board.flags and moveBlackFlag <> 0);
@@ -267,7 +267,7 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
             
         if ch = 'F' then
             begin
-                loadFENData (board, turn, gameMove);
+                loadFENData (board, turn);
                 exit
             end;
         
@@ -401,14 +401,15 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
             ch := upcase (getKey)
         until ch in ['W', 'B'];
         turn := ord (ch = 'B');
-        setMoveFlag (board, turn);
+        if turn = 1 then
+            toggleMoveFlag (board);
         if turn = 0 then
             writeln('*** white to move ***')
         else
             writeln('*** black to move ***');
 
         write('enter move number: ');
-        readln(gameMove)
+        readln (board.moveNr)
     end;
 
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);

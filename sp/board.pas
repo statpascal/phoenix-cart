@@ -56,7 +56,7 @@ type
     
     TBoardRecord = record
         hash: uint64;
-        flags: int16;
+        flags, moveNr: int16;
         allPieces: bitboard;
         case boolean of
             false: (white, black: TSideRecord);
@@ -69,8 +69,8 @@ type
         flags: int16;			 // EP/castling flag
     end;
 
-procedure setInitPosition (var board: TBoardRecord; var side, moveNr: integer);
-procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: string);
+procedure setInitPosition (var board: TBoardRecord; var side: integer);
+procedure setFENPosition (var board: TBoardRecord; s: string);
 
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
@@ -83,7 +83,7 @@ function findPieceType (var board: TBoardRecord; turn, square: integer): integer
 procedure setSquare (var board: TBoardRecord; side, piece, square: integer);
 procedure clearSquare (var board: TBoardRecord; side, piece, square: integer);
 procedure enterCastleFlag (var board: TBoardRecord; flag: integer; setflg: boolean);
-procedure setMoveFlag (var board: TBoardRecord; side: integer);
+procedure toggleMoveFlag (var board: TBoardRecord);
 
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
@@ -335,14 +335,16 @@ procedure setEnPassantRights (var board: TBoardRecord; col: integer);
         board.hash := board.hash xor zobristKeys.epfile [col]
     end;
     
-procedure setMoveFlag (var board: TBoardRecord; side: integer);
+procedure toggleMoveFlag (var board: TBoardRecord);
     begin
-        if (side = 1) = (board.flags and moveBlackFlag = 0) then
-           board.hash := board.hash xor zobristKeys.turn;
-        if side = 1 then
+        board.hash := board.hash xor zobristKeys.turn;
+        if board.flags and moveBlackFlag = 0 then
             board.flags := board.flags or moveBlackFlag
         else
-            board.flags := board.flags and not moveBlackFlag
+            begin
+                board.flags := board.flags and not moveBlackFlag;
+                inc (board.moveNr)
+            end
     end;
     
 {$bank:off}
@@ -409,7 +411,7 @@ procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var b
                     enterCastleFlag (board, blackRightCastle, false)
             end;
             
-        setMoveFlag (board, 1 - turn);
+        toggleMoveFlag (board);
     end;    
     
 procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
@@ -532,7 +534,7 @@ procedure placePiece (var board: TBoardRecord; row, col: integer; piece: char);
                     setSquare (board, side, pieceType, row * 8 + col)
    end;
 
-procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: string);
+procedure setFENPosition (var board: TBoardRecord; s: string);
     var
         index, row, col, factor: integer;
         ch: char;
@@ -569,7 +571,8 @@ procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: strin
             end;
         
         skipBlank;
-        setMoveFlag (board, ord (s [index] = 'b'));
+        if s [index] = 'b' then
+            toggleMoveFlag (board);
         inc (index);
         
         skipBlank;
@@ -603,11 +606,11 @@ procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: strin
             
         // TODO: half move count
         index := length (s);
-        moveNr := 0;
+        board.moveNr := 0;
         factor := 1;
         while s [index] in ['0'..'9'] do
             begin
-                inc (moveNr, factor * (ord (s [index]) - ord ('0')));
+                inc (board.moveNr, factor * (ord (s [index]) - ord ('0')));
                 factor := factor * 10;
                 dec (index)
             end;
@@ -615,9 +618,9 @@ procedure setFENPosition (var board: TBoardRecord; var moveNr: integer; s: strin
         clearPositionHashes
     end;
 
-procedure setInitPosition (var board: TBoardRecord; var side, moveNr: integer);
+procedure setInitPosition (var board: TBoardRecord; var side: integer);
     begin    
-        setFENPosition (board, moveNr, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+        setFENPosition (board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
         side := 0;
     end;
            

@@ -74,13 +74,13 @@ procedure evaluateMove (turn: integer; var prevBoard: TBoardRecord; attackFlag: 
                     dec (bonus, 50);
 
         {penalty for moving the rook if castling possible on its side}
-        if (move.pieceType = Rook) and (gameMove < 13) then
+        if (move.pieceType = Rook) and (prevBoard.moveNr < 13) then
             if (turn = 0) and (prevBoard.flags and (whiteLeftCastle or whiteRightCastle) <> 0) or
                (turn = 1) and (prevBoard.flags and (blackLeftCastle or blackRightCastle) <> 0) then
             dec (bonus, 25);
   
         {penalty if moving queen too early in game}
-        if (move.pieceType = Queen) and (gameMove < 5) then
+        if (move.pieceType = Queen) and (prevBoard.moveNr < 5) then
             dec (bonus, 50);
             
 //        {check bonus}

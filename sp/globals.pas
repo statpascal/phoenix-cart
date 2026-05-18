@@ -18,7 +18,7 @@ type
     TBookMoves = array [0..MaxMoves - 1] of integer;
     
 var
-    gameMove: integer;
+//    gameMove: integer;
     gamePly: integer;
     moveNumHi, moveNumLo: integer;
     plyQS: integer;

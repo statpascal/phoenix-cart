@@ -80,7 +80,7 @@ procedure printBoard (var f: text; var board: TBoardRecord);
                 
         writeln (f);
         writeln (f, '========================================');
-        writeln (f, 'Move: ', gameMove);
+        writeln (f, 'Move: ', board.moveNr);
         writeln (f);
         for i := 7 downto 0 do
             begin

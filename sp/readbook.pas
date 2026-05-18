@@ -138,7 +138,7 @@ procedure loadOpeningBook (fn: string);
         mainBoard: TBoardRecord;
         f: text;
         desc, line: string;
-        side, move: integer;
+        side: integer;
     
     begin
         assign (f, fn);
@@ -153,7 +153,7 @@ procedure loadOpeningBook (fn: string);
                 readln (f, line);
                 if (length (line) <> 0) and (line [1] <> '#') then 
                     begin
-                        setInitPosition (mainBoard, side, move);
+                        setInitPosition (mainBoard, side);
                         handlePositions (mainBoard, line)
                     end
             end;
