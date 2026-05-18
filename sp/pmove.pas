@@ -9,7 +9,11 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
 
 implementation
 
-uses trimprocs, ui, utility;
+uses trimprocs, utility;
+
+const
+    xOrg = 18;
+    yOrg = 9;
 
 procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer; var humanSide: integer);
     var 
@@ -38,18 +42,16 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
                 0:
                     begin
                         square [0] := 0;
-                        gotoxy (20, 6);
-                        write (chr (7), 'enter move');
-                        gotoxy (20, 7);
-                        write ('from:           ');
-                        gotoxy (26, 7)
+                        gotoxy (xOrg, yOrg);
+                        write (chr (7), 'enter move:');
+                        showHChar (xOrg, succ (yOrg), 32, 8);
+                        gotoxy (xOrg, succ (yOrg))
                     end;
                 2:
                     begin
                         square [1] := 0;
-                        gotoxy (30, 7);
-                        write ('to:   ');
-                        gotoxy (34, 7)
+                        gotoxy (xOrg + 3, succ (yOrg));
+                        write ('to ')
                     end
             end;
                 
@@ -86,25 +88,31 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
                     end
             end
         until state = 4;
+        
+        showHChar (xOrg, yOrg, 32, 31 - Xorg);
+        showHChar (xOrg, succ (yOrg), 32, 31 - Xorg);
                         
         {promote pawn if applicable}
         if (playMove.pieceType = pawn) and (playMove.endSq in [0..7, 56..63]) then
             begin
-                gotoxy (20, 8);
-                writeln ('promote pawn to');
-                gotoxy (22, 9);
-                writeln ('1- rook');
-                gotoxy (22, 10);
-                writeln ('2- knight');
-                gotoxy (22, 11);
-                writeln ('3- bishop');
-                gotoxy (22, 12);
-                writeln ('4- queen');
+                gotoxy (xOrg, yOrg);
+                write ('promote pawn');
+                gotoxy (xOrg, yOrg + 1);
+                write('1- rook');
+                gotoxy (xOrg, yOrg + 2);
+                write ('2- knight');
+                gotoxy (xOrg, yOrg + 3);
+                write ('3- bishop');
+                gotoxy (xOrg, yOrg + 4);
+                write ('4- queen');
                 repeat
                     key := GetKey
                 until key in ['1'..'4'];
                 playMove.flags := playMove.flags or (ord (key) - ord ('0')) shl 4
-            end
+            end;
+            
+        // delete position/score while calculating
+        showHChar (0, 22, 32, 64)
 
     end;
 

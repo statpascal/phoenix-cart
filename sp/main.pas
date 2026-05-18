@@ -1,3 +1,4 @@
+
 unit Main;
 
 interface
@@ -17,15 +18,20 @@ var
 procedure SaveMove;
     begin
     end;
+    
+procedure showMessage (s: string);
+    begin
+        // TODO: beep
+        showHChar (18, 4, 32, 15);
+        gotoxy (18, 4);
+        write (s)
+    end;
 
 procedure initGame (var mainBoard: TBoardRecord);
     var
         ans: integer;
     begin
-        // Randomize;	// TODO
-//        gameSide := 0;
-//        gameMove := 1;
-
+        writeln;
         write(chr(7), 'enter ply: [1-6] ');
         repeat
             ans := GetKeyInt;
@@ -33,7 +39,7 @@ procedure initGame (var mainBoard: TBoardRecord);
         writeln(chr(ans));
         gamePly := ans - 48;
 
-        writeln(chr(7), 'select side to play: [w]hite/[b]lack');
+        writeln(chr(7), 'select side: [w]hite/[b]lack');
         repeat
             ans := GetKeyInt;
         until ans in[66, 87];
@@ -81,7 +87,7 @@ procedure initGame (var mainBoard: TBoardRecord);
             gameSide := 0;	// turn := gameside
 
         writeln;            
-        write(chr(7), 'debug log to DSK0.phoenix.log (y/n)');
+        write(chr(7), 'log to DSK0.phoenix.log (y/n)');
         repeat
             ans := GetKeyInt;
         until ans in[78, 89];
@@ -125,37 +131,37 @@ procedure chainMain;
         setInitPosition (mainboard, gameSide, gameMove);
         initGame (mainBoard);
 
-     {start game}
+        {start game}
+        NewBoard;
         BoardDisplay (mainBoard);
+        showMessage ('');
+        
         if cWarning = 1 then
-            begin
-                gotoxy(20, 1);
-                write(chr(7), chr(7), 'check!');
-            end;
+            showMessage ('check!');
 
         repeat
         
-            gotoxy(10, 1);
-            writeln('move: ', gameMove);
+            gotoxy(0, 2);
+            write ('move: ', gameMove, ' turn: ');
             if gameSide = 0 then
-                write('turn: white')
+                write ('white')
             else
-                write('turn: black');
+                write ('black');
         
             if humanSide = gameSide then
                 {TODO: save current game state}
                 playerMove (mainBoard, playMove.move, gameSide, humanSide);	// may change game side
             if humanSide <> gameSide then
                 begin
-                    gotoxy(20, 7);
+                    gotoxy (18, 18);
                     write('thinking...');
                     playMove := generateMove (gamePly, gameSide, mainBoard);
+                    showHChar (18, 18, 32, 11);
                     
                     if playMove.move.pieceType = InvalidPiece then
                         begin
-                            gotoxy(20, 1);
-                            write(chr(7), chr(7), 'stalemate!');
-                            readln;
+                            showMessage ('stalemate!');
+                            waitKeyPressed;
                             Utility (dummy);
                             exit                            
                         end
@@ -180,17 +186,13 @@ procedure chainMain;
             BoardDisplay (mainBoard);
             
             if isThreeFoldRepetition then
-                begin
-                    gotoxy (20, 2);
-                    write ('3-fold rep')
-                end;
+                showMessage ('3-fold rep');
 
             {look for check condition}
             checkFlag := isKingChecked (1 - gameSide, mainBoard);
             if checkFlag then
                 begin
-                    gotoxy(20, 1);
-                    write(chr(7), chr(7), 'check!');
+                    showMessage ('check!');
                     cWarning := 1;
                 end;
 
@@ -198,28 +200,26 @@ procedure chainMain;
             if checkFlag then
                 if isMate (1 - gameSide, mainBoard) then
                     begin
-                        gotoxy(20, 1);
-                        write(chr(7), chr(7), 'checkmate!');
-                        readln;
+                        showMessage ('checkmate!');
+                        waitKeyPressed;
                         Utility (dummy);
                         exit;
                     end
                 else if abs (playMove.Score) >= infinity then
                     begin
-                        gotoxy(20, 1);
-                        write(chr(7), chr(7), 'resign!');
-                        readln;
+                        showMessage ('resign!');
+                        waitKeypressed;
                         Utility (dummy);
                         exit;
                     end;
                 
             inc (gameMove, gameSide);	// add 1 if black
             showMove (playMove, gameSide = humanSide);
-            gameSide := 1 - gameSide;
+            gameSide := 1 - gameSide
 
 //            check3Rep;
 
-        until FALSE;
+        until false
     end;
 
 end.

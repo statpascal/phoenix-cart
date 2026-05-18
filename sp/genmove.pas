@@ -44,12 +44,12 @@ utility,
 resources, logger, bitops, openbook;
 
 var
-    maxMoves: integer;
+    maxMovesDeepening: integer;
     isDeepening: boolean;
     
 procedure setMaxMoves (val: integer);
     begin
-        maxMoves := val
+        maxMovesDeepening := val
     end;
 
 procedure pushMoveStack (var move: TMoveRecord); overload;
@@ -282,7 +282,7 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
                                         begin
                                             moveNumLo := 0;
                                             inc (moveNumHi);
-                                            if isDeepening and (moveNumHi >= maxMoves) then
+                                            if isDeepening and (moveNumHi >= maxMovesDeepening) then
                                                 longjmp (jmpbuf, 1)
                                         end
                                 end
@@ -347,7 +347,10 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
                 i := 1;
                 while (i < MaxMoves) and (moves [i] <> 0) do
                     inc (i);
-                i := Random (i);
+//                gotoxy (0, 3);
+//                write ('Have: ', i:2);
+                i := Random (succ (i));
+//                write (' Random: ', i:2);
                 result.score := 0;
                 result.move := makeMoveRecord (board, turn, moves [i] shr 6, moves [i] and $3f)
             end;
@@ -373,7 +376,7 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
                 isDeepening := false;
                 result := NegaMax (board, moveScore, alpha, beta, ply, turn);
 
-                if maxMoves <> 0 then
+                if maxMovesDeepening <> 0 then
                     begin
                         isDeepening := true;
                         savedHashCount := getPositionHashCount;                
@@ -390,5 +393,5 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
     end;
 
 begin
-    maxMoves := 0;
+    maxMovesDeepening := 0;
 end.

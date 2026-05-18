@@ -2,19 +2,42 @@ unit ui;
 
 interface
 
-uses globals, board;
+uses vdp, globals, board;
 
 procedure PrintGame;
-procedure BoardDisplay (var board: TBoardRecord);
+
+procedure showPly;					// display ply/qs in 2nd line
+procedure NewBoard;					// display main game screen
+procedure BoardDisplay (var board: TBoardRecord);	// display only board
+
 procedure EnterPos (var board: TBoardRecord; var turn: integer);
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
 
 function getKeyInt: integer;
+procedure waitKeyPressed;
+
+procedure initVideoMode;
 
 
 implementation
 
 uses trimprocs, logger;
+
+const
+    PatternBaseWhiteOnWhite = 128;
+    PatternBaseWhiteOnBlack = 152;
+    PatternBaseBlackOnWhite = 176;
+    PatternBaseBlackOnBlack = 200;
+    PatternEmptyWhite = 224;
+    PatternEmptyBlack = 228;
+    PatternSplitNumbers = 0;
+    PatternSplitChars = 16;
+    
+procedure waitKeypressed;
+    begin
+        while keyPressed do;
+        waitkey
+    end;
 
 function getKeyInt: integer;
     begin
@@ -117,53 +140,73 @@ begin
 end;
 (* PrintGame *)
 
+const 
+    orgX = 1;
+    orgY = 4;
+    
+procedure showPly;
+    begin
+        gotoxy (0, 1);
+        writeln ('ply: ', gamePly, ' qs: ', succ (-plyQS))
+    end;
+
 procedure NewBoard;
     var 
-        y, row : integer;
+        row, col: integer;
     begin
         clrscr;
         writeln ('Phoenix Chess ', versionString);
-        writeln ('ply : ', gamePly, '-', succ (gamePly - plyQS));
-        writeln;
-        y := 4;
-        row := 8;
-        writeln ('------------------');
-        repeat
-            gotoxy (0, y);
-            writeln (row, '| |=| |=| |=| |=|');
-            writeln (pred (row), '|=| |=| |=| |=| |');
-            y := y + 2;
-            row := row - 2
-        until y > 10;
-        writeln ('------------------');
-        writeln ('  A B C D E F G H');
-    end; {NewBoard}
-
-procedure showSquare (row, col: integer; ch: char);
-    const 
-        orgX = 2;
-        orgY = 11;
-    begin
-        gotoxy (orgX + 2 * col, orgY - row);
-        write (ch)
-    end;
+        showPly;
+        for row := 0 to 15 do
+            begin
+                showHChar (0, orgY + row, row, 1);
+                showHChar (succ (row), orgY + 16, PatternSplitChars + row, 1)
+            end
+    end; 
 
 procedure BoardDisplay (var board: TBoardRecord);
     type
         TByteArray = array [0..7] of uint8;
     var 
-        s, piece, i: integer;
+        s, piece, i, row, col: integer;
         posArray: bitarray;
+        lines: array [0..15] of string [16];
+        
+    procedure showSquare (row, col, pattern: integer);
+        begin
+            row := 2 * (7 - row);
+            col := succ (col + col);
+            lines [row, col] := chr (pattern);
+            lines [row, succ (col)] := chr (succ (pattern));
+            lines [succ (row), col] := chr (pattern + 2);
+            lines [succ (row), succ (col)] := chr (pattern + 3)
+        end;
+
     begin
-        NewBoard;
+        for row := 0 to 7 do
+            for col := 0 to 7 do
+                showSquare (row, col, PatternEmptyWhite + 4 * ord (odd (row) = odd (col)));
+        
         for s := 0 to 1 do
             for piece := Pawn to King do
                 begin
                     BitPos (board.sides [s].bitboards [piece], posArray);
                     for i := 1 to posArray [0] do
-                        showSquare (posArray [i] div 8, posArray [i] mod 8, figure [s, piece])
+                        begin
+                            row := posArray [i] div 8;
+                            col := posArray [i] mod 8;
+                            showSquare (row, col, PatternBaseWhiteOnWhite + 4 * piece + 24 * ord (odd (row) = odd (col)) + 48 * s)
+                        end
                 end;
-        gotoxy (0, 16);
+                
+        for row := 0 to 15 do
+            begin
+                lines [row][0] := #16;
+                gotoxy (orgX, orgY + row);
+                write (lines [row])
+            end;
+(*                
+        gotoxy (0, 22);
         write ('castling: ');
         if board.flags and whiteRightCastle <> 0 then
             write ('K');
@@ -180,6 +223,7 @@ procedure BoardDisplay (var board: TBoardRecord);
         for i := 0 to 7 do 
             write (hexstr2 (TByteArray (board.hash) [i]));
         gotoxy(0, 14)
+*)        
     end;
     
 procedure loadFENData (var board: TBoardRecord; var turn, gameMove: integer);
@@ -229,9 +273,10 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
         
         NewBoard;
         fillChar (board, sizeof (board), 0);
+        BoardDisplay (board);
 
         repeat
-            gotoxy (0, 14);
+            gotoxy (0, 22);
             writeln(chr(7), 'select side: [w]hite/[b]black');
             write('[q] to exit  ');
             repeat
@@ -239,16 +284,19 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
             until sideKey in[87, 66, 81];
             if sideKey <> 81 then
                 begin
+                    gotoxy (0, 22);
+                    write ('select ');
                     if sideKey = 87 then
-                        writeln('*** white selected ***')
+                        write ('white')
                     else
-                        writeln('*** black selected ***');
+                        write ('black');
                     side := ord (sideKey <> 87);
                         
-                    writeln(chr(7), 'select piece: P / R / N / B / Q / K');
+                    writeln(chr(7), ' piece: P/R/N/B/Q/K');
+                    showHChar (0, 23, 32, 32);
                     repeat
-                        pieceKey := GetKeyInt;
-                    until pieceKey in[66, 75, 78, 80, 81, 82, 88];
+                        pieceKey := GetKeyInt
+                    until pieceKey in [66, 75, 78, 80, 81, 82, 88];
                     case pieceKey of 
                         66: 
                         begin
@@ -281,24 +329,22 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
                             pname := 'rook';
                         end;
                     end;
-                    writeln('*** ', pname, ' selected ***');
-                    writeln(chr(7), 'enter board square [column|row]');
+                    gotoxy (0, 23);
+                    write (pname, ' square [col|row]? ');
                     repeat
-                        showHChar (0, 19, 32, 2 * screenWidth);
-                        gotoxy(0, 19);
-                        
                         repeat
                             column := GetKeyInt
                         until column in[65..72];
-                        write(chr(column));
+                        write (chr(column));
                         dec (column, 65);
                         
                         repeat
                             row := GetKeyInt
                         until row in[49..56];
-                        writeln(chr(row));
+                        write (chr(row));
                         dec (row, 49);
                         
+                        gotoxy (0, 22);
                         write('[c]onfirm [r]edo [d]elete piece');
                         repeat
                             ans := GetKeyInt
@@ -308,22 +354,18 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
                     pLoc := 8 * row + column;
                     if ans = 67 then
                         begin
-                            showSquare (row, column, Figure [side, pieceType]);
                             setSquare (board, side, pieceType, pLoc)
                         end
                     else 
                        begin
-                            if odd (row) = odd (column) then
-                                showSquare (row, column, '=')
-                            else
-                                showSquare (row, column,' ');
                             clearSquare (board, side, pieceType, pLoc)
                         end;
-                    showHChar (0, 14, 32, 7 * screenWidth)
+                    BoardDisplay (board);
+                    showHChar (0, 23, 32, 2 * screenWidth)
                 end;
         until sideKey = 81;
 
-        writeln;
+        clrscr;
         if getBit (board.white.kingBitboard, 4) = 1 then
             begin
                 writeln(chr(7), 'allow white castling? (y/n)');
@@ -371,31 +413,123 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
 
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
     begin
-        gotoxy (20, 4);
+        gotoxy (18, 6);
         write ('last move: ');
+        gotoxy (18, 7);
         printMove (output, moveScore.move);
+        write (' ');
         
         if not isHumanMove then
             begin
-                showHChar (0, 18, 32, 2 * screenWidth);
-                gotoxy(0, 18);
-                write('number of positions evaluated: ');
-                if moveNumHi > 0 then
+                showHChar (0, 22, 32, 2 * screenWidth);
+                gotoxy (0, 22);
+                if (moveNumHi <> 0) or (moveNumLo <> 0) then
                     begin
-                        write (moveNumHi);
-                        write ('000');
-                        if moveNumLo >= 100 then
-                            gotoxy (wherex - 3, wherey)
-                        else if moveNumLo >= 10 then
-                            gotoxy (wherex - 2, wherey)
+                        write('positions evaluated: ');
+                        if moveNumHi > 0 then
+                            begin
+                                write (moveNumHi);
+                                write ('000');
+                                if moveNumLo >= 100 then
+                                    gotoxy (wherex - 3, wherey)
+                                else if moveNumLo >= 10 then
+                                    gotoxy (wherex - 2, wherey)
+                                else
+                                    gotoxy (wherex - 1, wherey);
+                                writeln (moveNumLo)
+                            end
                         else
-                            gotoxy (wherex - 1, wherey);
-                        writeln (moveNumLo)
+                            writeln (moveNumLo);
+                        write('position score: ', moveScore.score)
                     end
                 else
-                    writeln (moveNumLo);
-                write('position score: ', moveScore.score);
+                    write ('book move')
             end;
+    end;
+
+procedure initVideoMode;
+
+    procedure pattern; external '../resources/pattern.dat';
+    
+    type
+        TPatternData = array [0..3, Pawn..King, 0..31] of uint8;
+    
+    var
+        patternDataRom: TPatternData absolute pattern;
+        patternData: TPatternData;
+        i, j, side, field, destChar, destGroup: integer;
+        fg, bg: TColor;
+        p1, p2, p3: array [0..7] of uint8;
+
+    begin
+        setVideoMode (StandardMode);
+        clrscr;
+        setBackColor (gray);
+        setTextColor (black);
+        enableScreenSaver (false);
+
+        patternData := patternDataRom;
+        destChar := PatternBaseWhiteOnWhite;
+        destGroup := destChar div 8;
+        
+        vmbw (patternData, patternTable + 8 * destChar, sizeof (patternData));
+        for side := 0 to 1 do
+            for field := 0 to 1 do
+                begin
+                    if side = 0 then
+                        fg := white
+                    else
+                        fg := black;
+                    if field = 0 then
+                        bg := lightgreen
+                    else
+                        bg := darkyellow;
+                    setColor (destGroup, fg, bg);
+                    setColor (destGroup + 1, fg, bg);
+                    setColor (destGroup + 2, fg, bg);
+                    inc (destChar, 24);
+                    inc (destGroup, 3)
+                end;
+        setColor (destGroup, darkyellow, lightgreen);
+        vrbw (patternTable + 8 * PatternEmptyBlack, $ff, 32);
+        
+        // create split numbers 1 - 8
+        fillChar (p2, 8, #0);
+        fillChar (p3, 8, #0);
+        destChar := patternTable + PatternSplitNumbers;
+        for i := 0 to 7 do
+            begin
+                vmbr (p1, patternTable + (ord ('8') - i) * 8, 8);
+                move (p1, p2 [4], 4);
+                move (p1 [4], p3, 4);
+                vmbw (p2, destChar, 8);
+                vmbw (p3, destChar + 8, 8);
+                inc (destChar, 16)
+            end;
+        
+        // create split chars A - H
+        destChar := patternTable + 8 * PatternSplitChars;
+        for i := 0 to 7 do
+            begin
+                vmbr (p1, patternTable + (ord ('A') + i) * 8, 8);
+                p2 [0] := 0; p3 [0] := 0;
+                for j := 0 to 6 do
+                    begin
+                        p2 [succ (j)] := p1 [j] shr 4;
+                        p3 [succ (j)] := (p1 [j] and $f) shl 4;
+                    end;
+                vmbw (p2, destChar, 8);
+                vmbw (p3, destChar + 8, 8);
+                inc (destChar, 16)
+            end;
+            
+        // replace lower case char definition
+        for i := ord ('A') to ord ('Z') do
+            begin
+                vmbr (p1, patternTable + i * 8, 8);
+                vmbw (p1, patternTable + (i + ord ('a') - ord ('A')) * 8, 8)
+            end
+        
     end;
 
 end.

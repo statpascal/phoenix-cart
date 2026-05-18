@@ -45,16 +45,45 @@ procedure UpdateBoard(gBase, gOffset: integer);
     end;
 *)    
 
-procedure ClearFields;
+const
+    xOrg = 18;
+    yOrg = 6;
+
+procedure ClearUtilityMenu;
     var 
-        y: integer;
+        i: integer;
     begin
-        for y := 3 to 13 do
-            begin
-                gotoxy(20, y);
-                write('                ');
-            end;
+        for i := 0 to 11 do
+            showHChar (xOrg, yOrg + i, 32, 32 - xOrg)
     end;
+    
+procedure ShowUtilityMenu;
+    var
+        count: integer;
+
+    procedure showLine (s: string);
+        begin
+            gotoxy (xOrg, yOrg + count);
+            write (s);
+            inc (count)
+        end;
+    
+    begin
+        count := 0;
+        showLine (' : load game');
+        showLine (' : save game');
+        showLine (' : backup');
+        showLine (' : forward');
+        showLine (' : first move ');
+        showLine (' : last move');
+        showLine ('7: switch sides');
+        showLine ('8: change ply');
+        showLine ('9: play');
+        showLine (' : new game');
+        showLine (' : print game');
+        showLine ('0: exit')
+    end;
+    
 
 procedure saveGame (gname: string; showMsg: boolean);
     var
@@ -145,64 +174,28 @@ procedure saveGame (gname: string; showMsg: boolean);
     end;
 
 procedure Utility(var humanSide: integer);
-    label 
-        l_1, l_2;
     var 
-        y, i, ans, offset, storeBase, storePtr, tmpPtr, tmpBase, ioCheck: integer;
-        tempGPointer: integer;
-        utilFlag: boolean;
-        gBuffer: array[0..67] of integer;
-        mBuffer: array[0..2048] of integer;
+        y, i, ioCheck: integer;
+        utilDone: boolean;
         gname: string;
-        tempStore: TMoveRecord;
         gamefile: file of integer;
-
+        ch: char;
     begin
-//        tempGPointer := gamePointer;
-        utilFlag := FALSE;
-//        startPage := BASE2;
-        offset := 4000;
-//        DataOps(2, startPage, dataSize, offset, storePtr);
-        offset := 4002;
-//        DataOps(2, startPage, dataSize, offset, storeBase);
-        tmpPtr := storePtr - 136;
-        tmpBase := storeBase;
+        utilDone := false;
 
         repeat
-            gotoxy(20, 3);
-            write('[1] load game');
-            gotoxy(20, 4);
-            write('[2] save game      ');
-            gotoxy(20, 5);
-            write('[3] backup');
-            gotoxy(20, 6);
-            write('[4] forward');
-            gotoxy(20, 7);
-            write('[5] first move ');
-            gotoxy(20, 8);
-            write('[6] last move');
-            gotoxy(20, 9);
-            write('[7] switch sides');
-            gotoxy(20, 10);
-            write('[8] change ply');
-            gotoxy(20, 11);
-            write('[9] play');
-            gotoxy(20, 12);
-            write('[0] end game');
-            gotoxy(20, 13);
-            write('[P] print game');
+            showUtilityMenu;
             repeat
-                ans := getKeyInt;
-            until ans in[48..57, 80];
+                ch := upcase (getKey)
+            until ch in ['0', '7'..'9'];
+            clearUtilityMenu;
 
-            ClearFields;
-
-            case ans of 
-                80: 
-                begin {print}
-                    PrintGame;
-                end;
-                49: 
+            case ch of 
+                'P': 
+                    begin {print}
+                        PrintGame;
+                    end;
+                '1': 
                 begin {load}
 (*                
                     gotoxy(20, 9);
@@ -303,16 +296,15 @@ procedure Utility(var humanSide: integer);
                     write('           ');
 *)                    
                 end;
-                50: 
+                '2': 
                 begin {save}
                     gotoxy(20, 9);
                     write('file name: ');
-                    ans := getKeyInt;
                     gotoxy(20, 10);
                     readln(gname);
                     saveGame (gname, true)
                 end;
-                51:                 
+                '3':                 
                 begin {backup}
 (*                
                     tmpPtr := tmpPtr - 136;
@@ -347,7 +339,7 @@ procedure Utility(var humanSide: integer);
                         end;
 *)                        
                 end;
-                52: 
+                '4':
                 begin {forward}
 (*                
                     if (tmpBase <> storeBase) or ((tmpBase = storeBase) and
@@ -368,7 +360,7 @@ procedure Utility(var humanSide: integer);
                         writeln(chr(7));
 *)                        
                 end;
-                54: 
+                '5':
                 begin {last move}
 (*                
                     tempGPointer := gamePointer;
@@ -377,7 +369,7 @@ procedure Utility(var humanSide: integer);
                     goto l_2;
 *(                    
                 end;
-                53: 
+                '6':
                 begin {first move}
 (*                
                     tempGPointer := 0;
@@ -386,64 +378,36 @@ procedure Utility(var humanSide: integer);
                     goto l_2;
 *)                    
                 end;
-                55: 
-                begin {switch sides}
-                    humanSide := 1 - humanSide;
-                    goto l_1;
-                end;
-                56: 
-                begin {change ply}
-                    ClearFields;
-                    repeat
-                        gotoxy(20, 10);
-                        write(chr(7), 'ply: ');
-                        ans := getKeyInt;
-                        readln(gamePly);
-                    until gamePly in[1..6];
-//                    ply := gamePly;
-                    gotoxy(0, 1);
-                    write('ply : ', gamePly);
-                    ClearFields;
-                end;
-                57: 
-                begin {play}
-                    l_1: 
-(*                    
-                    storeBase := tmpBase;
-                    storePtr := tmpPtr + 136;
-                    startPage := BASE2;
-                    dataSize := 2;
-                    offset := 4000;
-                    DataOps(1, startPage, dataSize, offset, storePtr);
-                    offset := 4002;
-                    DataOps(1, startPage, dataSize, offset, storeBase);
-*)                    
-                    utilFlag := TRUE;
-//	 TODO:                    turn := gameSide;
-//                    gamePointer := tempGPointer;
-                    tempStore.pieceType := InvalidPiece;
-(*                    
-                    startPage := BASE2;
-                    dataSize := 8;
-                    offset := PLAYLIST + gamePointer;
-                    DataOps(1, startPage, dataSize, offset, tempStore);
-*)                    
-                    ClearFields;
-                end;
-                48: 
-                begin {end game}
-                    ClearFields;
-                    gotoxy(20, 10);
-                    write(chr(7), 'end game? [y/n]');
-                    repeat
-                        ans := getKeyInt;
-                    until ans in[89, 78];
-                    if ans = 89 then
-                        halt;
-                    ClearFields;
-                end;
-            end;
-        until utilFlag;
+                '7':
+                    begin {switch sides}
+                        humanSide := 1 - humanSide;
+                        utilDone := true
+                    end;
+                '8':
+                    begin {change ply}
+                        repeat
+                            gotoxy(xOrg, yOrg);
+                            write(chr(7), 'ply: ');
+                            readln(gamePly);
+                        until gamePly in[1..6];
+                        showPly
+                    end;
+                '9':
+                    utilDone := true;
+                '0':
+                    begin {end game}
+                        gotoxy(xOrg, yOrg);
+                        write (chr(7), 'end game?');
+                        gotoxy (xOrg, succ (yOrg));
+                        write ('[y/n]');
+                        repeat
+                            ch := upcase (getKey)
+                        until ch in ['Y', 'N'];
+                        if ch = 'Y' then
+                            halt;
+                    end;
+            end
+        until utilDone
     end;
 
 end.

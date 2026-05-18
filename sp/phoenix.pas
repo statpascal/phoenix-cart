@@ -1,18 +1,14 @@
 program phoenix;
 
-uses globals, main, resources, vdp;
+uses globals, main, resources, ui;
 
 begin
-    clrscr;
-    setBackColor (white);
-    enableScreenSaver (false);
+    initVideoMode;
     writeln('Phoenix Chess ', versionString);
     chainMain;
 
-    writeln;
-    writeln;    
+    clrscr;
     writeln ('Phoenix Chess terminating');
     writeln ('Press any key for main title screen');
-    while keyPressed do;
-    waitkey
+    waitKeypressed
 end.
