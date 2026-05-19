@@ -87,7 +87,7 @@ procedure handlePositions (var mainBoard: TBoardRecord; line: string);
             begin
                 moveSeq [i].pieceType := findPieceType (mainBoard, turn, moveSeq [i].startSq);
                 registerMove (mainBoard, turn, moveSeq [i]);
-                enterMoveSimple (turn, mainBoard, moveSeq [i]);
+                enterMoveSimple (mainBoard, moveSeq [i]);
                 turn := 1 - turn
             end
     end;
@@ -138,8 +138,6 @@ procedure loadOpeningBook (fn: string);
         mainBoard: TBoardRecord;
         f: text;
         desc, line: string;
-        side: integer;
-    
     begin
         assign (f, fn);
         {$i-}
@@ -153,7 +151,7 @@ procedure loadOpeningBook (fn: string);
                 readln (f, line);
                 if (length (line) <> 0) and (line [1] <> '#') then 
                     begin
-                        setInitPosition (mainBoard, side);
+                        setInitPosition (mainBoard);
                         handlePositions (mainBoard, line)
                     end
             end;

@@ -69,7 +69,7 @@ type
         flags: int16;			 // EP/castling flag
     end;
 
-procedure setInitPosition (var board: TBoardRecord; var side: integer);
+procedure setInitPosition (var board: TBoardRecord);
 procedure setFENPosition (var board: TBoardRecord; s: string);
 
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
@@ -85,8 +85,9 @@ procedure clearSquare (var board: TBoardRecord; side, piece, square: integer);
 procedure enterCastleFlag (var board: TBoardRecord; flag: integer; setflg: boolean);
 procedure toggleMoveFlag (var board: TBoardRecord);
 
+function sideToMove (var board: TBoardRecord): integer;
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
-procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
+procedure enterMoveSimple (var board: TBoardRecord; var move: TMoveRecord);
 
 procedure clearPositionHashes;
 procedure enterPositionHash (var move: TMoveRecord; hash: uint64);
@@ -240,8 +241,8 @@ function makeMoveRecord (var board: TBoardRecord; turn, startSq, endSq: integer)
     
     function exposesKing (tempBoard: TBoardRecord; var move: TMoveRecord): boolean;
         begin
-            enterMoveSimple (turn, tempBoard, move);
-            exposesKing := isKingChecked (turn, tempBoard)
+            enterMoveSimple (tempBoard, move);
+            exposesKing := isKingChecked (1 - sideToMove (tempBoard), tempBoard)
         end;
         
     begin
@@ -349,6 +350,11 @@ procedure toggleMoveFlag (var board: TBoardRecord);
     
 {$bank:off}
     
+function sideToMove (var board: TBoardRecord): integer;
+    begin
+        sideToMove := ord (board.flags and moveBlackFlag <> 0)
+    end;
+    
 procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var board: TBoardRecord; move: TMoveRecord);
         
     procedure castleRook (startSq, endSq: integer);
@@ -414,11 +420,11 @@ procedure enterMove (turn: integer; isAttack: boolean; var capId: integer; var b
         toggleMoveFlag (board);
     end;    
     
-procedure enterMoveSimple (turn: integer; var board: TBoardRecord; var move: TMoveRecord);
+procedure enterMoveSimple (var board: TBoardRecord; var move: TMoveRecord);
     var
         dummyId: integer;
     begin
-        enterMove (turn, true, dummyId, board, move)
+        enterMove (sideToMove (board), true, dummyId, board, move)
     end;
     
 const
@@ -618,10 +624,9 @@ procedure setFENPosition (var board: TBoardRecord; s: string);
         clearPositionHashes
     end;
 
-procedure setInitPosition (var board: TBoardRecord; var side: integer);
+procedure setInitPosition (var board: TBoardRecord);
     begin    
-        setFENPosition (board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-        side := 0;
+        setFENPosition (board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
     end;
            
 end.

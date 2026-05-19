@@ -20,6 +20,15 @@ procedure stopLogging;
 
 implementation
 
+{$ifdef fpc}
+uses sysutils;
+
+function hexstr2 (n: uint8): string;
+    begin
+        hexstr2 := intToHex (n, 2)
+    end;
+{$endif}
+
 procedure startLogging (fn: string);
     begin
         doLogging := true;
@@ -57,6 +66,8 @@ procedure dumpBitBoard (var b: bitboard);
     end;
 
 procedure printBoard (var f: text; var board: TBoardRecord);
+    type
+        TByteArray = array [0..7] of uint8;
     var
         s: array [0..7] of string [8];
         side, piece, i, j: integer;
@@ -81,6 +92,22 @@ procedure printBoard (var f: text; var board: TBoardRecord);
         writeln (f);
         writeln (f, '========================================');
         writeln (f, 'Move: ', board.moveNr);
+        write (f, 'Castling: ');
+        if board.flags and whiteRightCastle <> 0 then
+            write (f, 'K');
+        if board.flags and whiteLeftCastle <> 0 then
+            write (f, 'Q');
+        if board.flags and blackRightCastle <> 0 then
+            write (f, 'k');
+        if board.flags and blackLeftCastle <> 0 then
+            write (f, 'q');
+        if board.flags and epMoveFlag <> 0 then            
+            write (f, ' EP: ', chr (ord ('A') + board.flags and 7), 6 - 3 * ord (board.flags and MoveBlackFlag <> 0));
+        writeln (f);
+        write (f, 'hash: ');
+        for i := 0 to 7 do 
+            write (f, hexstr2 (TByteArray (board.hash) [i]));
+        
         writeln (f);
         for i := 7 downto 0 do
             begin

@@ -12,7 +12,7 @@ uses
     globals, genmove, trimprocs, ui, pmove, utility, resources, logger;
 
 var 
-    cWarning, gameSide, humanSide: integer;
+    cWarning, humanSide: integer;
 
 
 procedure SaveMove;
@@ -22,7 +22,7 @@ procedure SaveMove;
 procedure showMessage (s: string);
     begin
         // TODO: beep
-        showHChar (18, 4, 32, 15);
+        showHChar (18, 4, 32, 14);
         gotoxy (18, 4);
         write (s)
     end;
@@ -32,62 +32,43 @@ procedure initGame (var mainBoard: TBoardRecord);
         ans: integer;
     begin
         writeln;
-        write(chr(7), 'enter ply: [1-6] ');
+        write(chr(7), 'Enter ply: [1-6] ');
         repeat
             ans := GetKeyInt;
         until ans in[49..54];
         writeln(chr(ans));
         gamePly := ans - 48;
 
-        writeln(chr(7), 'select side: [w]hite/[b]lack');
+        writeln(chr(7), 'Select side: [w]hite/[b]lack');
         repeat
             ans := GetKeyInt;
         until ans in[66, 87];
         if ans = 66 then
             begin
                 humanSide := 1;
-                writeln('***playing as black***');
+                writeln('Playing as black');
             end
         else
             begin
                 humanSide := 0;
-                writeln('***playing as white***');
+                writeln('Playing as white');
             end;
             
         cWarning := 0;
-        write(chr(7), 'enter position? (y/n)');
+        write(chr(7), 'Enter position? (y/n)');
         repeat
             ans := GetKeyInt;
         until ans in[78, 89];
         if ans = 89 then
             begin
-                EnterPos (mainBoard, gameside);
-//                gameSide := turn;	<->
-               {look for check condition}
-               
+                EnterPos (mainBoard);
 (* TODO: check cehck               
-                lastMove .id := 0;
-                lastMove.startSq := 0;
-                lastMove.endSq := 0;
-                CombineTrim(bit3, bit5, lastMove, mainBoard);
-                if gameSide = 0 then
-                    offset := WKO
-                else
-                    offset := BKO;
-                DataOps(2, startPage, dataSize, offset, bit1);
-                if gameSide = 0 then
-                    BitAnd(bit1, bit5, bit2)
-                else
-                    BitAnd(bit1, bit3, bit2);
-                if not(IsClear(bit2)) then
                     cWarning := 1;
 *)                    
-            end
-        else
-            gameSide := 0;	// turn := gameside
+            end;
 
         writeln;            
-        write(chr(7), 'log to DSK0.phoenix.log (y/n)');
+        write(chr(7), 'Log to DSK0.phoenix.log (y/n)');
         repeat
             ans := GetKeyInt;
         until ans in[78, 89];
@@ -108,12 +89,12 @@ procedure initGame (var mainBoard: TBoardRecord);
 procedure chainMain;
     var mainBoard: TBoardRecord;
         compressedBoard: TCompressedBoard;
-        checkFlag: boolean;
+        checkFlag, isHumanMove: boolean;
         playMove: TMoveScoreRecord;
         dummy: integer;
 
     begin
-        setInitPosition (mainboard, gameSide);
+        setInitPosition (mainboard);
         initGame (mainBoard);
 
         {start game}
@@ -128,19 +109,21 @@ procedure chainMain;
         
             gotoxy(0, 2);
             write ('move: ', mainBoard.moveNr, ' turn: ');
-            if gameSide = 0 then
+            if mainBoard.flags and moveBlackFlag = 0 then
                 write ('white')
             else
                 write ('black');
         
-            if humanSide = gameSide then
-                {TODO: save current game state}
-                playerMove (mainBoard, playMove.move, gameSide, humanSide);	// may change game side
-            if humanSide <> gameSide then
+            if humanSide = sideToMove (mainBoard) then
+                playerMove (mainBoard, playMove.move, humanSide);	// may change game side
+            isHumanMove := humanSide = sideToMove (mainBoard);
+            showMessage ('');
+                
+            if not isHumanMove then
                 begin
                     gotoxy (18, 18);
                     write('thinking...');
-                    playMove := generateMove (gamePly, gameSide, mainBoard);
+                    playMove := generateMove (gamePly, mainBoard);
                     showHChar (18, 18, 32, 11);
                     
                     if playMove.move.pieceType = InvalidPiece then
@@ -165,7 +148,7 @@ procedure chainMain;
             DataOps(1, sPage, dataSize, offset, moveStore);
 *)            
 
-            enterMoveSimple (gameSide, mainBoard, playMove.move);
+            enterMoveSimple (mainBoard, playMove.move);
             enterPositionHash (playMove.move, mainBoard.hash);
 
             BoardDisplay (mainBoard);
@@ -174,7 +157,7 @@ procedure chainMain;
                 showMessage ('3-fold rep');
 
             {look for check condition}
-            checkFlag := isKingChecked (1 - gameSide, mainBoard);
+            checkFlag := isKingChecked (sideToMove (mainBoard), mainBoard);
             if checkFlag then
                 begin
                     showMessage ('check!');
@@ -198,9 +181,7 @@ procedure chainMain;
                         exit;
                     end;
                 
-//            inc (gameMove, gameSide);	// add 1 if black
-            showMove (playMove, gameSide = humanSide);
-            gameSide := 1 - gameSide
+            showMove (playMove, isHumanMove);
 
 //            check3Rep;
 

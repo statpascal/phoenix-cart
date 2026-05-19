@@ -18,7 +18,7 @@ const
 procedure setMaxMoves (val: integer);    
 // procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
 
-function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreRecord;
+function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
 (* if no valid move can be generated, move.pieceType is set to InvalidPiece and score
    indicates the cause:
    abs (move.score) >= infinity : checkmate
@@ -330,7 +330,7 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
             logResult (ply, turn, isPruned, result)
     end;
     
-function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreRecord;
+function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
     const
         alpha = -20000;
         beta = 20000;
@@ -338,10 +338,11 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
     var
         moveScore: TMoveScore;
         result1: TMoveScoreRecord;
-        i, totalValue, side, piece, savedHashCount: integer;
+        i, totalValue, turn, side, piece, savedHashCount: integer;
         moves: TBookMoves;
         
     begin
+        turn := ord (board.flags and moveBlackFlag <> 0);
         moves := searchMove (board.hash);
         result.move.pieceType := InvalidPiece;
         if moves [0] <> 0 then
@@ -351,10 +352,15 @@ function generateMove (ply, turn: integer; var board: TBoardRecord): TMoveScoreR
                     inc (i);
 //                gotoxy (0, 3);
 //                write ('Have: ', i:2);
-                i := Random (succ (i));
+                i := Random (i);
 //                write (' Random: ', i:2);
                 result.score := 0;
                 result.move := makeMoveRecord (board, turn, moves [i] shr 6, moves [i] and $3f)
+            end
+        else
+            begin
+//                gotoxy (0, 3);
+//                write ('                     ')
             end;
             
         if result.move.pieceType = InvalidPiece then
@@ -407,7 +413,7 @@ function isMovingSideMate (var board: TBoardRecord): boolean;
             begin
                 tempBoard := board;
                 dec (moveStackPointer);
-                enterMoveSimple (turn, tempBoard, moveStack [moveStackPointer]);
+                enterMoveSimple (tempBoard, moveStack [moveStackPointer]);
                 result := isKingChecked (turn, tempBoard)
             end
     end;

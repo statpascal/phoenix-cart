@@ -26,7 +26,7 @@ procedure calcMove (side: integer);
         end;
         
     begin
-        move := generateMove (gamePly, side, board);
+        move := generateMove (gamePly, board);
         write ('bestmove ');
         writeCoord (move.move.startSq);
         writeCoord (move.move.endSq);
@@ -72,14 +72,16 @@ procedure handlePosition (s: string);
             move: TMoveRecord;
         begin
             if t = 'startpos' then
-                setInitPosition (board, side, gameMove);
+                begin
+                    setInitPosition (board);
+                    side := 0
+                end;
             if t = 'moves' then
                 isMoves := true;
             if isMoves and interpretMove (t, side, move) then
                 begin
-                    enterMoveSimple (side, board, move);
+                    enterMoveSimple (board, move);
                     enterPositionHash (move, board.hash);
-                    inc (gameMove, side);
                     side := 1 - side
                 end
         end;

@@ -10,7 +10,6 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
 
     var 
         mainBoard: TBoardRecord;
-        side: integer;
         calcMove: string;
         playMove: TMoveRecord;
         
@@ -22,14 +21,13 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
     
     begin
         setFENPosition (mainBoard, fenStr);
-        side := ord (mainBoard.flags and MoveBlackFlag <> 0);
         gamePly := ply;
         plyQS := 1 - qsdeepening;
 
         write (fenStr);
         if log <> '' then
             startLogging (log);
-        playMove := generateMove (ply, side, mainBoard).move;
+        playMove := generateMove (ply, mainBoard).move;
         calcMove := makeCoord (playMove.startSq) + makeCoord (playMove.endSq);
         if playMove.flags and $f0 <> 0 then
             calcMove := calcMove + figure [1, playMove.flags shr 4];

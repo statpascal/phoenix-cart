@@ -4,7 +4,7 @@ interface
 
 uses globals, board;
 
-procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer; var humanSide: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var humanSide: integer);
 
 
 implementation
@@ -15,9 +15,9 @@ const
     xOrg = 18;
     yOrg = 9;
 
-procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: integer; var humanSide: integer);
+procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var humanSide: integer);
     var 
-        state: integer;
+        state, turn: integer;
         square: array [0..1] of integer;
         key: char;
         
@@ -36,6 +36,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
                 
     begin
         state := 0;
+        turn := sideToMove (board);
         
         repeat
             case state of
@@ -43,7 +44,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; turn: 
                     begin
                         square [0] := 0;
                         gotoxy (xOrg, yOrg);
-                        write (chr (7), 'enter move:');
+                        write (chr (7), 'Enter move:');
                         showHChar (xOrg, succ (yOrg), 32, 8);
                         gotoxy (xOrg, succ (yOrg))
                     end;

@@ -10,7 +10,7 @@ procedure showPly;					// display ply/qs in 2nd line
 procedure NewBoard;					// display main game screen
 procedure BoardDisplay (var board: TBoardRecord);	// display only board
 
-procedure EnterPos (var board: TBoardRecord; var turn: integer);
+procedure EnterPos (var board: TBoardRecord);
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
 
 function getKeyInt: integer;
@@ -165,8 +165,6 @@ procedure NewBoard;
     end; 
 
 procedure BoardDisplay (var board: TBoardRecord);
-    type
-        TByteArray = array [0..7] of uint8;
     var 
         s, piece, i, row, col: integer;
         posArray: bitarray;
@@ -204,29 +202,10 @@ procedure BoardDisplay (var board: TBoardRecord);
                 lines [row][0] := #16;
                 gotoxy (orgX, orgY + row);
                 write (lines [row])
-            end;
-(*                
-        gotoxy (0, 22);
-        write ('castling: ');
-        if board.flags and whiteRightCastle <> 0 then
-            write ('K');
-        if board.flags and whiteLeftCastle <> 0 then
-            write ('Q');
-        if board.flags and blackRightCastle <> 0 then
-            write ('k');
-        if board.flags and blackLeftCastle <> 0 then
-            write ('q');
-        if board.flags and epMoveFlag <> 0 then            
-            write (' EP: ', chr (ord ('A') + board.flags and 7), 6 - 3 * ord (board.flags and MoveBlackFlag <> 0));
-        writeln;
-        write ('hash: ');
-        for i := 0 to 7 do 
-            write (hexstr2 (TByteArray (board.hash) [i]));
-        gotoxy(0, 14)
-*)        
+            end
     end;
     
-procedure loadFENData (var board: TBoardRecord; var turn: integer);
+procedure loadFENData (var board: TBoardRecord);
     var
         fn, s: string;
         f: text;
@@ -241,11 +220,10 @@ procedure loadFENData (var board: TBoardRecord; var turn: integer);
             setFENPosition (board, s)
         else
             writeln ('Cannot read ', fn);
-        turn := ord (board.flags and moveBlackFlag <> 0);
         close (f)
     end;
 
-procedure EnterPos (var board: TBoardRecord; var turn: integer);
+procedure EnterPos (var board: TBoardRecord);
     var 
         row, column, sideKey, pieceKey, offset : integer;
         ans, pLoc : integer;
@@ -255,7 +233,7 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
 
     begin
         writeln;
-        writeln ('load [f]en/[i]nteractive?');
+        writeln ('Load [f]en/[i]nteractive?');
         write ('(q) to exit');
         repeat
             ch := upcase (GetKey)
@@ -267,7 +245,7 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
             
         if ch = 'F' then
             begin
-                loadFENData (board, turn);
+                loadFENData (board);
                 exit
             end;
         
@@ -277,7 +255,7 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
 
         repeat
             gotoxy (0, 22);
-            writeln(chr(7), 'select side: [w]hite/[b]black');
+            writeln(chr(7), 'Select side: [w]hite/[b]black');
             write('[q] to exit  ');
             repeat
                 sideKey := GetKeyInt;
@@ -285,7 +263,7 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
             if sideKey <> 81 then
                 begin
                     gotoxy (0, 22);
-                    write ('select ');
+                    write ('Select ');
                     if sideKey = 87 then
                         write ('white')
                     else
@@ -368,7 +346,7 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
         clrscr;
         if getBit (board.white.kingBitboard, 4) = 1 then
             begin
-                writeln(chr(7), 'allow white castling? (y/n)');
+                writeln(chr(7), 'Allow white castling? (y/n)');
                 repeat
                     ans := GetKeyInt;
                 until ans in[78, 89];
@@ -383,7 +361,7 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
 
         if getBit (board.black.kingBitboard, 60) = 1 then
             begin
-                writeln(chr(7), 'allow black castling? (y/n)');
+                writeln(chr(7), 'Allow black castling? (y/n)');
                 repeat
                     ans := GetKeyInt;
                 until ans in[78, 89];
@@ -396,26 +374,26 @@ procedure EnterPos (var board: TBoardRecord; var turn: integer);
                     end
             end;
 
-        writeln ('side to start? [w]hite/[b]lack');
+        writeln ('Side to start? [w]hite/[b]lack');
         repeat
             ch := upcase (getKey)
         until ch in ['W', 'B'];
-        turn := ord (ch = 'B');
-        if turn = 1 then
-            toggleMoveFlag (board);
-        if turn = 0 then
-            writeln('*** white to move ***')
+        if ch = 'B' then
+            begin
+                toggleMoveFlag (board);
+                writeln ('Black to move')
+            end
         else
-            writeln('*** black to move ***');
+            writeln ('White to move');
 
-        write('enter move number: ');
+        write('Enter move number: ');
         readln (board.moveNr)
     end;
 
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
     begin
         gotoxy (18, 6);
-        write ('last move: ');
+        write ('Last move: ');
         gotoxy (18, 7);
         printMove (output, moveScore.move);
         write (' ');
@@ -426,7 +404,7 @@ procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
                 gotoxy (0, 22);
                 if (moveNumHi <> 0) or (moveNumLo <> 0) then
                     begin
-                        write('positions evaluated: ');
+                        write('Positions evaluated: ');
                         if moveNumHi > 0 then
                             begin
                                 write (moveNumHi);
@@ -441,23 +419,27 @@ procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
                             end
                         else
                             writeln (moveNumLo);
-                        write('position score: ', moveScore.score)
+                        write('Position score: ', moveScore.score)
                     end
                 else
-                    write ('book move')
+                    write ('Book move')
             end;
     end;
 
 procedure initVideoMode;
 
+    procedure charset; external '../resources/charset.dat';
     procedure pattern; external '../resources/pattern.dat';
     
     type
+        TCharData = array [0..767] of uint8;
         TPatternData = array [0..3, Pawn..King, 0..31] of uint8;
     
     var
         patternDataRom: TPatternData absolute pattern;
+        charDataRom: TCharData absolute charset;
         patternData: TPatternData;
+        charData: TCharData;
         i, j, side, field, destChar, destGroup: integer;
         fg, bg: TColor;
         p1, p2, p3: array [0..7] of uint8;
@@ -465,9 +447,13 @@ procedure initVideoMode;
     begin
         setVideoMode (StandardMode);
         clrscr;
-        setBackColor (gray);
+//        setBackColor (gray);
+        setBackColor (white);
         setTextColor (black);
         enableScreenSaver (false);
+        
+        charData := charDataRom;
+        vmbw (charData, patternTable + 8 * ord ('a'), sizeof (charData));
 
         patternData := patternDataRom;
         destChar := PatternBaseWhiteOnWhite;
@@ -482,7 +468,7 @@ procedure initVideoMode;
                     else
                         fg := black;
                     if field = 0 then
-                        bg := lightgreen
+                        bg := gray // lightgreen
                     else
                         bg := darkyellow;
                     setColor (destGroup, fg, bg);
@@ -491,7 +477,8 @@ procedure initVideoMode;
                     inc (destChar, 24);
                     inc (destGroup, 3)
                 end;
-        setColor (destGroup, darkyellow, lightgreen);
+//        setColor (destGroup, darkyellow, lightgreen);
+        setColor (destGroup, darkyellow, gray);
         vrbw (patternTable + 8 * PatternEmptyBlack, $ff, 32);
         
         // create split numbers 1 - 8
@@ -525,11 +512,11 @@ procedure initVideoMode;
             end;
             
         // replace lower case char definition
-        for i := ord ('A') to ord ('Z') do
-            begin
-                vmbr (p1, patternTable + i * 8, 8);
-                vmbw (p1, patternTable + (i + ord ('a') - ord ('A')) * 8, 8)
-            end
+//        for i := ord ('A') to ord ('Z') do
+//            begin
+//                vmbr (p1, patternTable + i * 8, 8);
+//                vmbw (p1, patternTable + (i + ord ('a') - ord ('A')) * 8, 8)
+//            end
         
     end;
 
