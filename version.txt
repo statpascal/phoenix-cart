@@ -115,3 +115,11 @@
 - added pawn promotion to QS
 - removed pawn weights from end game detection
 - weighted castling with ply
+
+2026-05-19-16-00
+
+- test version standard graphics mode
+
+2026-05-20-18-30
+
+- added game history

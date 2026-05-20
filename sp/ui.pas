@@ -4,8 +4,6 @@ interface
 
 uses vdp, globals, board;
 
-procedure PrintGame;
-
 procedure showPly;					// display ply/qs in 2nd line
 procedure NewBoard;					// display main game screen
 procedure BoardDisplay (var board: TBoardRecord);	// display only board
@@ -44,101 +42,6 @@ function getKeyInt: integer;
         getKeyInt := ord (upcase (getkey ()))
     end;
 
-
-
-procedure PrintGame;
-
-var 
-    pturn, offset : integer;
-    pcname : array [0..40] of char;
-    status : boolean;
-    rdir, iLocString, eLocString, gDate, pName : string;
-
-begin
-(*
-    rdir := 'PIO';
-    pcname[0] := 'P';
-    pcname[8] := 'R';
-    pcname[16] := 'N';
-    pcname[24] := 'B';
-    pcname[32] := 'Q';
-    pcname[40] := 'K';
-
-    gotoxy(20, 10);
-    write(chr(7), 'opponent name:');
-    gotoxy(20, 11);
-    readln(pName);
-    gotoxy(20, 10);
-    write(chr(7), 'date:             ');
-    gotoxy(20, 11);
-    write('                  ');
-    gotoxy(20, 11);
-    readln(gDate);
-    gotoxy(20, 12);
-    write('printing...');
-    offset := PLAYLIST;
-    startPage := BASE2;
-    dataSize := 8;
-    pturn := 1;
-    
-    close (output);
-    assign (output, rdir);
-    rewrite (output);
-    status := IOResult = 0;
-    
-    if status = FALSE then
-        begin
-            //   Exception(TRUE);
-            gotoxy(20, 12);
-            write(chr(7), 'printer error!');
-        end
-    else
-        begin
-            iLocString := '  ';
-            eLocString := '  ';
-            write('Phoenix Chess ');
-            if humanSide = 0 then
-                writeln('playing black')
-            else
-                writeln('playing white');
-            writeln('Opponent: ', pName);
-            writeln('Date: ', gDate);
-            writeln('Ply: ', gamePly);
-            writeln;
-            repeat
-                DataOps(2, startPage, dataSize, offset, moveStore);
-                if moveStore.Id = 99 then
-                    goto l_1;
-                iLocString[1] := chr(65 + (moveStore.startSq mod 8));
-                iLocString[2] := chr(49 + (moveStore.startSq div 8));
-                eLocString[1] := chr(65 + (moveStore.endSq mod 8));
-                eLocString[2] := chr(49 + (moveStore.endSq div 8));
-                write(pturn, ': ', pcname[moveStore.Id], ']', iLocString, '-',
-                      eLocString, '  ');
-                offset := offset + 8;
-                DataOps(2, startPage, dataSize, offset, moveStore);
-                if moveStore.Id = 99 then
-                    goto l_1;
-                iLocString[1] := chr(65 + (moveStore.startSq mod 8));
-                iLocString[2] := chr(49 + (moveStore.startSq div 8));
-                eLocString[1] := chr(65 + (moveStore.endSq mod 8));
-                eLocString[2] := chr(49 + (moveStore.endSq div 8));
-                writeln(pcname[moveStore.Id], ']', iLocString, '-', eLocString);
-                offset := offset + 8;
-                pturn := succ(pturn);
-                l_1: 
-            until moveStore.Id = 99;
-        end;
-    //  Exception(TRUE);
-    
-    close (output);
-    assign (output, '');
-    rewrite (output);
-*)    
-    gotoxy(20, 12);
-    write('               ');
-end;
-(* PrintGame *)
 
 const 
     orgX = 1;
@@ -428,7 +331,7 @@ procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
 
 procedure initVideoMode;
 
-    procedure charset; external '../resources/charset.dat';
+    procedure charset; external '../resources/font-221.bin';
     procedure pattern; external '../resources/pattern.dat';
     
     type
@@ -453,7 +356,7 @@ procedure initVideoMode;
         enableScreenSaver (false);
         
         charData := charDataRom;
-        vmbw (charData, patternTable + 8 * ord ('a'), sizeof (charData));
+        vmbw (charData, patternTable + 8 * ord (' '), sizeof (charData));
 
         patternData := patternDataRom;
         destChar := PatternBaseWhiteOnWhite;

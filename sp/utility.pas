@@ -8,7 +8,7 @@ procedure Utility (var humanSide: integer);
 
 implementation
 
-uses globals, ui;
+uses globals, ui, logger;
 
 (*
 procedure UpdateBoard(gBase, gOffset: integer);
@@ -76,14 +76,60 @@ procedure ShowUtilityMenu;
         showLine (' : forward');
         showLine (' : first move ');
         showLine (' : last move');
-        showLine ('7: switch sides');
+        showLine ('7: switch side');
         showLine ('8: change ply');
         showLine ('9: play');
         showLine (' : new game');
-        showLine (' : print game');
+        showLine ('P: print game');
         showLine ('0: exit')
     end;
     
+procedure printGame;
+    var 
+        f: text;
+        s: string;
+        side, count, moveNr, total: integer;
+        move: TMoveRecord;
+    begin
+        gotoxy (xOrg, yOrg);
+        write ('Print [PIO]:');
+        gotoxy (xOrg, succ (yOrg));
+        readln (s);
+        if s = '' then
+            s := 'PIO';
+        
+        assign(f, s);
+        rewrite (f);
+        
+        writeln (f, 'Initial posiition:');
+        writeln (f, getGameStartPosition);
+        writeln (f);
+        
+        count := 0;
+        side := getGameStartSide;
+        moveNr := getGameStartMoveNr;
+        total := getGameMoveCount;
+        
+        while count < total do
+            begin
+                if side = 0 then
+                    write (f, moveNr, '. ');
+                move := getGameSavedMove (count);
+                printMove (f, move);
+                inc (count);
+                if side = 0 then 
+                    write (f, ' ')
+                else
+                    begin
+                        inc (moveNr);
+                        writeln (f)
+                    end;
+                side := 1 - side;
+            end;
+            
+        writeln (f);
+        close (f)
+    end;
 
 procedure saveGame (gname: string; showMsg: boolean);
     var
@@ -187,7 +233,7 @@ procedure Utility(var humanSide: integer);
             showUtilityMenu;
             repeat
                 ch := upcase (getKey)
-            until ch in ['0', '7'..'9'];
+            until ch in ['0', '7'..'9', 'P'];
             clearUtilityMenu;
 
             case ch of 

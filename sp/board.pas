@@ -101,6 +101,11 @@ procedure combinePieces (var board: TBoardRecord);
 procedure compressBoard (var board: TBoardRecord; var res: TCompressedBoard);
 procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord);
 
+function getGameStartPosition: string;
+function getGameMoveCount: integer;
+function getGameStartSide: integer;
+function getGameStartMoveNr: integer;
+function getGameSavedMove (n: integer): TMoveRecord;
 
 
 implementation
@@ -427,6 +432,43 @@ procedure enterMoveSimple (var board: TBoardRecord; var move: TMoveRecord);
         enterMove (sideToMove (board), true, dummyId, board, move)
     end;
     
+// game histroy
+const
+    MaxGameMoves = 249;
+    
+var
+    savedStartPosition: string  [100];	// TODO: max length 92?
+    savedStartSide, savedStartMoveNr: integer;
+    savedMoves: array [0..MaxGameMoves - 1] of TMoveRecord;
+    savedMoveCount: integer;
+    
+function getGameStartPosition: string;
+    begin
+        getGameStartPosition := savedStartPosition
+    end;
+    
+function getGameMoveCount: integer;
+    begin
+        getGameMoveCount := savedMoveCount
+    end;
+    
+function getGameStartSide: integer;
+    begin
+        getGameStartSide := savedStartSide
+    end;
+    
+function getGameStartMoveNr: integer;
+    begin
+        getGameStartMoveNr := savedStartMovenr
+    end;
+    
+function getGameSavedMove (n: integer): TMoveRecord;
+    begin
+        getGameSavedMove := savedMoves [n]
+    end;
+
+// Zobirst hashes
+    
 const
     MaxPositionHashes = 120;
     
@@ -450,6 +492,11 @@ procedure enterPositionHash (var move: TMoveRecord; hash: uint64);
                 hashes [hashCount] := hash;
                 isStop [hashCount] := hashCount = 0;
                 inc (hashCount)
+            end;
+        if savedMoveCount < MaxGameMoves then
+            begin
+                savedMoves [savedMoveCount] := move;
+                inc (savedMoveCount)
             end
     end;
     
@@ -578,7 +625,12 @@ procedure setFENPosition (var board: TBoardRecord; s: string);
         
         skipBlank;
         if s [index] = 'b' then
-            toggleMoveFlag (board);
+            begin
+                toggleMoveFlag (board);
+                savedStartSide := 1
+            end
+        else
+            savedStartSide := 0;
         inc (index);
         
         skipBlank;
@@ -620,8 +672,11 @@ procedure setFENPosition (var board: TBoardRecord; s: string);
                 factor := factor * 10;
                 dec (index)
             end;
+        savedStartMoveNr := board.moveNr;
             
-        clearPositionHashes
+        clearPositionHashes;
+        savedMoveCount := 0;
+        savedStartPosition := s
     end;
 
 procedure setInitPosition (var board: TBoardRecord);
