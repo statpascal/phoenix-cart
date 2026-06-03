@@ -92,18 +92,7 @@ procedure printBoard (var f: text; var board: TBoardRecord);
         writeln (f);
         writeln (f, '========================================');
         writeln (f, 'Move: ', board.moveNr);
-        write (f, 'Castling: ');
-        if board.flags and whiteRightCastle <> 0 then
-            write (f, 'K');
-        if board.flags and whiteLeftCastle <> 0 then
-            write (f, 'Q');
-        if board.flags and blackRightCastle <> 0 then
-            write (f, 'k');
-        if board.flags and blackLeftCastle <> 0 then
-            write (f, 'q');
-        if board.flags and epMoveFlag <> 0 then            
-            write (f, ' EP: ', chr (ord ('A') + board.flags and 7), 6 - 3 * ord (board.flags and MoveBlackFlag <> 0));
-        writeln (f);
+        writeln (f, 'Castling: ', makeCastlingString (board), ' EP: ', makeEPString (board));
         write (f, 'hash: ');
         for i := 0 to 7 do 
             write (f, hexstr2 (TByteArray (board.hash) [i]));

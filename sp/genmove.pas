@@ -16,7 +16,6 @@ const
     MoveStackSize = 2047;
     
 procedure setMaxMoves (val: integer);    
-// procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
 
 function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
 (* if no valid move can be generated, move.pieceType is set to InvalidPiece and score

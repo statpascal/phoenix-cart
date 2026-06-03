@@ -106,14 +106,16 @@ procedure chainMain;
             showMessage ('check!');
 
         repeat
-        
+
+(*        
             gotoxy(0, 2);
             write ('move: ', mainBoard.moveNr, ' turn: ');
             if mainBoard.flags and moveBlackFlag = 0 then
                 write ('white')
             else
                 write ('black');
-        
+*)
+
             if humanSide = sideToMove (mainBoard) then
                 playerMove (mainBoard, playMove.move, humanSide);	// may change game side
             isHumanMove := humanSide = sideToMove (mainBoard);
@@ -130,7 +132,7 @@ procedure chainMain;
                         begin
                             showMessage ('stalemate!');
                             waitKeyPressed;
-                            Utility (dummy);
+                            Utility (dummy, mainBoard);
                             exit                            
                         end
                 end;
@@ -170,14 +172,14 @@ procedure chainMain;
                     begin
                         showMessage ('checkmate!');
                         waitKeyPressed;
-                        Utility (dummy);
+                        Utility (dummy, mainBoard);
                         exit;
                     end
                 else if abs (playMove.Score) >= infinity then
                     begin
                         showMessage ('resign!');
                         waitKeypressed;
-                        Utility (dummy);
+                        Utility (dummy, mainBoard);
                         exit;
                     end;
                 

@@ -2,8 +2,10 @@ unit utility;
 
 interface
 
+uses board;
+
 procedure saveGame (gname: string; showMsg: boolean);
-procedure Utility (var humanSide: integer);
+procedure Utility (var humanSide: integer; var board: TBoardRecord);
 
 
 implementation
@@ -73,13 +75,13 @@ procedure ShowUtilityMenu;
         showLine (' : load game');
         showLine (' : save game');
         showLine (' : backup');
-        showLine (' : forward');
-        showLine (' : first move ');
+        showLine ('4: forward');
+        showLine ('5: first move ');
         showLine (' : last move');
         showLine ('7: switch side');
         showLine ('8: change ply');
         showLine ('9: play');
-        showLine (' : new game');
+        showLine ('N: new game');
         showLine ('P: print game');
         showLine ('0: exit')
     end;
@@ -89,6 +91,7 @@ procedure printGame;
         f: text;
         s: string;
         side, count, moveNr, total: integer;
+        startPosition: TBoardRecord;
         move: TMoveRecord;
     begin
         gotoxy (xOrg, yOrg);
@@ -102,18 +105,22 @@ procedure printGame;
         rewrite (f);
         
         writeln (f, 'Initial posiition:');
-        writeln (f, getGameStartPosition);
+        
+        startPosition := getGameStartPosition;
+        writeln (f, makeFENString (startPosition));
         writeln (f);
         
         count := 0;
-        side := getGameStartSide;
-        moveNr := getGameStartMoveNr;
+        side := sideToMove (startPosition);
+        moveNr := startPosition.moveNr;
         total := getGameMoveCount;
         
         while count < total do
             begin
-                if side = 0 then
+                if (side = 0) or (count = 0) then
                     write (f, moveNr, '. ');
+                if (count = 0) and (side = 1) then
+                    write (f, '... ');
                 move := getGameSavedMove (count);
                 printMove (f, move);
                 inc (count);
@@ -132,108 +139,25 @@ procedure printGame;
     end;
 
 procedure saveGame (gname: string; showMsg: boolean);
-    var
-        gamefile: file of integer;
-        ioCheck: integer;
-        i, startPage, offset, storePtr, storeBase: integer;
-        mBuffer: array[0..2048] of integer;
-        gBuffer: array[0..67] of integer;
-    
     begin    
-    (*
-        startPage := BASE2;
-        dataSize := 2;
-        offset := 4000;
-        DataOps(2, startPage, dataSize, offset, storePtr);
-        offset := 4002;
-        DataOps(2, startPage, dataSize, offset, storeBase);
-        assign (gamefile, gname);
-        rewrite (gamefile);
-        //        rewrite(gamefile, gname);
-        ioCheck := IORESULT;
-        if ioCheck = 0 then
-            begin
-                if showMsg then begin
-                    gotoxy(20, 11);
-                    write('saving...');
-                end;
-                startPage := BASE2;
-                dataSize := 4096;
-                offset := 0;
-                DataOps(2, startPage, dataSize, offset, mBuffer);
-                for i := 0 to 2047 do
-                    begin
-                        write (gamefile, mBuffer [i]);
-                        //            gamefile^ := mBuffer[i];
-                        //            put(gamefile);
-                    end;
-                startPage := BASE4;
-                dataSize := 136;
-                offset := 0;
-
-                write (gamefile, storePtr);
-                //          gamefile^ := storePtr;
-                //          put(gamefile);
-                write (gamefile, storeBase);
-                //          gamefile^ := storeBase;
-                //          put(gamefile);
-                write (gamefile, gamePly);
-                //          gamefile^ := gamePly;
-                //          put(gamefile);
-                write (gameFile, gameSide);
-                //          gamefile^ := gameSide;
-                //          put(gamefile);
-                write (gameFile, gamePointer);
-                //          gamefile^ := gamePointer;
-                //          put(gamefile);
-
-                repeat
-                    DataOps(2, startPage, dataSize, offset, gBuffer);
-                    for i := 0 to 67 do
-                        begin
-                            write (gamefile, gBuffer [i]);
-                            //             gamefile^ := gBuffer[i];
-                            //             put(gamefile);
-                        end;
-                    offset := offset + 136;
-                    if offset > 4079 then
-                        begin
-                            startPage := succ(startPage);
-                            offset := 0;
-                        end;
-                until (offset = storePtr) and (startPage = storeBase);
-                close(gamefile);
-            end
-        else
-            begin
-                gotoxy(20, 11);
-                write(chr(7), chr(7), 'file error #', ioCheck);
-                readln;
-            end;
-        if showMsg then begin
-            gotoxy(20, 10);
-            write('                  ');
-            gotoxy(20, 11);
-            write('           ')
-        end
-*)        
     end;
 
-procedure Utility(var humanSide: integer);
+procedure Utility (var humanSide: integer; var board: TBoardRecord);
     var 
-        y, i, ioCheck: integer;
         utilDone: boolean;
-        gname: string;
-        gamefile: file of integer;
         ch: char;
+        move: TMoveRecord;
+        totalMoves, currentMove: integer;
     begin
         utilDone := false;
+        totalMoves := getGameMoveCount;
+        currentMove := totalMoves;
 
         repeat
             showUtilityMenu;
             repeat
                 ch := upcase (getKey)
-            until ch in ['0', '7'..'9', 'P'];
+            until ch in ['0', '4'..'5', '7'..'9', 'N', 'P'];
             clearUtilityMenu;
 
             case ch of 
@@ -242,188 +166,35 @@ procedure Utility(var humanSide: integer);
                         PrintGame;
                     end;
                 '1': 
-                begin {load}
-(*                
-                    gotoxy(20, 9);
-                    write('file name: ');
-                    ans := ord (getKeyInt ());
-                    gotoxy(20, 10);
-                    readln(gname);
-            {$I-}
-                    assign (gamefile, gname);
-                    reset (gamefile);
-                    //        reset(gamefile, gname);
-                    ioCheck := IORESULT;
-            {$I+}
-                    if ioCheck = 0 then
-                        begin
-                            gotoxy(20, 11);
-                            write('loading...');
-                            startPage := BASE2;
-                            dataSize := 4096;
-                            offset := 0;
-                            for i := 0 to 2047 do
-                                begin
-                                    read (gamefile, mBuffer [i])
-                                    //            mBuffer[i] := gamefile^;
-                                    //            get(gamefile);
-                                end;
-                            DataOps(1, startPage, dataSize, offset, mBuffer);
-
-                            read (gamefile, storePtr);
-                            //          storePtr := gamefile^;
-                            //          get(gamefile);
-                            read (gamefile, storeBase);
-                            //          storeBase := gamefile^;
-                            //          get(gamefile);
-                            read (gamefile, gamePly);
-                            //          gamePly := gamefile^;
-                            //          get(gamefile);
-                            read (gamefile, gameSide);
-                            //          gameSide := gamefile^;
-                            //          get(gamefile);
-                            read (gameFile, gamePointer);
-                            //          gamePointer := gamefile^;
-
-                            tempGPointer := gamePointer;
-                            tmpPtr := storePtr - 136;
-                            tmpBase := storeBase;
-
-                            startPage := BASE2;
-                            dataSize := 2;
-                            offset := 4000;
-                            DataOps(1, startPage, dataSize, offset, storePtr);
-                            offset := 4002;
-                            DataOps(1, startPage, dataSize, offset, storeBase);
-
-                            startPage := BASE4;
-                            dataSize := 136;
-                            offset := 0;
-                            repeat
-                                for i := 0 to 67 do
-                                    begin
-                                        read (gamefile, gBuffer [i]);
-                                        //             get(gamefile);
-                                        //             gBuffer[i] := gamefile^;
-                                    end;
-
-                                DataOps(1, startPage, dataSize, offset, gBuffer);
-                                offset := offset + 136;
-                                if offset > 4079 then
-                                    begin
-                                        offset := 0;
-                                        startPage := succ(startPage);
-                                    end;
-                            until (offset = storePtr) and (startPage = storeBase);
-
-                            wCastleFlag := gBuffer[60];
-                            bCastleFlag := gBuffer[61];
-                            wRookLFlag := gBuffer[62];
-                            wRookRFlag := gBuffer[63];
-                            bRookLFlag := gBuffer[64];
-                            bRookRFlag := gBuffer[65];
-                            cWarning := gBuffer[66];
-                            gameMove := gBuffer[67];
-                            if storePtr > 0 then
-                                UpdateBoard(storeBase, storePtr - 136)
-                            else
-                                UpdateBoard(pred(storeBase), 3943);
-                            close(gamefile);
-                        end
-                    else
-                        begin
-                            gotoxy(20, 10);
-                            write(chr(7), chr(7), 'file error #', ioCheck);
-                            readln;
-                        end;
-                    gotoxy(20, 10);
-                    write('                  ');
-                    gotoxy(20, 11);
-                    write('           ');
-*)                    
-                end;
+                    begin {load}
+                    end;
                 '2': 
-                begin {save}
-                    gotoxy(20, 9);
-                    write('file name: ');
-                    gotoxy(20, 10);
-                    readln(gname);
-                    saveGame (gname, true)
-                end;
+                    begin {save}
+                    end;
                 '3':                 
-                begin {backup}
-(*                
-                    tmpPtr := tmpPtr - 136;
-                    if tmpPtr < 0 then
-                        begin
-                            tmpBase := pred(tmpBase);
-                            tmpPtr := 0;
-                        end;
-                    if tmpBase < 24 then
-                        begin
-                            tmpBase := 24;
-                            writeln(chr(7));
-                        end
-                    else
-                        begin
-                            tempGPointer := tempGPointer - 16;
-                            if tempGPointer < 0 then
-                                tempGPointer := 0;
-                            l_2: 
-                            dataSize := 16;
-                            offset := tmpPtr + 120;
-                            dataOps(2, tmpBase, dataSize, offset, gBuffer);
-                            wCastleFlag := gBuffer[0];
-                            bCastleFlag := gBuffer[1];
-                            wRookLFlag := gBuffer[2];
-                            wRookRFlag := gBuffer[3];
-                            bRookLFlag := gBuffer[4];
-                            bRookRFlag := gBuffer[5];
-                            cWarning := gBuffer[6];
-                            gameMove := gBuffer[7];
-                            UpdateBoard(tmpBase, tmpPtr);
-                        end;
-*)                        
-                end;
+                    begin {backup}
+                    end;
                 '4':
-                begin {forward}
-(*                
-                    if (tmpBase <> storeBase) or ((tmpBase = storeBase) and
-                       (tmpPtr < (storePtr - 136))) then
-                        begin
-                            tempGPointer := tempGPointer + 16;
-                            if tempGPointer > gamePointer then
-                                tempGPointer := gamePointer;
-                            tmpPtr := tmpPtr + 136;
-                            if tmpPtr > 4079 then
-                                begin
-                                    tmpBase := succ(tmpBase);
-                                    tmpPtr := 0;
-                                end;
-                            goto l_2;
-                        end
-                    else
-                        writeln(chr(7));
-*)                        
-                end;
+                    if currentMove < totalMoves then {forward}
+                        begin 
+                            move := getGameSavedMove (currentMove);
+                            // unify with main
+                            enterMoveSimple (board, move);
+                            enterPositionHash (move, board.hash);
+                            //                             
+                            BoardDisplay (board);
+                            inc (currentMove);
+                        end;
                 '5':
-                begin {last move}
-(*                
-                    tempGPointer := gamePointer;
-                    tmpPtr := storePtr - 136;
-                    tmpBase := storeBase;
-                    goto l_2;
-*(                    
-                end;
+                    begin {first move}
+                        board := getGameStartPosition;
+                        setGameStartPosition (board);
+                        BoardDisplay (board);
+                        currentMove := 0;
+                    end;
                 '6':
-                begin {first move}
-(*                
-                    tempGPointer := 0;
-                    tmpPtr := 0;
-                    tmpBase := 24;
-                    goto l_2;
-*)                    
-                end;
+                    begin {last move}
+                    end;
                 '7':
                     begin {switch sides}
                         humanSide := 1 - humanSide;
@@ -440,6 +211,25 @@ procedure Utility(var humanSide: integer);
                     end;
                 '9':
                     utilDone := true;
+                'N':
+                    begin
+                        gotoxy (xOrg, yOrg);
+                        write (chr (7), 'new game?');
+                        gotoxy (xOrg, succ (yOrg));
+                        write ('[y/n]');
+                        repeat
+                            ch := upcase (getKey)
+                        until ch in ['Y', 'N'];
+                        
+                        if ch = 'Y' then
+                            begin
+                                setInitPosition (board);
+                                ClearUtilityMenu;
+                                BoardDisplay (board);
+                                utilDone := true
+                            end
+                    end;
+                        
                 '0':
                     begin {end game}
                         gotoxy(xOrg, yOrg);

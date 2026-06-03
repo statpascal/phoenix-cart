@@ -105,7 +105,16 @@ procedure BoardDisplay (var board: TBoardRecord);
                 lines [row][0] := #16;
                 gotoxy (orgX, orgY + row);
                 write (lines [row])
-            end
+            end;
+            
+        gotoxy(0, 2);
+        write ('move: ', board.moveNr, ' turn: ');
+        if board.flags and moveBlackFlag = 0 then
+            write ('white')
+        else
+            write ('black');
+    
+        
     end;
     
 procedure loadFENData (var board: TBoardRecord);
@@ -290,7 +299,9 @@ procedure EnterPos (var board: TBoardRecord);
             writeln ('White to move');
 
         write('Enter move number: ');
-        readln (board.moveNr)
+        readln (board.moveNr);
+        
+        setGameStartPosition (board)
     end;
 
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);

@@ -65,7 +65,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var hu
                     state := 0;
                 'U':
                     begin
-                        Utility (humanSide);
+                        Utility (humanSide, board);
                         playMove.pieceType := InvalidPiece;
                         if humanSide <> turn then
                             exit;

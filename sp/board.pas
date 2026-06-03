@@ -71,6 +71,11 @@ type
 
 procedure setInitPosition (var board: TBoardRecord);
 procedure setFENPosition (var board: TBoardRecord; s: string);
+procedure setGameStartPosition (var board: TBoardRecord);
+
+function makeFENString (var board: TBoardRecord): string;
+function makeCastlingString (var board: TBoardRecord): string;
+function makeEPString (var board: TBoardRecord): string;
 
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
@@ -101,11 +106,10 @@ procedure combinePieces (var board: TBoardRecord);
 procedure compressBoard (var board: TBoardRecord; var res: TCompressedBoard);
 procedure inflateBoard (var compressed: TCompressedBoard; var res: TBoardRecord);
 
-function getGameStartPosition: string;
+function getGameStartPosition: TBoardRecord;
 function getGameMoveCount: integer;
-function getGameStartSide: integer;
-function getGameStartMoveNr: integer;
 function getGameSavedMove (n: integer): TMoveRecord;
+
 
 
 implementation
@@ -437,14 +441,13 @@ const
     MaxGameMoves = 249;
     
 var
-    savedStartPosition: string  [100];	// TODO: max length 92?
-    savedStartSide, savedStartMoveNr: integer;
+    startPosition: TBoardRecord;
     savedMoves: array [0..MaxGameMoves - 1] of TMoveRecord;
     savedMoveCount: integer;
     
-function getGameStartPosition: string;
+function getGameStartPosition: TBoardRecord;
     begin
-        getGameStartPosition := savedStartPosition
+        getGameStartPosition := startPosition;
     end;
     
 function getGameMoveCount: integer;
@@ -452,21 +455,11 @@ function getGameMoveCount: integer;
         getGameMoveCount := savedMoveCount
     end;
     
-function getGameStartSide: integer;
-    begin
-        getGameStartSide := savedStartSide
-    end;
-    
-function getGameStartMoveNr: integer;
-    begin
-        getGameStartMoveNr := savedStartMovenr
-    end;
-    
 function getGameSavedMove (n: integer): TMoveRecord;
     begin
         getGameSavedMove := savedMoves [n]
     end;
-
+    
 // Zobirst hashes
     
 const
@@ -586,6 +579,96 @@ procedure placePiece (var board: TBoardRecord; row, col: integer; piece: char);
                 if piece = Figure [side, pieceType] then
                     setSquare (board, side, pieceType, row * 8 + col)
    end;
+   
+function makeFENString (var board: TBoardRecord): string;
+    var
+        blanks, row, col, sq: integer;
+        res, s: string;
+
+    procedure addBlanks;
+        begin
+            if blanks > 0 then
+                begin
+                    res := res + chr (ord ('0') + blanks);
+                    blanks := 0
+                end
+        end;
+
+    procedure addPiece (sq: integer);
+        var
+            side, piece: integer;
+        begin        
+            for side := 0 to 1 do
+                for piece := Pawn to King do
+                    if getBit (board.sides [side].bitboards [piece], sq) = 1 then
+                        begin
+                            res := res + figure [side, piece];
+                            exit
+                        end
+        end;
+        
+    begin
+        res := '';
+        blanks := 0;
+        for row := 7 downto 0 do
+            begin
+                for col := 0 to 7 do
+                    begin
+                        sq := 8 * row + col;
+                        if getBit (board.allPieces, sq) <> 0 then
+                            begin
+                                addBlanks;
+                                addPiece (sq);
+                            end
+                        else
+                            inc (blanks)
+                    end;
+                addBlanks;
+                if row > 0 then
+                    res := res + '/'
+            end;
+        if board.flags and moveBlackFlag <> 0 then
+            res := res + ' b '
+        else
+            res := res + ' w ';
+         res := res + makeCastlingString (board) + ' ' + makeEPString (board);       
+
+        // TODO: half move count
+        res := res + ' 0 ';
+        str (board.moveNr, s);
+        res := res + s;
+        
+        makeFENString := res
+    end;
+
+function makeCastlingString (var board: TBoardRecord): string;
+    begin
+        result := '';    
+        if board.flags and whiteRightCastle <> 0 then
+            result := 'K';
+        if board.flags and whiteLeftCastle <> 0 then
+            result := result + 'Q';
+        if board.flags and blackRightCastle <> 0 then
+            result := result + 'k';
+        if board.flags and blackLeftCastle <> 0 then
+            result := result + 'q';
+        if result = '' then
+            result := '-'
+    end;
+    
+function makeEPString (var board: TBoardRecord): string;
+    begin
+        if board.flags and epMoveFlag <> 0 then            
+            begin
+                result := chr (ord ('A') + board.flags and 7);
+                if board.flags and MoveBlackFlag <> 0 then 
+                    result := result + '3'
+                else
+                    result := result + '6'
+            end
+        else
+            result := '-'
+    end;
 
 procedure setFENPosition (var board: TBoardRecord; s: string);
     var
@@ -625,12 +708,7 @@ procedure setFENPosition (var board: TBoardRecord; s: string);
         
         skipBlank;
         if s [index] = 'b' then
-            begin
-                toggleMoveFlag (board);
-                savedStartSide := 1
-            end
-        else
-            savedStartSide := 0;
+            toggleMoveFlag (board);
         inc (index);
         
         skipBlank;
@@ -672,16 +750,21 @@ procedure setFENPosition (var board: TBoardRecord; s: string);
                 factor := factor * 10;
                 dec (index)
             end;
-        savedStartMoveNr := board.moveNr;
             
-        clearPositionHashes;
-        savedMoveCount := 0;
-        savedStartPosition := s
+        setGameStartPosition (board)
     end;
 
 procedure setInitPosition (var board: TBoardRecord);
     begin    
         setFENPosition (board, 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')
+    end;
+    
+procedure setGameStartPosition (var board: TBoardRecord);
+    begin
+        startPosition := board;
+        clearPositionHashes;
+        savedMoveCount := 0;
+        startPosition := board
     end;
            
 end.
