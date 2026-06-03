@@ -8,7 +8,6 @@ procedure showPly;					// display ply/qs in 2nd line
 procedure NewBoard;					// display main game screen
 procedure BoardDisplay (var board: TBoardRecord);	// display only board
 
-procedure EnterPos (var board: TBoardRecord);
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
 
 function getKeyInt: integer;
@@ -50,7 +49,12 @@ const
 procedure showPly;
     begin
         gotoxy (0, 1);
-        writeln ('ply: ', gamePly, ' qs: ', succ (-plyQS))
+        showHChar (0, 1, 32, 32);
+        write ('ply: ', gamePly, ' qs: ');
+        if plyQS = -Maxint then
+            write ('unlimited')
+        else
+            write (succ (-plyQS))
     end;
 
 procedure NewBoard;
@@ -117,6 +121,7 @@ procedure BoardDisplay (var board: TBoardRecord);
         
     end;
     
+(*    
 procedure loadFENData (var board: TBoardRecord);
     var
         fn, s: string;
@@ -134,175 +139,7 @@ procedure loadFENData (var board: TBoardRecord);
             writeln ('Cannot read ', fn);
         close (f)
     end;
-
-procedure EnterPos (var board: TBoardRecord);
-    var 
-        row, column, sideKey, pieceKey, offset : integer;
-        ans, pLoc : integer;
-        ch: char;
-        pname : string;
-        pieceType, bitval, side: integer;
-
-    begin
-        writeln;
-        writeln ('Load [f]en/[i]nteractive?');
-        write ('(q) to exit');
-        repeat
-            ch := upcase (GetKey)
-        until ch in ['F','I', 'Q'];
-        writeln;
-        
-        if ch = 'Q' then 
-            exit;
-            
-        if ch = 'F' then
-            begin
-                loadFENData (board);
-                exit
-            end;
-        
-        NewBoard;
-        fillChar (board, sizeof (board), 0);
-        BoardDisplay (board);
-
-        repeat
-            gotoxy (0, 22);
-            writeln(chr(7), 'Select side: [w]hite/[b]black');
-            write('[q] to exit  ');
-            repeat
-                sideKey := GetKeyInt;
-            until sideKey in[87, 66, 81];
-            if sideKey <> 81 then
-                begin
-                    gotoxy (0, 22);
-                    write ('Select ');
-                    if sideKey = 87 then
-                        write ('white')
-                    else
-                        write ('black');
-                    side := ord (sideKey <> 87);
-                        
-                    writeln(chr(7), ' piece: P/R/N/B/Q/K');
-                    showHChar (0, 23, 32, 32);
-                    repeat
-                        pieceKey := GetKeyInt
-                    until pieceKey in [66, 75, 78, 80, 81, 82, 88];
-                    case pieceKey of 
-                        66: 
-                        begin
-                            pieceType := Bishop;
-                            pname := 'bishop';
-                        end;
-                        75: 
-                        begin
-                            pieceType := King;
-                            pname := 'king';
-                        end;
-                        78: 
-                        begin
-                            pieceType := Knight;
-                            pname := 'knight';
-                        end;
-                        80: 
-                        begin
-                            pieceType := Pawn;
-                            pname := 'pawn';
-                        end;
-                        81: 
-                        begin
-                            pieceType := Queen;
-                            pname := 'queen';
-                        end;
-                        82: 
-                        begin
-                            pieceType := Rook;
-                            pname := 'rook';
-                        end;
-                    end;
-                    gotoxy (0, 23);
-                    write (pname, ' square [col|row]? ');
-                    repeat
-                        repeat
-                            column := GetKeyInt
-                        until column in[65..72];
-                        write (chr(column));
-                        dec (column, 65);
-                        
-                        repeat
-                            row := GetKeyInt
-                        until row in[49..56];
-                        write (chr(row));
-                        dec (row, 49);
-                        
-                        gotoxy (0, 22);
-                        write('[c]onfirm [r]edo [d]elete piece');
-                        repeat
-                            ans := GetKeyInt
-                        until ans in[67, 68, 82];
-                    until ans <> 82;
-                    
-                    pLoc := 8 * row + column;
-                    if ans = 67 then
-                        begin
-                            setSquare (board, side, pieceType, pLoc)
-                        end
-                    else 
-                       begin
-                            clearSquare (board, side, pieceType, pLoc)
-                        end;
-                    BoardDisplay (board);
-                    showHChar (0, 23, 32, 2 * screenWidth)
-                end;
-        until sideKey = 81;
-
-        clrscr;
-        if getBit (board.white.kingBitboard, 4) = 1 then
-            begin
-                writeln(chr(7), 'Allow white castling? (y/n)');
-                repeat
-                    ans := GetKeyInt;
-                until ans in[78, 89];
-                if ans = 89 then
-                    begin
-                        if getBit (board.white.rookBitboard, 0) = 1 then
-                            enterCastleFlag (board, whiteLeftCastle, true);
-                        if getBit (board.white.rookBitboard, 7) = 1 then
-                            enterCastleFlag (board, whiteRightCastle, true)
-                    end
-            end;
-
-        if getBit (board.black.kingBitboard, 60) = 1 then
-            begin
-                writeln(chr(7), 'Allow black castling? (y/n)');
-                repeat
-                    ans := GetKeyInt;
-                until ans in[78, 89];
-                if ans = 89 then
-                    begin
-                        if getBit (board.black.rookBitboard, 56) = 1 then
-                            enterCastleFlag (board, blackLeftCastle, true);
-                        if getBit (board.black.rookBitboard, 63) = 1 then
-                           enterCastleFlag (board, blackRightCastle, true)
-                    end
-            end;
-
-        writeln ('Side to start? [w]hite/[b]lack');
-        repeat
-            ch := upcase (getKey)
-        until ch in ['W', 'B'];
-        if ch = 'B' then
-            begin
-                toggleMoveFlag (board);
-                writeln ('Black to move')
-            end
-        else
-            writeln ('White to move');
-
-        write('Enter move number: ');
-        readln (board.moveNr);
-        
-        setGameStartPosition (board)
-    end;
+*)    
 
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
     begin

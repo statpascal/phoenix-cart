@@ -17,7 +17,7 @@ const
 
 procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var humanSide: integer);
     var 
-        state, turn: integer;
+        i, state, turn: integer;
         square: array [0..1] of integer;
         key: char;
         
@@ -36,7 +36,6 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var hu
                 
     begin
         state := 0;
-        turn := sideToMove (board);
         
         repeat
             case state of
@@ -67,7 +66,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var hu
                     begin
                         Utility (humanSide, board);
                         playMove.pieceType := InvalidPiece;
-                        if humanSide <> turn then
+                        if humanSide <> sideToMove (board) then
                             exit;
                         state := 0
                     end;
@@ -77,6 +76,7 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var hu
                     inc (square [pred (state) div 2], 8 * (ord (key) - ord ('1')))
             end;
             
+            turn := sideToMove (board);
             case state of
                 2:
                     if getBit (board.sides [turn].bitboards [SidePieces], square [0]) = 0 then
@@ -90,8 +90,8 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var hu
             end
         until state = 4;
         
-        showHChar (xOrg, yOrg, 32, 31 - Xorg);
-        showHChar (xOrg, succ (yOrg), 32, 31 - Xorg);
+        for i := 0 to 1 do
+            showHChar (xOrg, yOrg + i, 32, 31 - Xorg);
                         
         {promote pawn if applicable}
         if (playMove.pieceType = pawn) and (playMove.endSq in [0..7, 56..63]) then
@@ -99,17 +99,20 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var hu
                 gotoxy (xOrg, yOrg);
                 write ('promote pawn');
                 gotoxy (xOrg, yOrg + 1);
-                write('1- rook');
+                write('[1] rook');
                 gotoxy (xOrg, yOrg + 2);
-                write ('2- knight');
+                write ('[2] knight');
                 gotoxy (xOrg, yOrg + 3);
-                write ('3- bishop');
+                write ('[3] bishop');
                 gotoxy (xOrg, yOrg + 4);
-                write ('4- queen');
+                write ('[4] queen');
                 repeat
                     key := GetKey
                 until key in ['1'..'4'];
-                playMove.flags := playMove.flags or (ord (key) - ord ('0')) shl 4
+                playMove.flags := playMove.flags or (ord (key) - ord ('0')) shl 4;
+
+                for i := 0 to 4 do
+                    showHChar (xOrg, yOrg + i, 32, 31 - Xorg);
             end;
             
         // delete position/score while calculating

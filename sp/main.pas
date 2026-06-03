@@ -55,18 +55,6 @@ procedure initGame (var mainBoard: TBoardRecord);
             end;
             
         cWarning := 0;
-        write(chr(7), 'Enter position? (y/n)');
-        repeat
-            ans := GetKeyInt;
-        until ans in[78, 89];
-        if ans = 89 then
-            begin
-                EnterPos (mainBoard);
-(* TODO: check cehck               
-                    cWarning := 1;
-*)                    
-            end;
-
         writeln;            
         write(chr(7), 'Log to DSK0.phoenix.log (y/n)');
         repeat
