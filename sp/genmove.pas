@@ -354,7 +354,7 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
                 i := Random (i);
 //                write (' Random: ', i:2);
                 result.score := 0;
-                result.move := makeMoveRecord (board, turn, moves [i] shr 6, moves [i] and $3f)
+                result.move := makeMoveRecord (board, moves [i] shr 6, moves [i] and $3f)
             end
         else
             begin

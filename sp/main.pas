@@ -29,54 +29,43 @@ procedure showMessage (s: string);
 
 procedure initGame (var mainBoard: TBoardRecord);
     var
-        ans: integer;
+        ch: char;
     begin
         writeln;
-        write(chr(7), 'Enter ply: [1-6] ');
-        repeat
-            ans := GetKeyInt;
-        until ans in[49..54];
-        writeln(chr(ans));
-        gamePly := ans - 48;
+        write (chr (7), 'Enter ply: [1-6]: ');
+        ch := getKeySet (['1'..'6']);
+        writeln (ch);
+        gamePly := ord (ch) - ord ('0');
 
-        writeln(chr(7), 'Select side: [w]hite/[b]lack');
-        repeat
-            ans := GetKeyInt;
-        until ans in[66, 87];
-        if ans = 66 then
+        write ('QS deepening (0-9/u): ');
+        ch := getKeySet (['0'..'9', 'U']);
+        writeln (ch);
+        if ch = 'U' then
+            plyQS := -Maxint
+        else
+            plyQS := 1 - (ord (ch) - ord ('0'));
+            
+        writeln (chr (7), 'Select side: [w]hite/[b]lack');
+        if getKeySet (['W', 'B']) = 'B' then
             begin
                 humanSide := 1;
-                writeln('Playing as black');
+                writeln ('Playing as black');
             end
         else
             begin
                 humanSide := 0;
-                writeln('Playing as white');
+                writeln ('Playing as white');
             end;
             
-        cWarning := 0;
-        writeln;            
-        write(chr(7), 'Log to DSK0.phoenix.log (y/n)');
-        repeat
-            ans := GetKeyInt;
-        until ans in[78, 89];
-        if ans = 89 then
+        writeln (chr (7), 'Log to DSK0.phoenix.log (y/n)');
+        if getKeySet (['Y', 'N']) = 'Y' then
             startLogging ('DSK0.phoenix.log');
-            
-        writeln;
-        write ('QS deepening (0-9/u)');
-        repeat
-            ans := getKeyInt
-        until ans in [48..57, 85];
-        if ans = 85 then 
-            plyQS := -Maxint
-        else 
-            plyQS := 1 - (ans - 48)
+
+        cWarning := 0            
     end;
 
 procedure chainMain;
     var mainBoard: TBoardRecord;
-        compressedBoard: TCompressedBoard;
         checkFlag, isHumanMove: boolean;
         playMove: TMoveScoreRecord;
         dummy: integer;
@@ -94,16 +83,6 @@ procedure chainMain;
             showMessage ('check!');
 
         repeat
-
-(*        
-            gotoxy(0, 2);
-            write ('move: ', mainBoard.moveNr, ' turn: ');
-            if mainBoard.flags and moveBlackFlag = 0 then
-                write ('white')
-            else
-                write ('black');
-*)
-
             if humanSide = sideToMove (mainBoard) then
                 playerMove (mainBoard, playMove.move, humanSide);	// may change game side
             isHumanMove := humanSide = sideToMove (mainBoard);
@@ -124,23 +103,9 @@ procedure chainMain;
                             exit                            
                         end
                 end;
-                
-            {update move list}
-(*            
-        TODO: save move history
-            sPage := BASE2;
-            dataSize := 8;
-            offset := PLAYLIST + gamePointer;
-            DataOps(1, sPage, dataSize, offset, playMove);
-            gamePointer := gamePointer + 8;
-            moveStore.id := 99;
-            offset := offset + 8;
-            DataOps(1, sPage, dataSize, offset, moveStore);
-*)            
 
             enterMoveSimple (mainBoard, playMove.move);
             enterPositionHash (playMove.move, mainBoard.hash);
-
             BoardDisplay (mainBoard);
             
             if isThreeFoldRepetition then
@@ -171,10 +136,7 @@ procedure chainMain;
                         exit;
                     end;
                 
-            showMove (playMove, isHumanMove);
-
-//            check3Rep;
-
+            showMove (playMove, isHumanMove)
         until false
     end;
 

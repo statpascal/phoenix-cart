@@ -80,7 +80,7 @@ function makeEPString (var board: TBoardRecord): string;
 function checkCastleRights (var board: TBoardRecord; turn: integer): integer;
 function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
 
-function makeMoveRecord (var board: TBoardRecord; turn, startSq, endSq: integer): TMoveRecord;
+function makeMoveRecord (var board: TBoardRecord; startSq, endSq: integer): TMoveRecord;
 // returns pieceType = InvalidPiece in TMoveRecord to indicate illegal move
 
 function findPieceType (var board: TBoardRecord; turn, square: integer): integer;
@@ -243,9 +243,9 @@ function isKingChecked (turn: integer; var board: TBoardRecord): boolean;
         result := false
     end;
     
-function makeMoveRecord (var board: TBoardRecord; turn, startSq, endSq: integer): TMoveRecord;
+function makeMoveRecord (var board: TBoardRecord; startSq, endSq: integer): TMoveRecord;
     var
-        epCapDummy: integer;
+        turn, epCapDummy: integer;
         bits: bitboard;
     
     function exposesKing (tempBoard: TBoardRecord; var move: TMoveRecord): boolean;
@@ -255,6 +255,7 @@ function makeMoveRecord (var board: TBoardRecord; turn, startSq, endSq: integer)
         end;
         
     begin
+        turn := sideToMove (board);
         result.pieceType := InvalidPiece;
         if getBit (board.sides [turn].bitboards [SidePieces], startSq) = 0 then
             exit;

@@ -17,7 +17,7 @@ const
 
 procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var humanSide: integer);
     var 
-        i, state, turn: integer;
+        i, state: integer;
         square: array [0..1] of integer;
         key: char;
         
@@ -76,14 +76,13 @@ procedure PlayerMove (var board: TBoardRecord; var playMove: TMoveRecord; var hu
                     inc (square [pred (state) div 2], 8 * (ord (key) - ord ('1')))
             end;
             
-            turn := sideToMove (board);
             case state of
                 2:
-                    if getBit (board.sides [turn].bitboards [SidePieces], square [0]) = 0 then
+                    if getBit (board.sides [sideToMove (board)].bitboards [SidePieces], square [0]) = 0 then
                         state := 0;
                 4:
                     begin
-                        playMove := makeMoveRecord (board, turn, square [0], square [1]);
+                        playMove := makeMoveRecord (board, square [0], square [1]);
                         if playMove.pieceType = InvalidPiece then
                             state := 2
                     end

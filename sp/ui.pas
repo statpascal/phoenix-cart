@@ -11,6 +11,12 @@ procedure BoardDisplay (var board: TBoardRecord);	// display only board
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
 
 function getKeyInt: integer;
+
+type
+    charset = set of char;
+    
+function getKeySet (validKeys: charset): char;
+
 procedure waitKeyPressed;
 
 procedure initVideoMode;
@@ -40,7 +46,16 @@ function getKeyInt: integer;
     begin
         getKeyInt := ord (upcase (getkey ()))
     end;
-
+    
+function getKeySet (validKeys: charset): char;
+    var
+        ch: char;
+    begin
+        repeat
+            ch := upcase (getKey)
+        until ch in validKeys;
+        getKeySet := ch
+    end;
 
 const 
     orgX = 1;

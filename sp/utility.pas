@@ -39,23 +39,32 @@ procedure showMenuLine (s: string);
         write (s);
         inc (lineCount)
     end;
+    
+function getFileName (prompt: string): string;
+    begin
+        clearButtomLines;
+        gotoxy (0, 22);
+        writeln (prompt);
+        readln (result);
+        clearButtomLines
+    end;
 
 procedure ShowUtilityMenu;
     begin
-        showMenuLine (' : load game');
-        showMenuLine (' : save game');
-        showMenuLine ('3: backup');
-        showMenuLine ('4: forward  ');
-        showMenuLine ('5: first move ');
-        showMenuLine ('6: last move');
-        showMenuLine ('7: switch side');
-        showMenuLine ('8: change ply');
-        showMenuLine ('9: play');
-        showMenuLine ('[W]rite FEN');
-        showMenuLine ('[N]ew game');
-        showMenuLine ('[S]etup pos');
-        showMenuLine ('[P]rint game');
-        showMenuLine ('[E]xit cart')
+        showMenuLine ('A: load game');
+        showMenuLine ('B: save game');
+        showMenuLine ('C: backup');
+        showMenuLine ('D: forward');
+        showMenuLine ('E: first move ');
+        showMenuLine ('F: last move');
+        showMenuLine ('G: switch side');
+        showMenuLine ('H: change ply');
+        showMenuLine ('I: play');
+        showMenuLine ('J: write FEN');
+        showMenuLine ('K: new game');
+        showMenuLine ('L: setup pos');
+        showMenuLine ('M: print game');
+        showMenuLine ('N: exit cart')
     end;
     
 procedure printGame;
@@ -66,10 +75,7 @@ procedure printGame;
         startPosition: TBoardRecord;
         move: TMoveRecord;
     begin
-        gotoxy (xOrg, yOrg);
-        write ('Print [PIO]:');
-        gotoxy (xOrg, succ (yOrg));
-        readln (s);
+        s := getFileName ('Print to [PIO]:');
         if s = '' then
             s := 'PIO';
         
@@ -109,6 +115,81 @@ procedure printGame;
         writeln (f);
         close (f)
     end;
+    
+procedure loadGame (var board: TBoardRecord);
+
+    var
+        f: text;
+        s: string;
+        move: TMoveRecord;
+
+    function readCoord (col, row: char): integer;
+        begin
+            readCoord := ord (upcase (col)) - ord ('A') + 8 * (ord (row) - ord ('1'))
+        end;
+
+    begin
+        s := getFileName ('Load game from file:');
+        assign (f, s);
+        reset (f);
+        
+        readln (f, s);
+        setFENPosition (board, s);
+        
+        while not eof (f) do
+            begin
+                readln (f, s);
+                if length (s) >= 4 then
+                    begin
+                        move := makeMoveRecord (board, readCoord (s [1], s [2]), readCoord (s [3], s [4]));
+                        if length (s) = 5 then
+                            move.flags := move.flags or pos (upcase (s [5]), 'RNBQ') shl 4;
+                        enterMoveSimple (board, move);
+                        enterPositionHash (move, board.hash);
+                        BoardDisplay (board);
+                    end
+            end;
+            
+        close (f);
+        clearUtilityMenu
+    end;
+    
+procedure saveGame;
+    var
+        f: text;
+        s: string;
+        i, promotion: integer;
+        startPosition: TBoardRecord;
+        move: TMoveRecord;
+        
+    procedure writeCoord (sq: integer);
+        begin
+            write (f, chr (ord ('a') + sq mod 8), chr (ord ('1') + sq div 8))
+        end;
+        
+    begin
+        s := getFileName ('Save game to file:');
+        assign (f, s);
+        rewrite (f);
+        
+        startPosition := getGameStartPosition;
+        writeln (f, makeFENString (startPosition));
+ 
+        // TODO: parantheses should not be required in call to getGameMoveCount
+        for i := 0 to pred (getGameMoveCount ()) do
+            begin
+                move := getGameSavedMove (i);
+                writeCoord (move.startSq);
+                writeCoord (move.endSq);
+                promotion := move.flags shr 4;
+                if promotion <> 0 then
+                    write (f, figure [1, promotion]);
+                writeln (f)
+            end;
+            
+        close (f);
+        clearUtilityMenu
+    end;
 
 procedure replayMove (var board: TBoardRecord; index: integer);
     var
@@ -124,35 +205,24 @@ procedure writeFEN (var board: TBoardRecord);
         fn: string;
         f: text;
     begin
-        gotoxy (xOrg, yOrg);
-        write ('Write FEN');
-        gotoxy (xOrg, succ (yOrg));
-        write ('Filename:');
-        gotoxy (xOrg, yOrg + 2);
-        readln (fn);
-       
+        fn := getFileName ('Write FEN position to file:');
         assign (f, fn);
         rewrite (f);
         writeln (f, makeFenString (board));
-        close (f)
+        close (f);
+        
+        clearUtilityMenu
     end;    
 
 procedure editBoard (var board: TBoardRecord);
     var 
-        row, column, sideKey, pieceKey, offset : integer;
-        ans, pLoc : integer;
-        ch: char;
-        pname : string;
-        pieceType, bitval, side: integer;
+        sideKey, ch: char;
+        pieceName : string [6];
+        pLoc, pieceType, side: integer;
 
     begin
-        gotoxy (xOrg, yOrg);
-        write ('Clear (y/n)');
-        repeat
-            ch := upcase (getKey)
-        until ch in ['Y', 'N'];
-
-        if ch = 'Y' then
+        showMenuLine ('Clear (y/n)');
+        if getKeySet (['Y', 'N']) = 'Y' then
             begin        
                 fillChar (board, sizeof (board), 0);
                 BoardDisplay (board)
@@ -164,83 +234,52 @@ procedure editBoard (var board: TBoardRecord);
             showMenuLine ('[w]hite');
             showMenuLine ('[b]lack');
             showMenuLine ('[q]uit');
-            repeat
-                sideKey := GetKeyInt
-            until sideKey in[87, 66, 81];
+            sideKey := getKeySet (['W', 'B', 'Q']);
             
-            if sideKey <> 81 then
+            if sideKey <> 'Q' then
                 begin
                     showMenuLine ('');
-                    if sideKey = 87 then
+                    if sideKey = 'W' then
                         showMenuLine ('select white')
                     else
                         showMenuLine ('select black');
-                    side := ord (sideKey <> 87);
+                    side := ord (sideKey <> 'W');
                         
                     showMenuLine ('P/R/N/B/Q/K');
-                    repeat
-                        pieceKey := GetKeyInt
-                    until pieceKey in [66, 75, 78, 80, 81, 82, 88];
-                    
-                    case pieceKey of 
-                        66: 
-                        begin
-                            pieceType := Bishop;
-                            pname := 'bishop';
-                        end;
-                        75: 
-                        begin
-                            pieceType := King;
-                            pname := 'king';
-                        end;
-                        78: 
-                        begin
-                            pieceType := Knight;
-                            pname := 'knight';
-                        end;
-                        80: 
-                        begin
-                            pieceType := Pawn;
-                            pname := 'pawn';
-                        end;
-                        81: 
-                        begin
-                            pieceType := Queen;
-                            pname := 'queen';
-                        end;
-                        82: 
-                        begin
-                            pieceType := Rook;
-                            pname := 'rook';
-                        end;
+                    pieceType := pred (pos (getKeySet (['P', 'R', 'N', 'B', 'Q', 'K']), 'PRNBQK'));
+                    case pieceType of
+                        Pawn: 
+                            pieceName := 'pawn';
+                        Rook:
+                            pieceName := 'rook';
+                        Knight:
+                            pieceName := 'knight';
+                        Bishop:
+                            pieceName := 'bishop';
+                        Queen:
+                            pieceName := 'queen';
+                        King:
+                            pieceName := 'king'
                     end;
                     showMenuLine ('');
-                    showMenuLine (pname + ' square');
+                    showMenuLine (pieceName + ' square');
                     showMenuLine ('[col|row]? ');
                     repeat
-                        repeat
-                            column := GetKeyInt
-                        until column in[65..72];
-                        write (chr(column));
-                        dec (column, 65);
-                        
-                        repeat
-                            row := GetKeyInt
-                        until row in[49..56];
-                        write (chr(row));
-                        dec (row, 49);
+                        ch := getKeySet (['A'..'H']);
+                        write (ch);
+                        ploc := ord (ch) - ord ('A');
+
+                        ch := getKeySet (['1'..'8']);
+                        write (ch);
+                        inc (pLoc, 8 * (ord (ch) - ord ('1')));
                         
                         showMenuLine ('');
                         showMenuLine ('[c]onfirm');
                         showMenuLine ('[r]edo');
                         showMenuLine ('[d]elete');
-                        repeat
-                            ans := GetKeyInt
-                        until ans in[67, 68, 82]
-                    until ans <> 82;
-                    
-                    pLoc := 8 * row + column;
-                    if ans = 67 then
+                        ch := getKeySet (['C', 'R', 'D'])
+                    until ch <> 'R';
+                    if ch = 'C' then
                         begin
                             setSquare (board, side, pieceType, pLoc)
                         end
@@ -250,17 +289,14 @@ procedure editBoard (var board: TBoardRecord);
                         end;
                     BoardDisplay (board);
                     clearButtomLines
-                end;
-        until sideKey = 81;
+                end
+        until sideKey = 'Q';
 
         if getBit (board.white.kingBitboard, 4) = 1 then
             begin
                 gotoxy (0, 23);
                 write ('Allow white castling? (y/n)');
-                repeat
-                    ans := GetKeyInt;
-                until ans in[78, 89];
-                if ans = 89 then
+                if getKeySet (['Y', 'N']) = 'Y' then
                     begin
                         if getBit (board.white.rookBitboard, 0) = 1 then
                             enterCastleFlag (board, whiteLeftCastle, true);
@@ -273,10 +309,7 @@ procedure editBoard (var board: TBoardRecord);
             begin
                 gotoxy (0, 23); 
                 write ('Allow black castling? (y/n)');
-                repeat
-                    ans := GetKeyInt;
-                until ans in[78, 89];
-                if ans = 89 then
+                if getKeySet (['Y', 'N']) = 'Y' then
                     begin
                         if getBit (board.black.rookBitboard, 56) = 1 then
                             enterCastleFlag (board, blackLeftCastle, true);
@@ -288,15 +321,14 @@ procedure editBoard (var board: TBoardRecord);
         clearButtomLines;
         gotoxy (0, 23);
         write ('Side to start? [w]hite/[b]lack');
-        repeat
-            ch := upcase (getKey)
-        until ch in ['W', 'B'];
+        ch := getKeySet (['W', 'B']);
+        if sideToMove (board) <> ord (ch = 'B') then
+            toggleMoveFlag (board);
 
         clearButtomLines;
         gotoxy (0, 23);
         write ('Enter move number: ');
         readln (board.moveNr);
-        
         
         setGameStartPosition (board);
         NewBoard;
@@ -307,30 +339,35 @@ procedure editBoard (var board: TBoardRecord);
 procedure Utility (var humanSide: integer; var board: TBoardRecord);
     var 
         utilDone: boolean;
-        ch: char;
+        ch, sel: char;
         i, totalMoves, currentMove: integer;
     begin
         utilDone := false;
         totalMoves := getGameMoveCount;
         currentMove := totalMoves;
-
+        clearUtilityMenu; 
+        sel := 'A';
+        
         repeat
-            showUtilityMenu;
+            if sel in ['A', 'B', 'H'..'N'] then
+                showUtilityMenu;
             repeat
-                ch := upcase (getKey)
-            until ch in ['E', '3'..'9', 'N', 'P', 'W', 'S'];
-            clearUtilityMenu;
+                sel := upcase (getKey)
+            until sel in ['A'..'N'];
+            
+            if sel in ['A', 'B', 'H'..'N'] then
+                clearUtilityMenu;
 
-            case ch of 
-                'P': 
-                    PrintGame;
-                '1': 
-                    begin {load}
+            case sel of 
+                'A':
+                    begin
+                        loadGame (board);
+                        totalMoves := getGameMoveCount;
+                        currentMove := totalMoves
                     end;
-                '2': 
-                    begin {save}
-                    end;
-                '3':
+                'B': 
+                    saveGame;
+                'C':
                     if currentMove > 0 then {backup}
                         begin
                             board := getGameStartPosition;
@@ -340,21 +377,21 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
                             dec (currentMove);
                             BoardDisplay (board)
                         end;
-                '4':
+                'D':
                     if currentMove < totalMoves then {forward}
                         begin 
                             replayMove (board, currentMove);
                             BoardDisplay (board);
                             inc (currentMove);
                         end;
-                '5':
+                'E':
                     begin {first move}
                         board := getGameStartPosition;
                         setGameStartPosition (board);
                         BoardDisplay (board);
                         currentMove := 0;
                     end;
-                '6':
+                'F':
                     begin {last move}
                         while currentMove < totalMoves do
                             begin
@@ -363,64 +400,53 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
                             end;
                         BoardDisplay (board);
                     end;
-                '7':
+                'G':
                     {switch sides}
                     humanSide := 1 - humanSide;
-                '8':
+                'H':
                     begin {change ply}
-                        repeat
-                            gotoxy (xOrg, yOrg);
-                            write (chr (7), 'ply: ');
-                            readln (gamePly);
-                        until gamePly in [1..6];
-                        repeat
-                            gotoxy (xOrg, yOrg + 1);
-                            write (char (7), 'qs: ');
-                            readln (ch)
-                        until ch in ['0'..'9', 'u'];
-                        if ch = 'u' then
+                        showMenuLine ('ply: ');
+                        ch := getKeySet (['1'..'6']);
+                        write (ch);
+                        gamePly := ord (ch) - ord ('0');
+                        showMenuLine ('qs: ');
+                        ch := getKeySet (['0'..'9', 'U']);
+                        if ch = 'U' then
                             plyQS := -Maxint
                         else
                             plyQS := 1 - (ord (ch) - ord ('0'));
+                        clearUtilityMenu;
                         showPly
                     end;
-                '9':
+                'I':
                     utilDone := true;
-                'W':
+                'J':
                     writeFen (board);
-                'S':
-                    editBoard (board);
-                'N':
+                'K':
                     begin
-                        gotoxy (xOrg, yOrg);
-                        write (chr (7), 'new game?');
-                        gotoxy (xOrg, succ (yOrg));
-                        write ('[y/n]');
-                        repeat
-                            ch := upcase (getKey)
-                        until ch in ['Y', 'N'];
-                        
-                        if ch = 'Y' then
+                        showMenuLine ('new game?');
+                        showMenuLine ('[y/n]');
+                        if getKeySet (['Y', 'N']) = 'Y' then
                             begin
                                 setInitPosition (board);
-                                ClearUtilityMenu;
                                 BoardDisplay (board);
                                 utilDone := true
-                            end
+                            end;
+                        clearUtilityMenu;
                     end;
-                'E':
+                'L':
+                    editBoard (board);
+                'M': 
+                    printGame;
+                'N':
                     begin {exit game}
-                        gotoxy(xOrg, yOrg);
-                        write (chr(7), 'exit cart?');
-                        gotoxy (xOrg, succ (yOrg));
-                        write ('[y/n]');
-                        repeat
-                            ch := upcase (getKey)
-                        until ch in ['Y', 'N'];
-                        if ch = 'Y' then
+                        showMenuLine ('exit cart?');
+                        showMenuLine ('[y/n]');
+                        if getKeySet (['Y', 'N']) = 'Y' then
                             halt;
+                        clearUtilityMenu
                     end;
-            end
+            end;
         until utilDone
     end;
 
