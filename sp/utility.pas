@@ -48,6 +48,47 @@ function getFileName (prompt: string): string;
         readln (result);
         clearButtomLines
     end;
+    
+function isFileError (var f: text; name: string): boolean;
+    var
+        res: integer;
+    begin
+        res := IOResult;
+        result := res <> 0;
+        if result then
+            begin
+                gotoxy (0, 22);
+                writeln ('File: ', name);
+                case res of
+                    FileWriteProtected:
+                        write ('Write protection');
+                    FileBadAttributes:
+                        write ('Bad attributes');
+                    FileIllegalOperation:
+                        write ('Illegal operation');
+                    FileDiskFull:
+                        write ('Disk full');
+                    FilePastEOF:
+                        write ('Past EOF');
+                    FileDeviceError:
+                        write ('Device error');
+                    FileError:
+                        write ('Error accessing');
+                    FileMaxOpen:
+                        write ('Too many open files');
+                    FileInvalidDsrName:
+                        write ('DSR not found');
+                    FileInvalidName:
+                        write ('Invalid name');
+                    FileNotOpen:
+                        write ('Not open')
+                end;
+                waitKeyPressed;
+                clearButtomLines;
+                close (f);
+                res := IOResult	// clear error code
+            end
+    end;
 
 procedure ShowUtilityMenu;
     begin
@@ -82,6 +123,9 @@ procedure printGame;
         assign(f, s);
         rewrite (f);
         
+        if isFileError (f, s) then
+            exit;
+        
         writeln (f, 'Initial posiition:');
         
         startPosition := getGameStartPosition;
@@ -113,11 +157,12 @@ procedure printGame;
             end;
             
         writeln (f);
+        if isFileError (f, s) then
+            exit;
         close (f)
     end;
     
 procedure loadGame (var board: TBoardRecord);
-
     var
         f: text;
         s: string;
@@ -132,10 +177,14 @@ procedure loadGame (var board: TBoardRecord);
         s := getFileName ('Load game from file:');
         assign (f, s);
         reset (f);
+        if isFileError (f, s) then
+            exit;
         
         readln (f, s);
-        setFENPosition (board, s);
+        if isFileError (f, s) then
+            exit;
         
+        setFENPosition (board, s);
         while not eof (f) do
             begin
                 readln (f, s);
@@ -150,6 +199,8 @@ procedure loadGame (var board: TBoardRecord);
                     end
             end;
             
+        if isFileError (f, s) then
+            exit;
         close (f);
         clearUtilityMenu
     end;
@@ -171,7 +222,9 @@ procedure saveGame;
         s := getFileName ('Save game to file:');
         assign (f, s);
         rewrite (f);
-        
+        if isFileError (f, s) then
+            exit;
+            
         startPosition := getGameStartPosition;
         writeln (f, makeFENString (startPosition));
  
@@ -186,6 +239,9 @@ procedure saveGame;
                     write (f, figure [1, promotion]);
                 writeln (f)
             end;
+            
+        if isFileError (f, s) then
+            exit;
             
         close (f);
         clearUtilityMenu
@@ -202,13 +258,18 @@ procedure replayMove (var board: TBoardRecord; index: integer);
     
 procedure writeFEN (var board: TBoardRecord);
     var
-        fn: string;
+        s: string;
         f: text;
     begin
-        fn := getFileName ('Write FEN position to file:');
-        assign (f, fn);
+        s := getFileName ('Write FEN position to file:');
+        assign (f, s);
         rewrite (f);
+        if isFileError (f, s) then
+            exit;
+        
         writeln (f, makeFenString (board));
+        if isFileError (f, s) then
+            exit;
         close (f);
         
         clearUtilityMenu
@@ -421,7 +482,7 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
                 'I':
                     utilDone := true;
                 'J':
-                    writeFen (board);
+                    writeFEN (board);
                 'K':
                     begin
                         showMenuLine ('new game?');

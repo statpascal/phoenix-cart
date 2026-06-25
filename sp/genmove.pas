@@ -382,6 +382,8 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
                 moveNumHi := 0;
                 isDeepening := false;
                 result := NegaMax (board, moveScore, alpha, beta, ply, turn);
+                if turn = 1 then
+                    result.score := -result.score;
 
                 if maxMovesDeepening <> 0 then
                     begin
