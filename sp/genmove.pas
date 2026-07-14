@@ -66,31 +66,79 @@ const
     MinPly = -5;
     
 var
-    valueCaptureBoard: array [Pawn..Bishop] of bitboard;
     killerMoves: array [MinPly..MaxPly, 0..1] of TMoveRecord;
     jmpbuf: jmp_buf;
 
 procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
     const
         MaxMoves = 218;
+        MaxCaptures = 218; // 65;
+        
+    type
+        TAttackRecord = record
+            move: TMoveRecord;
+            score: integer
+        end;
+        
     var 
         piece, l, pLoc, epCapSquare: integer;
         posArray: bitArray;
         currentMoveBoard, attackBoard: bitboard;
-        attackMoves, moves: array [0..MaxMoves] of TMoveRecord;
+        attackMoves: array [0..MaxCaptures] of TAttackRecord;
+        moves: array [0..MaxMoves] of TMoveRecord;
         killers: array [0..1] of TMoveRecord;
         attackMoveCount, moveCount, killerMoveCount: integer;
+        
+    procedure sortAttackMoves (left, right: integer);
+        var
+            mScore, i, j: integer;
+            
+        procedure swapAttackMoves (i, j: integer);
+            var 
+                h: TAttackRecord;
+            begin
+                h := attackMoves [i];
+                attackMoves [i] := attackMoves [j];
+                attackMoves [j] := h
+            end;
+            
+        begin
+            mScore := attackMoves [(left + right) div 2].score;
+            i := left;
+            j := right;
+            repeat
+                while attackMoves [i].score < mScore do
+                    inc (i);
+                while attackMoves [j].score > mScore do
+                    dec (j);
+                if i <= j then
+                    begin
+                        if i <> j then
+                            swapAttackMoves (i, j);
+                        inc (i);
+                        dec (j)
+                    end
+            until i > j;
+            if i < right then
+                sortAttackMoves (i, right);
+            if left < j then
+                sortAttackMoves (left, j)
+        end;
     
     procedure registerMove (attackFlag: boolean; var move: TMoveRecord);
+        var
+            attackedPiece: integer;
+        const
+            pieceScore: array [Pawn..InvalidPiece] of integer = (PawnValue, RookValue, KnightValue, BishopValue, QueenValue, KingValue, PawnValue);
         begin
             if attackFlag then
-                if (move.pieceType <= Bishop) and (getBit (valueCaptureBoard [move.pieceType], move.endSq) <> 0) then
-                    pushMoveStack (move)
-                else
-                    begin
-                        attackMoves [attackMoveCount] := move;
-                        inc (attackMoveCount)
-                    end
+                begin
+                    attackMoves [attackMoveCount].move := move;
+                    attackedPiece := findPieceType (board, 1 - turn, move.endSq);
+                    { returns InvalidPiece if EP capture }
+                    attackMoves [attackMoveCount].score := 16 * pieceScore [attackedPiece] - pieceScore [move.pieceType];
+                    inc (attackMoveCount)
+                end
             else
                 if (ply >= MinPly) and ((compareByte (move, killerMoves [ply, 0], sizeof (TMoveRecord)) = 0) or (compareByte (move, killerMoves [ply, 1], sizeof (TMoveRecord)) = 0)) then
                     begin
@@ -167,11 +215,6 @@ procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: in
         end;
         
     begin
-        valueCaptureBoard [Pawn] := board.sides [1 - turn].pieces and not board.sides [1 - turn].pawnBitboard;
-        valueCaptureBoard [Rook] := board.sides [1 - turn].queenBitboard;
-        valueCaptureBoard [Knight] := board.sides [1 - turn].rookBitboard or board.sides [1 - turn].queenBitboard;
-        valueCaptureBoard [Bishop] := valueCaptureBoard [Knight];
-        
         attackMoveCount := 0;
         moveCount := 0;
         killerMoveCount := 0;
@@ -194,7 +237,10 @@ procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: in
                     end
             end;
             
-        move (attackMoves, moveStack [moveStackPointer], min (MoveStackSize - moveStackPointer, attackMoveCount) * sizeof (TMoveRecord));
+        if attackMoveCount > 1 then
+            sortAttackMoves (0, pred (attackMoveCount));
+        for l := 0 to pred (attackMoveCount) do
+            moveStack [moveStackPointer + l] := attackMoves [l].move;
         move (killers, moveStack [moveStackPointer + attackMoveCount], min (MoveStackSize - moveStackPointer, killerMoveCount) * sizeof (TMoveRecord));
         move (moves, moveStack [moveStackPointer + attackMoveCount + killerMoveCount], min (MoveStackSize - moveStackPointer, moveCount) * sizeof (TMoveRecord));
         inc (moveStackPointer, attackMoveCount + moveCount + killerMoveCount);

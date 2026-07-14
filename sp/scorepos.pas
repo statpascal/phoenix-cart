@@ -21,6 +21,7 @@ const
     KnightValue = 325;
     BishopValue = 350;
     QueenValue = 900;
+    KingValue = 20000;
     
     EndGameReached = 3000;
 
