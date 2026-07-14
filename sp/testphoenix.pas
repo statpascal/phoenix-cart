@@ -48,7 +48,7 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
 procedure readTestPositions (fn: string);
     const
         ply = 6;
-        qs = 5;
+        qs = 2;
     var
         f: text;
         logFn, fenstr, s, move: string;

@@ -72,7 +72,7 @@ var
 procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: integer);
     const
         MaxMoves = 218;
-        MaxCaptures = 218; // 65;
+        MaxCaptures = 65;
         
     type
         TAttackRecord = record
