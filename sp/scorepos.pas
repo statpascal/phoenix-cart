@@ -241,16 +241,102 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             else
                 inc (evalScore, pieceScoreData [KingMidScore, evalPos])
         end;    
+        
+    procedure evaluateRookFiles;
+        var
+            locArray: bitarray;
+            i, rsq, col, r, ownPawn, oppPawn: integer;
+        begin
+            BitPos (sideBoards.rookBitboard, locArray);
+            for i := 1 to locArray [0] do
+                begin
+                    rsq := locArray [i];  col := rsq and 7;
+                    ownPawn := 0;  oppPawn := 0;
+                    for r := 0 to 7 do
+                        begin
+                            if getBit (sideBoards.pawnBitboard,            r * 8 + col) <> 0 then ownPawn := 1;
+                            if getBit (board.sides [1 - side].pawnBitboard, r * 8 + col) <> 0 then oppPawn := 1
+                        end;
+                    if (ownPawn = 0) and (oppPawn = 0) then
+                        inc (evalScore, 25)          { fully open file }
+                    else if ownPawn = 0 then
+                        inc (evalScore, 12)          { half-open file }
+                end
+        end;
+
+    procedure evaluateKingShield;
+        var
+            locArray: bitarray;
+            ksq, krow, kcol, dc, c, shieldRow, cnt: integer;
+        begin
+            if endGame > 0 then exit;              { shield only matters in the middlegame }
+            BitPos (sideBoards.kingBitboard, locArray);
+            ksq := locArray [1];  krow := ksq shr 3;  kcol := ksq and 7;
+            cnt := 0;
+            if side = 0 then shieldRow := krow + 1 else shieldRow := krow - 1;
+            if (shieldRow >= 0) and (shieldRow <= 7) then
+                for dc := -1 to 1 do
+                    begin
+                        c := kcol + dc;
+                        if (c >= 0) and (c <= 7) then
+                            if getBit (sideBoards.pawnBitboard, shieldRow * 8 + c) <> 0 then
+                                inc (cnt)
+                    end;
+            inc (evalScore, cnt * 12)
+        end;
+
+    // TODO: check folding with pawn evaluation
+    procedure evaluateIsoPawns;
+        var
+            locArray: bitarray;
+            i, psq, col, r, hasAdj: integer;
+        begin
+            BitPos (sideBoards.pawnBitboard, locArray);
+            for i := 1 to locArray [0] do
+                begin
+                    psq := locArray [i];  col := psq and 7;  hasAdj := 0;
+                    for r := 0 to 7 do
+                        begin
+                            if (col > 0) and (getBit (sideBoards.pawnBitboard, r * 8 + col - 1) <> 0) then hasAdj := 1;
+                            if (col < 7) and (getBit (sideBoards.pawnBitboard, r * 8 + col + 1) <> 0) then hasAdj := 1
+                        end;
+                    if hasAdj = 0 then
+                        dec (evalScore, 15)
+                end
+        end;
+
+    procedure evaluateMobility;
+        const
+            mobWeight: array [Pawn..Queen] of integer = (0, 2, 4, 4, 1);   { P R N B Q }
+        var
+            locArray: bitarray;
+            piece, i, epDummy: integer;
+            mb: bitboard;
+        begin
+            for piece := Rook to Queen do
+                begin
+                    BitPos (sideBoards.bitboards [piece], locArray);
+                    for i := 1 to locArray [0] do
+                        begin
+                            mb := Trim (side, piece, locArray [i], board, epDummy);
+                            inc (evalScore, BitCount (mb) * mobWeight [piece])
+                        end
+                end
+        end;
 
     begin 
         evalScore := 0;
         
         evaluatePawns;
         evaluateRooks;
+        evaluateRookFiles;
         evaluateKnightsBishops (sideBoards.knightBitboard, KnightScore, KnightValue);
         evaluateKnightsBishops (sideBoards.bishopBitboard, BishopScore, BishopValue);
         evaluateQueen;
         evaluateKing (board.sides [side].kingBitboard, board.sides [1 - side].kingBitBoard);
+        evaluateKingShield;
+        evaluateIsoPawns;
+        evaluateMobility;
             
         evaluateSide := evalScore
     end;

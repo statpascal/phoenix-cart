@@ -222,6 +222,7 @@ procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: in
             end;
             
         if attackMoveCount > 1 then
+
             sortAttackMoves (pred (attackMoveCount));
         for l := 0 to pred (attackMoveCount) do
             moveStack [moveStackPointer + l] := attackMoves [l].move;
@@ -251,7 +252,18 @@ procedure logResult (ply, turn: integer; isPruned: boolean; var result: TMoveSco
             writeln (logFile, 'Mate')
     end;
     
+function hasNonPawnMaterial (var board: TBoardRecord; turn: integer): boolean;
+    begin
+        hasNonPawnMaterial :=
+            not IsClear (board.sides [turn].knightBitboard) or
+            not IsClear (board.sides [turn].bishopBitboard) or
+            not IsClear (board.sides [turn].rookBitboard)   or
+            not IsClear (board.sides [turn].queenBitboard)
+    end;     
+    
 function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, ply, turn: integer): TMoveScoreRecord;
+    const 
+        NullReduction = 2;
     var 
         evalScore, savedMoveStackPointer, capId, currentMoveindex: integer;
         hasValidMove, isQuiet, isAttack, isPruned: boolean;
@@ -263,6 +275,22 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
         savedMoveStackPointer := moveStackPointer;
         createAllMoves (board, ply, turn, savedMoveStackPointer);
         
+       { --- null-move pruning --- }
+       if not disableAlphaBetaPruning
+          and (beta < infinity)
+          and (pred (ply) - NullReduction > plyQS)                 { keep reduced depth above qsearch (R = 2) }
+          and not isKingChecked (turn, board)
+          and hasNonPawnMaterial (board, turn) then     { zugzwang guard }
+           begin
+               evalScore := -NegaMax (board, moveScore, -beta, -beta + 1, ply - 1 - NullReduction, 1 - turn).score;
+               if evalScore >= beta then
+                    begin
+                        result.score := beta;
+                        result.move.pieceType := InvalidPiece;
+                        exit
+                    end
+            end;         
+        
         result.move.pieceType := InvalidPiece;
         result.score := -infinity - ply;
 
@@ -272,10 +300,10 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
         repeat
             tempMove := moveStack [currentMoveIndex];
             inc (currentMoveIndex);
-            isAttack := tempMove.flags and AttackMove <> 0;
-            isQuiet := not isAttack and (tempMove.flags = 0) ;        // TODO: add check as condition
             workBoard := board;
             workMoveScore := moveScore;
+
+            isAttack := tempMove.flags and AttackMove <> 0;
             
             enterMove (turn, isAttack, capId, workBoard, tempMove);
             pushPositionHash (tempMove, workBoard.hash);
@@ -283,6 +311,7 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
             {check if own king in check after current move}
             if not isKingChecked (turn, workBoard) then 
                 begin
+                    isQuiet := not isAttack and (tempMove.flags = 0) and not isKingChecked (1 - turn, workBoard);
                     hasValidMove := true;
                     if doLogging then begin   
                         indent (pred (ply)); 

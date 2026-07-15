@@ -94,7 +94,13 @@ procedure printBoard (var f: text; var board: TBoardRecord);
         writeln (f, 'Move: ', board.moveNr);
         writeln (f, 'Castling: ', makeCastlingString (board), ' EP: ', makeEPString (board));
         write (f, 'hash: ');
+
+{$ifdef fpc}        
+        for i := 7 downto 0 do 
+{$endif}        
+{$ifdef ti99}
         for i := 0 to 7 do 
+{$endif}        
             write (f, hexstr2 (TByteArray (board.hash) [i]));
         
         writeln (f);
