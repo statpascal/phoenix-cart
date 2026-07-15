@@ -123,3 +123,7 @@
 2026-05-20-18-30
 
 - added game history
+
+2026-07-15-10-00
+
+- added LVA/MVV move ordering

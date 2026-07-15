@@ -89,40 +89,24 @@ procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: in
         killers: array [0..1] of TMoveRecord;
         attackMoveCount, moveCount, killerMoveCount: integer;
         
-    procedure sortAttackMoves (left, right: integer);
+    procedure sortAttackMoves (count: integer);
         var
             mScore, i, j: integer;
-            
-        procedure swapAttackMoves (i, j: integer);
-            var 
-                h: TAttackRecord;
-            begin
-                h := attackMoves [i];
-                attackMoves [i] := attackMoves [j];
-                attackMoves [j] := h
-            end;
-            
+            h: TAttackRecord;
         begin
-            mScore := attackMoves [(left + right) div 2].score;
-            i := left;
-            j := right;
-            repeat
-                while attackMoves [i].score < mScore do
-                    inc (i);
-                while attackMoves [j].score > mScore do
-                    dec (j);
-                if i <= j then
-                    begin
-                        if i <> j then
-                            swapAttackMoves (i, j);
-                        inc (i);
-                        dec (j)
-                    end
-            until i > j;
-            if i < right then
-                sortAttackMoves (i, right);
-            if left < j then
-                sortAttackMoves (left, j)
+            for i := 0 to pred (count) do
+                begin
+                    mScore := i;
+                    for j := succ (i) to count do
+                        if attackMoves [j].score > attackMoves [mScore].score then
+                            mScore := j;
+                    if mScore <> i then
+                        begin
+                            h := attackMoves [i];
+                            attackMoves [i] := attackMoves [mScore];
+                            attackMoves [mScore] := h
+                        end
+                end
         end;
     
     procedure registerMove (attackFlag: boolean; var move: TMoveRecord);
@@ -238,7 +222,7 @@ procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: in
             end;
             
         if attackMoveCount > 1 then
-            sortAttackMoves (0, pred (attackMoveCount));
+            sortAttackMoves (pred (attackMoveCount));
         for l := 0 to pred (attackMoveCount) do
             moveStack [moveStackPointer + l] := attackMoves [l].move;
         move (killers, moveStack [moveStackPointer + attackMoveCount], min (MoveStackSize - moveStackPointer, killerMoveCount) * sizeof (TMoveRecord));
@@ -395,17 +379,9 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
                 i := 1;
                 while (i < MaxMoves) and (moves [i] <> 0) do
                     inc (i);
-//                gotoxy (0, 3);
-//                write ('Have: ', i:2);
                 i := Random (i);
-//                write (' Random: ', i:2);
                 result.score := 0;
                 result.move := makeMoveRecord (board, moves [i] shr 6, moves [i] and $3f)
-            end
-        else
-            begin
-//                gotoxy (0, 3);
-//                write ('                     ')
             end;
             
         if result.move.pieceType = InvalidPiece then
