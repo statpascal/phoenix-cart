@@ -2,65 +2,6 @@
 #include <gtkmm.h>
 #include <fstream>
 
-/*
-
-class TTestDialog: public Gtk::Window {
-typedef Gtk::Window inherited;
-public:
-    TTestDialog ();
-    void handleDialog (Gtk::Window &parent);
-    
-private:
-    void buttonClicked (bool isOk);
-
-    Gtk::Label label;
-    Gtk::Button okButton, cancelButton;
-    Gtk::Grid grid;
-    Gtk::Box buttonBox;
-    
-    bool resultCode;
-};
-
-TTestDialog::TTestDialog ():
-  label ("Hello GTK dialog!", true),
-  okButton ("_OK", true),
-  cancelButton ("_Cancel", true),
-  buttonBox (Gtk::Orientation::HORIZONTAL, 5) {
-    set_title ("Test Dialog");
-    set_default_size (300, 100);
-    set_modal (true);
-    set_hide_on_close ();
-    
-    grid.set_row_spacing (10);
-    grid.set_column_spacing (4);
-    grid.set_expand (true);
-    
-    grid.attach (label, 0, 0, 1, 1);
-    grid.attach (buttonBox, 0, 1, 1, 1);
-    buttonBox.set_halign (Gtk::Align::END);
-    buttonBox.append (okButton);
-    buttonBox.append (cancelButton);
-    
-    set_child (grid);    
-    okButton.signal_clicked ().connect (sigc::bind (sigc::mem_fun (*this, &TTestDialog::buttonClicked), true));
-    cancelButton.signal_clicked ().connect (sigc::bind (sigc::mem_fun (*this, &TTestDialog::buttonClicked), false));
-}
-
-void TTestDialog::handleDialog (Gtk::Window &parent) {
-    set_transient_for (parent);
-    set_visible (true);
-}
-
-void TTestDialog::buttonClicked (bool isOk) {
-    puts ("Button clicked");
-    resultCode = isOk;
-    set_visible (false);
-}
-
-*/
-
-//
-
 class TMainWindow: public Gtk::ApplicationWindow {
 public:
     TMainWindow (const std::string &fn);
@@ -122,14 +63,21 @@ void TMainWindow::buildTreeModel (const std::string &fn) {
     std::string s;    
     std::array<Gtk::TreeModel::iterator, 100> levels;
     std::int32_t lineCount = 0;
-    
+
+    int lastLevel = 0,
+        indent = 0;
     while (getline (f, s)) {
         int level = getLevel (s);
-        if (level)
-            levels [level] = treeDataModel->append (levels [level - 1]->children ());
+        if (level > lastLevel) 
+            ++indent;
+        else if (level < lastLevel)
+            --indent;
+        lastLevel = level;
+        if (indent)
+            levels [indent] = treeDataModel->append (levels [indent - 1]->children ());
         else
-            levels [level] = treeDataModel->append ();
-        (*levels [level]) [nameColumn] = s + " (" + std::to_string (++lineCount) + ")";
+            levels [indent] = treeDataModel->append ();
+        (*levels [indent]) [nameColumn] = s + " (" + std::to_string (++lineCount) + ")";
     }
     
     treeview.append_column ("", nameColumn);

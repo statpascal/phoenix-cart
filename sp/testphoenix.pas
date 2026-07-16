@@ -54,7 +54,7 @@ function testPosition (fenStr, move, log: string; ply, qsdeepening: integer): bo
 procedure readTestPositions (fn: string);
     const
         ply = 6;
-        qs = 2;
+        qs = 4;
     var
         f: text;
         logFn, fenstr, s, move: string;
@@ -97,6 +97,7 @@ procedure evalTests;
     testPosition ('8/P7/8/8/8/4k3/8/4K3 w - - 0 40', 'a7a8q', 'DSK0.promotion-1.log', 2, 0);
     testPosition ('b7/k1P5/p7/8/8/8/3K4/1R6 w - - 0 40', 'c7c8n', 'DSK0.promotion-knight.log', 4, 0);
     testPosition ('8/4k3/8/8/8/8/p6K/8 w - - 0 40', 'h2g3', 'DSK0.promotion-2.log', 4, 0);
+    testPosition ('r1b1kb1r/ppppq1pp/2n2n2/8/8/5N2/PPP1PPPP/RNBQKB1R b KQ 0 6', 'd7d5', 'DSK0.pruning.log', 3, 5);
     
     disableAlphaBetaPruning := true;
     testPosition ('4k3/p1p3p1/8/1P5P/1p1p4/8/P1P1P3/4K3 w - - 0 10', 'e1d2', 'DSK0.ep-test.log', 3, 0);
@@ -118,11 +119,11 @@ procedure evalTests;
 
   
 begin
-//    readTestPositions (ParamStr (1));
+    readTestPositions (ParamStr (1));
 //    testPosition ('r1bqkb1r/ppp2ppp/2np1n2/3Pp3/4P3/2N2N2/PPP2PPP/R1BQKB1R b KQkq - 0 6', '', 'DSK0.pawn-lost.log', 5, 7);
 //    testPosition ('r2q1rk1/p1p1bpp1/1p1p1n1p/P1nPp3/4P3/2N2N2/1PPBQPPP/R4RK1 b - - 0 13', '', 'test1.log', 4, 2); 
 //    testPosition ('r1b1kb1r/pppp2pp/2n2n2/3q4/4P3/5N2/PPPN1PPP/R1BQKB1R b KQkq - 0 8', '', 'error1.log', 5, 10);
 //    testPosition ('r1b2rk1/pppp2pp/2n5/3q4/1b2N3/2P2N2/PP2QPPP/R1B1KB1R b KQkq - 0 12', '', 'error2.log', 5, 50);
     
-    evalTests
+//    evalTests
 end.

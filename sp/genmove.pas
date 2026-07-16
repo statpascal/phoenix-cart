@@ -271,8 +271,7 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
         tempMove: TMoveRecord;
         
     begin
-       { --- null-move pruning --- }
-
+        { --- null-move pruning --- }
         if not disableAlphaBetaPruning
           and (beta < infinity)
           and (pred (ply) - NullReduction > plyQS)                 { keep reduced depth above qsearch (R = 2) }
@@ -373,7 +372,7 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
                         end;
 
                     {alpha/beta selection}
-                    if evalScore >= result.score then
+                    if evalScore > result.score then
                         begin
                             result.Score := evalScore;
                             result.Move := tempMove
