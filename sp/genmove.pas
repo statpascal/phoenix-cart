@@ -1,4 +1,3 @@
-
 unit genmove;
 
 interface
@@ -272,24 +271,40 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
         tempMove: TMoveRecord;
         
     begin
-        savedMoveStackPointer := moveStackPointer;
-        createAllMoves (board, ply, turn, savedMoveStackPointer);
-        
        { --- null-move pruning --- }
-       if not disableAlphaBetaPruning
+
+        if not disableAlphaBetaPruning
           and (beta < infinity)
           and (pred (ply) - NullReduction > plyQS)                 { keep reduced depth above qsearch (R = 2) }
           and not isKingChecked (turn, board)
           and hasNonPawnMaterial (board, turn) then     { zugzwang guard }
-           begin
-               evalScore := -NegaMax (board, moveScore, -beta, -beta + 1, ply - 1 - NullReduction, 1 - turn).score;
-               if evalScore >= beta then
+            begin
+                workBoard := board;
+                toggleMoveFlag (workBoard);
+                if doLogging then
+                    begin
+                        indent (pred (ply));
+                        writeln (logFile, 'Check null move')
+                        { TODO: log viewer needs to handle multiple ident levels }
+                    end; 
+                evalScore := -NegaMax (workBoard, moveScore, -beta, -beta + 1, ply - 1 - NullReduction, 1 - turn).score;
+                if evalScore >= beta then
                     begin
                         result.score := beta;
                         result.move.pieceType := InvalidPiece;
+                        if doLogging then 
+                            logResult (ply, turn, true, result);
                         exit
+                    end;
+                if doLogging then
+                    begin
+                        indent (pred (ply));
+                        writeln (logFile, 'No pruning')
                     end
             end;         
+
+        savedMoveStackPointer := moveStackPointer;
+        createAllMoves (board, ply, turn, savedMoveStackPointer);
         
         result.move.pieceType := InvalidPiece;
         result.score := -infinity - ply;
