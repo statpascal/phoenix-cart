@@ -53,5 +53,18 @@ begin
     p := addr (zobristKeys);
     for j := 0 to sizeof (zobristKeys) div 8 do
         write (h, swapEndian (p [j]));
-    close (h)
+    close (h);
+    
+    for j := 0 to 9 do
+        begin
+            assign (g, 'resources/dtm_kqk_' + chr (ord ('0') + j) + '.dat');
+            rewrite (g, 1);
+            blockwrite (g, dtmKQKFolded [j], sizeof (TDtmFoldedSegment));
+            close (g);
+            
+            assign (g, 'resources/dtm_krk_' + chr (ord ('0') + j) + '.dat');
+            rewrite (g, 1);
+            blockwrite (g, dtmKRKFolded [j], sizeof (TDtmFoldedSegment));
+            close (g);
+        end
 end.

@@ -28,7 +28,7 @@ function isMovingSideMate (var board: TBoardRecord): boolean;
 
 implementation
 
-uses scorepos, trimprocs, 
+uses scorepos, trimprocs, dtmtables,
 {$ifdef ti99}
 utility, 
 {$endif}
