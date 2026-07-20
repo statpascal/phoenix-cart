@@ -26,7 +26,7 @@ type
         turn: uint64
     end;
     
-    TDtmFoldedSegment = array [0..4091] of uint8;
+    TDtmFoldedSegment = array [0..4095] of uint8;
     
 {$ifdef fpc}
 const

@@ -227,9 +227,42 @@ procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: in
             moveStack [moveStackPointer + l] := attackMoves [l].move;
         move (killers, moveStack [moveStackPointer + attackMoveCount], min (MoveStackSize - moveStackPointer, killerMoveCount) * sizeof (TMoveRecord));
         move (moves, moveStack [moveStackPointer + attackMoveCount + killerMoveCount], min (MoveStackSize - moveStackPointer, moveCount) * sizeof (TMoveRecord));
-        inc (moveStackPointer, attackMoveCount + moveCount + killerMoveCount);
-        
+        inc (moveStackPointer, attackMoveCount + moveCount + killerMoveCount)
     end;
+    
+function searchDTM (var board: TBoardRecord; turn, pieceType: integer): TMoveRecord;
+    var
+        strongKing, weakKing, piece, best, i, dtm: integer;
+        workBoard: TBoardRecord;        
+        
+    begin
+        moveStackPointer := 0;
+        createAllMoves (board, gamePly, turn, 0);
+        weakKing := BitPosition (board.sides [1 - turn].kingBitboard);
+        best := 1000;
+        result.pieceType := InvalidPiece;	// indicate draw
+        
+        for i := 0 to pred (moveStackPointer) do
+            begin
+                workBoard := board;
+                enterMoveSimple (workBoard, moveStack [i]);
+                strongKing := BitPosition (workboard.sides [turn].kingBitboard);
+                piece := BitPosition (workboard.sides [turn].bitboards [pieceType]);
+                if pieceType = Queen then
+                    dtm := getDtmKqk (strongKing, weakKing, piece)
+                else
+                    dtm := getDtmKrk (strongKing, weakKing, piece);
+                
+//                printMove (logFile, moveStack [i]);
+//                writeln (logFile, ', DTM: ', dtm);
+                
+                if dtm < best then 
+                    begin
+                        result := moveStack [i];
+                        best := dtm
+                    end
+            end
+    end;                
 
 procedure logResult (ply, turn: integer; isPruned: boolean; var result: TMoveScoreRecord);
     begin
@@ -415,6 +448,21 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
         
     begin
         turn := ord (board.flags and moveBlackFlag <> 0);
+        
+        if (BitCount (board.allPieces) = 3) then
+            if not isClear (board.sides [turn].queenBitboard) then
+                begin
+                    result.score := 0;
+                    result.move := searchDTM (board, turn, Queen);
+                    exit
+                end
+            else if not isClear (board.sides [turn].rookBitboard) then
+                begin
+                    result.score := 0;
+                    result.move := searchDTM (board, turn, Rook);
+                    exit
+                end;
+        
         moves := searchMove (board.hash);
         result.move.pieceType := InvalidPiece;
         if moves [0] <> 0 then
@@ -426,6 +474,7 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
                 result.score := 0;
                 result.move := makeMoveRecord (board, moves [i] shr 6, moves [i] and $3f)
             end;
+            
             
         if result.move.pieceType = InvalidPiece then
             begin

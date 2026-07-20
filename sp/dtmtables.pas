@@ -2,8 +2,10 @@ unit dtmtables;
 
 interface
 
+uses board;
+
 function getDtmKqk (strongKing, weakKing, piece: integer): uint8;
-//function getDtmKrk (strongKing, weakKing, piece: integer): uint8;
+function getDtmKrk (strongKing, weakKing, piece: integer): uint8;
 
 
 implementation
@@ -118,6 +120,112 @@ function lookup_kqk (idx, offs: integer): integer;
         end
     end;
     
+function lookup_krk_0 (offs: integer): integer;
+    procedure krk_data_0; external '../resources/dtm_krk_0.dat';
+    var
+        dtm_krk_0: TDtmFoldedSegment absolute krk_data_0;
+    begin
+        result := dtm_krk_0 [offs]
+    end;
+
+function lookup_krk_1 (offs: integer): integer;
+    procedure krk_data_1; external '../resources/dtm_krk_1.dat';
+    var
+        dtm_krk_1: TDtmFoldedSegment absolute krk_data_1;
+    begin
+        result := dtm_krk_1 [offs]
+    end;
+
+function lookup_krk_2 (offs: integer): integer;
+    procedure krk_data_2; external '../resources/dtm_krk_2.dat';
+    var
+        dtm_krk_2: TDtmFoldedSegment absolute krk_data_2;
+    begin
+        result := dtm_krk_2 [offs]
+    end;
+
+function lookup_krk_3 (offs: integer): integer;
+    procedure krk_data_3; external '../resources/dtm_krk_3.dat';
+    var
+        dtm_krk_3: TDtmFoldedSegment absolute krk_data_3;
+    begin
+        result := dtm_krk_3 [offs]
+    end;
+
+function lookup_krk_4 (offs: integer): integer;
+    procedure krk_data_4; external '../resources/dtm_krk_4.dat';
+    var
+        dtm_krk_4: TDtmFoldedSegment absolute krk_data_4;
+    begin
+        result := dtm_krk_4 [offs]
+    end;
+
+function lookup_krk_5 (offs: integer): integer;
+    procedure krk_data_5; external '../resources/dtm_krk_5.dat';
+    var
+        dtm_krk_5: TDtmFoldedSegment absolute krk_data_5;
+    begin
+        result := dtm_krk_5 [offs]
+    end;
+
+function lookup_krk_6 (offs: integer): integer;
+    procedure krk_data_6; external '../resources/dtm_krk_6.dat';
+    var
+        dtm_krk_6: TDtmFoldedSegment absolute krk_data_6;
+    begin
+        result := dtm_krk_6 [offs]
+    end;
+
+function lookup_krk_7 (offs: integer): integer;
+    procedure krk_data_7; external '../resources/dtm_krk_7.dat';
+    var
+        dtm_krk_7: TDtmFoldedSegment absolute krk_data_7;
+    begin
+        result := dtm_krk_7 [offs]
+    end;
+
+function lookup_krk_8 (offs: integer): integer;
+    procedure krk_data_8; external '../resources/dtm_krk_8.dat';
+    var
+        dtm_krk_8: TDtmFoldedSegment absolute krk_data_8;
+    begin
+        result := dtm_krk_8 [offs]
+    end;
+
+function lookup_krk_9 (offs: integer): integer;
+    procedure krk_data_9; external '../resources/dtm_krk_9.dat';
+    var
+        dtm_krk_9: TDtmFoldedSegment absolute krk_data_9;
+    begin
+        result := dtm_krk_9 [offs]
+    end;
+
+function lookup_krk (idx, offs: integer): integer;
+    begin
+        case idx of
+            0:
+                lookup_krk := lookup_krk_0 (offs);
+            1:
+                lookup_krk := lookup_krk_1 (offs);
+            2:
+                lookup_krk := lookup_krk_2 (offs);
+            3:
+                lookup_krk := lookup_krk_3 (offs);
+            4:
+                lookup_krk := lookup_krk_4 (offs);
+            5:
+                lookup_krk := lookup_krk_5 (offs);
+            6:
+                lookup_krk := lookup_krk_6 (offs);
+            7:
+                lookup_krk := lookup_krk_7 (offs);
+            8:
+                lookup_krk := lookup_krk_8 (offs);
+            9:
+                lookup_krk := lookup_krk_9 (offs)
+        end
+    end;
+    
 {$endif}
 
 {$ifdef fpc}
@@ -125,6 +233,11 @@ function lookup_kqk (idx, offs: integer): integer;
 function lookup_kqk (idx, offs: integer): integer;
     begin
         lookup_kqk := dtmKQKFolded [idx, offs]
+    end;
+    
+function lookup_krk (idx, offs: integer): integer;
+    begin
+        lookup_krk := dtmKRKFolded [idx, offs]
     end;
     
 {$endif}    
@@ -149,8 +262,8 @@ function symTab (t, s: integer): integer;
             5:
                 symTab := 8 * (7 - f) + 7 - r;	 	// anti diag
             6:
-                symTab := 8 * f       + 7 - r;		// rot 90
-            7:
+                symTab := 8 * f       + 7 - r		// rot 90
+            else
                 symTab := 8 * (7 - f) + r		// rot 270
         end
     end;
@@ -175,7 +288,7 @@ procedure initCanon;
                                 bt := t
                             end
                     end;
-                canonT [s] := t
+                canonT [s] := bt
             end;
             
         for s := 0 to 63 do
@@ -195,6 +308,14 @@ function getDtmKqk (strongKing, weakKing, piece: integer): uint8;
     begin
         t := canonT [strongKing];
         result := lookup_kqk (canonIdx [symTab (t, strongKing)], symTab (t, weakKing) * 64 + symTab (t, piece))
+    end;
+    
+function getDtmKrk (strongKing, weakKing, piece: integer): uint8;
+    var 
+        t: integer;
+    begin
+        t := canonT [strongKing];
+        result := lookup_krk (canonIdx [symTab (t, strongKing)], symTab (t, weakKing) * 64 + symTab (t, piece))
     end;
     
 begin

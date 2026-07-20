@@ -248,7 +248,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                 evalPos := ownPos
             else
                 evalPos := ownPos xor 56;
-            
+        
             if endGame > 0 then
                 begin
                     inc (evalScore, pieceScoreData [KingEndScore, evalPos]);

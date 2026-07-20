@@ -11,6 +11,7 @@ type
 
 procedure BitPos (var b1: bitboard; var posarray: bitarray);
 function BitCount (var b: bitboard): integer;
+function BitPosition (var b: bitboard): integer;		// extract single position (-1 if empty)
 
 procedure clearBit (var b: bitboard; n: integer);
 procedure setBit (var b: bitboard; n: integer); overload;
@@ -50,6 +51,19 @@ procedure BitPos (var b1: bitboard; var posarray: bitarray);
                     posarray [count] := i
                 end;
         posarray [0] := count
+    end;
+    
+function BitPosition (var b: bitboard): integer;
+    var
+        i: integer;
+    begin
+        BitPosition := -1;
+        for i := 0 to 63 do
+            if b and bitm [i] <> 0 then
+                begin
+                    BitPosition := i;
+                    exit
+                end
     end;
     
 function BitCount (var b: bitboard): integer;
@@ -187,6 +201,18 @@ function getBit (var b: bitboard; n: integer): integer; assembler;
         inc  *r13       // return 1
     getbit_1:        
 end;
+
+function BitPosition (var b: bitboard): integer;
+    var
+        l: bitArray;
+    begin
+        BitPos (b, l);
+        if l [0] = 0 then
+            BitPosition := -1
+        else
+            BitPosition := l [1]
+    end;
+
 {$endif}
 
 procedure setBit (var b: bitboard; pos, val: integer);
