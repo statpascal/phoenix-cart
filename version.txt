@@ -127,3 +127,8 @@
 2026-07-15-10-00
 
 - added LVA/MVV move ordering
+
+2026-07-20-14-00
+
+- score only advanced pawns
+- modified endgame detection

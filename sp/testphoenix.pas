@@ -124,6 +124,7 @@ begin
 //    testPosition ('r2q1rk1/p1p1bpp1/1p1p1n1p/P1nPp3/4P3/2N2N2/1PPBQPPP/R4RK1 b - - 0 13', '', 'test1.log', 4, 2); 
 //    testPosition ('r1b1kb1r/pppp2pp/2n2n2/3q4/4P3/5N2/PPPN1PPP/R1BQKB1R b KQkq - 0 8', '', 'error1.log', 5, 10);
 //    testPosition ('r1b2rk1/pppp2pp/2n5/3q4/1b2N3/2P2N2/PP2QPPP/R1B1KB1R b KQkq - 0 12', '', 'error2.log', 5, 50);
+    testPosition ('3r3r/n1pk4/4b3/R4p1p/p1P5/2K1N1P1/P3PPBP/8 b - - 0. 24', '', 'error3.log', 3, 3);
     
-    evalTests
+//    evalTests
 end.

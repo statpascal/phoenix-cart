@@ -110,8 +110,8 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
 
     procedure evaluatePawns;
         var
-            row, col: integer;
-            pLoc, i: integer;            
+            row, col, pLoc, i, pr, pc: integer;
+            passed: boolean;
             locArray: bitarray;
         const
             sideVals: array [0..1] of integer = (0, 0);
@@ -135,9 +135,18 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                     
                     if side = 0 then
                         begin
-                             {promote pawn advancement in end game}
+                             {promote advancement of passed paawns in end game}
                              if (endGame > 0) and (row >= 3) then
-                                 inc (sideVals [side], row * 50);
+                                 begin
+                                     passed := true;
+                                     for pr := row + 1 to 7 do
+                                         for pc := col - 1 to col + 1 do
+                                             if (pc >= 0) and (pc <= 7) then
+                                                 if getBit (board.sides [1 - side].pawnBitboard, pr * 8 + pc) <> 0 then
+                                                     passed := false;
+                                     if passed then
+                                         inc (sideVals [side], row * 50)
+                                 end;
                              {check pawn support}
                              if row >= 2 then
                                  begin
@@ -153,9 +162,18 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                         end
                     else
                         begin
-                            {promote pawn advancement in endgame}
+                            {promote advancement of passed pawns in endgame}
                             if (endGame > 0) and (row <= 4) then
-                                inc (sideVals [side], (7 - row) * 50);
+                                begin
+                                    passed := true;
+                                    for pr := 0 to row - 1 do
+                                        for pc := col - 1 to col + 1 do
+                                            if (pc >= 0) and (pc <= 7) then
+                                                if getBit (board.sides [1 - side].pawnBitboard, pr * 8 + pc) <> 0 then
+                                                    passed := false;
+                                    if passed then
+                                        inc (sideVals [side], (7 - row) * 50)
+                                end;
                             {check pawn support}
                             if row <= 5 then 
                                 begin

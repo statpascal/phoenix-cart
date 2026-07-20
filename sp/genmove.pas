@@ -434,11 +434,14 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
                 totalValue := 0;
                 moveStackPointer := 0;
                 
-                for piece := Rook to Queen do
-                    for side := 0 to 1 do 
-                        inc (totalValue, pieceValue [piece] * BitCount (board.sides [side].bitboards [piece]));
-                if totalValue <= EndGameReached then
-                    moveScore.flags := MoveEndGame;
+                if isClear (board.white.rookBitboard) and isClear (board.black.rookBitboard) then
+                    begin
+                        for piece := Rook to Queen do
+                            for side := 0 to 1 do 
+                                inc (totalValue, pieceValue [piece] * BitCount (board.sides [side].bitboards [piece]));
+                        if totalValue <= EndGameReached then
+                            moveScore.flags := MoveEndGame
+                    end;
         
                 if doLogging then
                     printBoard (logFile, board);
