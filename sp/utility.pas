@@ -175,6 +175,9 @@ procedure loadGame (var board: TBoardRecord);
 
     begin
         s := getFileName ('Load game from file:');
+        if s = '' then 
+            exit;
+            
         assign (f, s);
         reset (f);
         if isFileError (f, s) then
@@ -201,10 +204,9 @@ procedure loadGame (var board: TBoardRecord);
             
         if isFileError (f, s) then
             exit;
-        close (f);
-        clearUtilityMenu
+        close (f)
     end;
-    
+            
 procedure saveGame;
     var
         f: text;
@@ -220,6 +222,9 @@ procedure saveGame;
         
     begin
         s := getFileName ('Save game to file:');
+        if s = '' then
+            exit;
+
         assign (f, s);
         rewrite (f);
         if isFileError (f, s) then
@@ -244,7 +249,6 @@ procedure saveGame;
             exit;
             
         close (f);
-        clearUtilityMenu
     end;
 
 procedure replayMove (var board: TBoardRecord; index: integer);
@@ -262,6 +266,9 @@ procedure writeFEN (var board: TBoardRecord);
         f: text;
     begin
         s := getFileName ('Write FEN position to file:');
+        if s = '' then 
+            exit;
+        
         assign (f, s);
         rewrite (f);
         if isFileError (f, s) then
@@ -270,16 +277,14 @@ procedure writeFEN (var board: TBoardRecord);
         writeln (f, makeFenString (board));
         if isFileError (f, s) then
             exit;
-        close (f);
-        
-        clearUtilityMenu
+        close (f)
     end;    
 
 procedure editBoard (var board: TBoardRecord);
     var 
         sideKey, ch: char;
         pieceName : string [6];
-        pLoc, pieceType, side: integer;
+        pLoc, pieceType, side, i: integer;
 
     begin
         showMenuLine ('Clear (y/n)');
@@ -324,8 +329,8 @@ procedure editBoard (var board: TBoardRecord);
                     end;
                     showMenuLine ('');
                     showMenuLine (pieceName + ' square');
-                    showMenuLine ('[col|row]? ');
                     repeat
+                        showMenuLine ('[col|row]? ');
                         ch := getKeySet (['A'..'H']);
                         write (ch);
                         ploc := ord (ch) - ord ('A');
@@ -333,12 +338,20 @@ procedure editBoard (var board: TBoardRecord);
                         ch := getKeySet (['1'..'8']);
                         write (ch);
                         inc (pLoc, 8 * (ord (ch) - ord ('1')));
-                        
+                    
                         showMenuLine ('');
                         showMenuLine ('[c]onfirm');
                         showMenuLine ('[r]edo');
                         showMenuLine ('[d]elete');
-                        ch := getKeySet (['C', 'R', 'D'])
+                        ch := getKeySet (['C', 'R', 'D']);
+                        
+                        if ch = 'R' then
+                            begin
+                                dec (lineCount, 5);
+                                for i := 0 to 4 do
+                                    showHChar (xOrg, yOrg + lineCount + i, 32, 33 - xOrg)
+                            end
+                        
                     until ch <> 'R';
                     if ch = 'C' then
                         begin
@@ -423,11 +436,15 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
                 'A':
                     begin
                         loadGame (board);
+                        clearUtilityMenu;
                         totalMoves := getGameMoveCount;
                         currentMove := totalMoves
                     end;
                 'B': 
-                    saveGame;
+                    begin
+                        saveGame;
+                        clearUtilityMenu
+                    end;
                 'C':
                     if currentMove > 0 then {backup}
                         begin
@@ -482,7 +499,10 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
                 'I':
                     utilDone := true;
                 'J':
-                    writeFEN (board);
+                    begin
+                        writeFEN (board);
+                        clearUtilityMenu
+                    end;
                 'K':
                     begin
                         showMenuLine ('new game?');
