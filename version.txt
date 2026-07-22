@@ -136,3 +136,7 @@
 2026-07-22-14-00
 
 - Corrected screen glitches in Utility
+
+2026-07-22-20-00
+
+- Selection of light/dark mode
