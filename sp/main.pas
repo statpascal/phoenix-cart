@@ -60,6 +60,10 @@ procedure initGame (var mainBoard: TBoardRecord);
         writeln (chr (7), 'Log to DSK0.phoenix.log (y/n)');
         if getKeySet (['Y', 'N']) = 'Y' then
             startLogging ('DSK0.phoenix.log');
+            
+        writeln (chr (7), 'Select pattern: [d]ark/[l]ight');
+        if getKeySet (['D', 'L']) = 'L' then
+            initVideoMode (false);
 
         cWarning := 0            
     end;
@@ -84,15 +88,18 @@ procedure chainMain;
 
         repeat
             if humanSide = sideToMove (mainBoard) then
-                playerMove (mainBoard, playMove.move, humanSide);	// may change game side
+                begin
+                    playerMove (mainBoard, playMove.move, humanSide);	// may change game side
+                    showMessage ('')
+                end;
             isHumanMove := humanSide = sideToMove (mainBoard);
-            showMessage ('');
                 
             if not isHumanMove then
                 begin
                     gotoxy (18, 18);
                     write('thinking...');
                     playMove := generateMove (gamePly, mainBoard);
+                    showMessage ('');
                     showHChar (18, 18, 32, 11);
                     
                     if playMove.move.pieceType = InvalidPiece then

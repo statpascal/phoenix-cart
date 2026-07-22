@@ -3,7 +3,7 @@ program phoenix;
 uses globals, main, resources, ui;
 
 begin
-    initVideoMode;
+    initVideoMode (true);
     writeln('Phoenix Chess ', versionString);
     chainMain;
 

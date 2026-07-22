@@ -448,7 +448,9 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
         
     begin
         turn := ord (board.flags and moveBlackFlag <> 0);
-        
+        moveNumLo := 0;
+        moveNumHi := 0;
+       
         if (BitCount (board.allPieces) = 3) then
             if not isClear (board.sides [turn].queenBitboard) then
                 begin
@@ -495,8 +497,6 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
                 if doLogging then
                     printBoard (logFile, board);
                     
-                moveNumLo := 0;
-                moveNumHi := 0;
                 isDeepening := false;
                 result := NegaMax (board, moveScore, alpha, beta, ply, turn);
                 if turn = 1 then

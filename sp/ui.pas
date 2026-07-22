@@ -19,7 +19,7 @@ function getKeySet (validKeys: charset): char;
 
 procedure waitKeyPressed;
 
-procedure initVideoMode;
+procedure initVideoMode (dark: boolean);
 
 
 implementation
@@ -164,9 +164,10 @@ procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
             end;
     end;
 
-procedure initVideoMode;
+procedure initVideoMode (dark: boolean);
 
-    procedure pattern; external '../resources/pattern.dat';
+    procedure patternDark; external '../resources/pattern-dark.dat';
+    procedure patternLight; external '../resources/pattern-light.dat';
     
     procedure setCol (group: integer; fg, bg: uint8);
         begin
@@ -181,7 +182,8 @@ procedure initVideoMode;
         end;
     
     var
-        patternDataRom: TPatternData absolute pattern;
+        patternDataRomDark: TPatternData absolute patternDark;
+        patternDataRomLight: TPatternData absolute patternLight;
         patternData: TPatternData;
         i, j, field, destChar: integer;
         p1, p2, p3: array [0..7] of uint8;
@@ -191,7 +193,11 @@ procedure initVideoMode;
         clrscr;
         enableScreenSaver (false);
         
-        patternData := patternDataRom;
+        if dark then
+            patternData := patternDataRomDark
+        else
+            patternData := patternDataRomLight;
+            
         vmbw (patternData.charData, patternTable, sizeof (patternData.charData));
         vmbw (patternData.colorTable, colorTable, sizeof (patternData.colorTable));
         setBackColor (patternData.backColor);

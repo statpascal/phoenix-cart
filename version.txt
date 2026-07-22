@@ -132,3 +132,7 @@
 
 - score only advanced pawns
 - modified endgame detection
+
+2026-07-22-14-00
+
+- Corrected screen glitches in Utility

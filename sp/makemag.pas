@@ -69,14 +69,10 @@ begin
         end;
     close (f);
             
-    assign (g, '/home/goose/src/phoenix/resources/pattern.dat');
+    assign (g, ParamStr (2));
     rewrite (g, 1);
     blockwrite (g, pattern, sizeof (pattern));
     blockwrite (g, colorTable, sizeof (colorTable));
     blockwrite (g, backColor, 1);
     close (g);
 end.
-
-         
-    
-    
