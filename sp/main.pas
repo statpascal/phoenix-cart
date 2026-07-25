@@ -101,6 +101,7 @@ procedure chainMain;
                     playMove := generateMove (gamePly, mainBoard);
                     showMessage ('');
                     showHChar (18, 18, 32, 11);
+                    soundBell;
                     
                     if playMove.move.pieceType = InvalidPiece then
                         begin

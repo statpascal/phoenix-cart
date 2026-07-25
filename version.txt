@@ -144,3 +144,7 @@
 2026-07-25-12-00
 
 - fixed resign but
+
+2026-07-25-15-30
+
+- beep on computer move
