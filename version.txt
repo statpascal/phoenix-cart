@@ -140,3 +140,7 @@
 2026-07-22-20-00
 
 - Selection of light/dark mode
+
+2026-07-25-12-00
+
+- fixed resign but

@@ -106,8 +106,7 @@ procedure chainMain;
                         begin
                             showMessage ('stalemate!');
                             waitKeyPressed;
-                            Utility (dummy, mainBoard);
-                            exit                            
+                            Utility (dummy, mainBoard)
                         end
                 end;
 
@@ -132,16 +131,16 @@ procedure chainMain;
                     begin
                         showMessage ('checkmate!');
                         waitKeyPressed;
-                        Utility (dummy, mainBoard);
-                        exit;
-                    end
+                        Utility (dummy, mainBoard)
+                    end;
+(*                    
                 else if abs (playMove.Score) >= infinity then
                     begin
                         showMessage ('resign!');
                         waitKeypressed;
                         Utility (dummy, mainBoard);
-                        exit;
                     end;
+*)                    
                 
             showMove (playMove, isHumanMove)
         until false
