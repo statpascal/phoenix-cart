@@ -148,3 +148,7 @@
 2026-07-25-15-30
 
 - beep on computer move
+
+2026-07-26-15-30
+
+- weighted open book
