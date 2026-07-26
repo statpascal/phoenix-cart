@@ -29,7 +29,7 @@ procedure printOpenings;
     
 procedure saveOpenings;
     var 
-        count, i, j: integer;
+        maxWeight, scale, count, i, j: integer;
         s: string;
         f: file;
         g: text;
@@ -73,10 +73,23 @@ procedure saveOpenings;
                         openings [i].hash := swapEndian (openings [i].hash);
                         blockwrite (f, openings [i].hash, sizeof (uint64));
                         openings [i].hash := swapEndian (openings [i].hash);
+                        
+                        maxWeight := 0;
+                        for j := 1 to maxMoves do
+                            if j <= openings [i].count then
+                                maxWeight := max (maxWeight, openings [i].moveWeights [j]);
+                        if maxWeight > 15 then
+                            begin
+                                scale := succ (maxWeight div 16);
+                                for j := 1 to maxMoves do
+                                    if j <= openings [i].count then
+                                        openings [i].moveWeights [j] := max (1, openings [i].moveWeights [j] div scale)
+                            end;
+                                    
                         for j := 1 to maxMoves do
                             begin
                                 if j <= openings [i].count then
-                                    m := (openings [i].nextMoves [j].startSq shl 6) or openings [i].nextMoves [j].endSq
+                                    m := (openings [i].nextMoves [j].startSq shl 6) or openings [i].nextMoves [j].endSq or openings [i].moveWeights [j] shl 12
                                 else
                                     m := 0;
                                 m := swapEndian (m);
@@ -114,7 +127,7 @@ procedure saveOpenings;
 begin
     writeln ('Analyzing ', ParamStr (1));
     loadOpeningBook (ParamStr (1));
-    printOpenings;
-    saveOpenings
+    saveOpenings;
+    printOpenings
 end.
     

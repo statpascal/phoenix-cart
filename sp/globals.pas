@@ -9,10 +9,16 @@ uses bitops
 ;
 
 const    
-    versionString = '2026-07-25-15-30';
+    versionString = '2026-07-26-15-30';
     bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
     maxPly = 9;
     MaxMoves = 20;	// max moves for hased openbook position
+
+(* Encoding of book moves: 
+   val shr 12 - weight
+   (val shr 6) and 63 - start square
+   val and 63 - end square
+*)   
     
 type
     TBookMoves = array [0..MaxMoves - 1] of integer;
@@ -37,6 +43,7 @@ procedure soundBell;
     var
         i: integer;
     begin
+{$ifdef ti99}
         soundPort := $8e;
         soundPort := $0f;	// 440 Hz
         soundPort := $92;	// volume
@@ -46,6 +53,7 @@ procedure soundBell;
             until ord (VDPSTA) and $80 <> 0;
             
         soundPort := $9f	// sound off
+{$endif}
 end;
 
 begin

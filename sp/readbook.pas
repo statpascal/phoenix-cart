@@ -74,6 +74,7 @@ procedure handlePositions (var mainBoard: TBoardRecord; line: string);
             begin
                 moveSeq [count].startSq := ord (line [index]) - ord ('a') + 8 * (ord (line [index + 1]) - ord ('1'));
                 moveSeq [count].endSq := ord (line [index + 2]) - ord ('a') + 8 * (ord (line [index + 3]) - ord ('1'));
+                moveSeq [count].flags := 0;
                 if not (moveSeq [count].startSq in [0..63]) or not (moveSeq [count].endSq in [0..63]) then 
                     begin
                         writeln ('Error: invalid square -ignoring sequence in ', line);

@@ -443,7 +443,7 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
     var
         moveScore: TMoveScore;
         result1: TMoveScoreRecord;
-        i, totalValue, turn, side, piece, savedHashCount: integer;
+        sel, weights, i, totalValue, turn, side, piece, savedHashCount: integer;
         moves: TBookMoves;
         
     begin
@@ -469,12 +469,24 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
         result.move.pieceType := InvalidPiece;
         if moves [0] <> 0 then
             begin
-                i := 1;
+                i := 0;
+                weights := 0;
                 while (i < MaxMoves) and (moves [i] <> 0) do
-                    inc (i);
-                i := Random (i);
+                    begin
+                        inc (weights, (moves [i] shr 12) and $0f);
+                        inc (i)
+                    end;
+                sel := Random (weights);
+//                gotoxy (0, 0); write ('sel: ', sel, ', total: ', weights, ' ');
+                i := 0;
+                weights := (moves [i] shr 12) and $0f;
+                while weights <= sel do
+                    begin
+                        inc (i);
+                        inc (weights, (moves [i] shr 12) and $0f);
+                    end;
                 result.score := 0;
-                result.move := makeMoveRecord (board, moves [i] shr 6, moves [i] and $3f)
+                result.move := makeMoveRecord (board, moves [i] shr 6 and $3f, moves [i] and $3f)
             end;
             
             
