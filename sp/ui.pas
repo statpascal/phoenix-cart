@@ -193,10 +193,12 @@ procedure showSplashScreen;
         saveDiskBufs: array [0..4095] of uint8;
     begin
         vmbr (saveDiskBufs, 16384 - sizeof (saveDiskBufs), sizeof (saveDiskBufs));
+        setBackColor (black);
         setVideoMode (BitmapMode);
         loadPatternTable;
         loadColorTable;
         waitKeyPressed;
+        setVideoMode (StandardMode);
         vmbw (saveDiskBufs, 16384 - sizeof (saveDiskBufs), sizeof (saveDiskBufs));
     end;
 
@@ -225,19 +227,17 @@ procedure initVideoMode (dark: boolean);
         p1, p2, p3: array [0..7] of uint8;
 
     begin
-        setVideoMode (StandardMode);
-        setBackColor (black);
-        clrscr;
-        enableScreenSaver (false);
-        
         if dark then
             patternData := patternDataRomDark
         else
             patternData := patternDataRomLight;
             
+        setBackColor (patternData.backColor);
+        clrscr;
+        enableScreenSaver (false);
+        
         vmbw (patternData.charData, patternTable, sizeof (patternData.charData));
         vmbw (patternData.colorTable, colorTable, sizeof (patternData.colorTable));
-        setBackColor (patternData.backColor);
         
         // create split numbers 1 - 8
         fillChar (p2, 8, #0);
