@@ -20,6 +20,7 @@ function getKeySet (validKeys: charset): char;
 procedure waitKeyPressed;
 
 procedure initVideoMode (dark: boolean);
+procedure showSplashScreen;
 
 
 implementation
@@ -164,6 +165,41 @@ procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
             end;
     end;
 
+type
+    TTableData = array [0..6143] of uint8;
+
+procedure loadPatternTable;
+    procedure patternTableData; external '../resources/splashp.dat';
+    var
+        buf: TTableData;
+        data: TTableData absolute patternTableData;
+    begin
+        buf := data;
+        vmbw (buf, patternTable, 6144)
+    end;
+    
+procedure loadColorTable;
+    procedure colorTableData; external '../resources/splashc.dat';
+    var
+        buf: TTableData;
+        data: TTableData absolute colorTableData;
+    begin
+        buf := data;
+        vmbw (buf, colorTable, 6144)
+    end;
+    
+procedure showSplashScreen;
+    var
+        saveDiskBufs: array [0..4095] of uint8;
+    begin
+        vmbr (saveDiskBufs, 16384 - sizeof (saveDiskBufs), sizeof (saveDiskBufs));
+        setVideoMode (BitmapMode);
+        loadPatternTable;
+        loadColorTable;
+        waitKeyPressed;
+        vmbw (saveDiskBufs, 16384 - sizeof (saveDiskBufs), sizeof (saveDiskBufs));
+    end;
+
 procedure initVideoMode (dark: boolean);
 
     procedure patternDark; external '../resources/pattern-dark.dat';
@@ -190,6 +226,7 @@ procedure initVideoMode (dark: boolean);
 
     begin
         setVideoMode (StandardMode);
+        setBackColor (black);
         clrscr;
         enableScreenSaver (false);
         

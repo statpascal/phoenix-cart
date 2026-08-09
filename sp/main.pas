@@ -57,9 +57,9 @@ procedure initGame (var mainBoard: TBoardRecord);
                 writeln ('Playing as white');
             end;
             
-        writeln (chr (7), 'Log to DSK0.phoenix.log (y/n)');
-        if getKeySet (['Y', 'N']) = 'Y' then
-            startLogging ('DSK0.phoenix.log');
+//        writeln (chr (7), 'Log to DSK0.phoenix.log (y/n)');
+//        if getKeySet (['Y', 'N']) = 'Y' then
+//            startLogging ('DSK0.phoenix.log');
             
         writeln (chr (7), 'Select pattern: [d]ark/[l]ight');
         if getKeySet (['D', 'L']) = 'L' then
