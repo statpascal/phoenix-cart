@@ -25,10 +25,17 @@ faster than the original UCSD version.
 
 ## Building the cart
 
-The cart uses an opening book that may contain up to 20000 positions, with up
-to 20 moves for each position (the actual move is picked randomly). A
-simple example is stored in the file book/opening.txt: the file consists of lines
-with moves in coordinate notation and optional comment lines starting with #:
+Install the SP compiler and build it as cross compiler for the TI99:
+
+    git clone https://github.com/statpascal/spc statpascal
+    cd statpascal
+    make ti99=1
+
+The cart uses an opening book that may contain up to 20000 positions, with
+up to 20 moves for each position (the actual move is picked randomly).  A
+simple example (that one may to replace) is stored in the file
+book/opening.txt: the file consists of lines with moves in coordinate
+notation and optional comment lines starting with #:
 
     # Four knights
     e2e4 e7e5 g1f3 b8c6 b1c3 g8f6 f1b5 f8b4 e1g1 e8g8 d2d3 d7d6
