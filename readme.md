@@ -31,6 +31,9 @@ Install the SP compiler and build it as cross compiler for the TI99:
     cd statpascal
     make ti99=1
 
+Moreover, the xdt99 cross development tools are required (the SP compiler
+produces a source file to be assembled with xas99).
+
 The cart uses an opening book that may contain up to 20000 positions, with
 up to 20 moves for each position (the actual move is picked randomly).  A
 simple example (that one may to replace) is stored in the file
