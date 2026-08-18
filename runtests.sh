@@ -2,9 +2,9 @@
 
 # set path to compiler and assembler
 
-SP=~/src/statpascal/obj/sp
-XAS99=~/ti99/xdt99/xas99.py
-EMUL99=~/ti99/emul99/bin/emul99 
+SP=../statpascal/obj/sp
+XAS99=../xdt99/xas99.py
+EMUL99=../emul99/bin/emul99 
 
 rm -f out.a99
 $SP sp/testphoenix.pas

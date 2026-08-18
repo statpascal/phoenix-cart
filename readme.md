@@ -6,8 +6,7 @@ TI99/4A (https://github.com/wmaalouli/Phoenix-Chess).
 The repository contains a port of the UCSD sources to StatPascal, enabling
 native 9900 code running in a bank switched cart. To build the
 cart under Linux, one needs to install StatPascal as a 9900 cross
-compiler.
-(https://www.github.com/statpascal/spc). Moreover, the Free Pascal Compiler
+compiler (https://www.github.com/statpascal/spc). Moreover, the Free Pascal Compiler
 for Linux is required to generate a binary representation of the the opening book
 that is linked into the cart.
 
