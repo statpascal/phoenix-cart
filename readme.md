@@ -36,7 +36,7 @@ produces a source file to be assembled with xas99).
 
 The cart uses an opening book that may contain up to 20000 positions, with
 up to 20 moves for each position (the actual move is picked randomly).  A
-simple example (that one may to replace) is stored in the file
+simple example (that one may want to replace) is stored in the file
 book/opening.txt: the file consists of lines with moves in coordinate
 notation and optional comment lines starting with #:
 
