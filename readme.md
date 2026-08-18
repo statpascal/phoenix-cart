@@ -60,3 +60,24 @@ After that, return to the previous directory and build the cart with
 
 The last step produces a bank switched cart (phoenix.bin) that can
 be loaded in an emulator or executed on the real hardware with an FG99.
+
+
+## Building a UCI version
+
+The core engine can be compiled natively to an executable program
+providing a UCI interface; thus enabling fast testing on a modern machine.
+The file uci.pas provides the required main program.
+
+Game play of the UCI version is the same as in the cartridge for the TI99.
+
+
+## Acknowledgements
+
+The chess pieces of the light mode are provided
+by https://spicygame.itch.io/chess-pieces under a CC0 license.
+
+Phoenix uses a VGA font from IBM available under https://github.com/dhepper/font8x8
+which is in the public domain.
+
+Arne Bailliere (https://www.playchessgate.com) provided the DTM tables
+and greatly improved the program.

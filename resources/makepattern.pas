@@ -1,6 +1,6 @@
 program makepattern;
 
-// combines the piece bitmap image data from PBM files to a resource file
+// converterts the piece bitmap image data from PBM file to Magellan character definitions
 
 uses
     board, sysutils;
