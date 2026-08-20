@@ -198,6 +198,8 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
             epDummy: integer;
             bits: bitboard;
         begin
+            inc (evalScore, RookValue * bitCount (sideBoards.rookBitboard));
+(*        
             BitPos (sideBoards.rookBitboard, locArray);
             inc (evalScore, RookValue * locArray [0]);
             if locArray [0] = 2 then
@@ -210,6 +212,7 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
                         else
                             inc (evalScore, 100)
                 end
+*)                
         end;
         
     procedure evaluateKnightsBishops (var bits: bitboard; scoreType: TPieceScoreType; pieceValue: integer);
@@ -347,14 +350,15 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
         
         evaluatePawns;
         evaluateRooks;
-        evaluateRookFiles;
+//        evaluateRookFiles;
         evaluateKnightsBishops (sideBoards.knightBitboard, KnightScore, KnightValue);
         evaluateKnightsBishops (sideBoards.bishopBitboard, BishopScore, BishopValue);
         evaluateQueen;
         evaluateKing (board.sides [side].kingBitboard, board.sides [1 - side].kingBitBoard);
-        evaluateKingShield;
-        evaluateIsoPawns;
-        evaluateMobility;
+        
+//        evaluateKingShield;
+//        evaluateIsoPawns;
+//        evaluateMobility;
             
         evaluateSide := evalScore
     end;
