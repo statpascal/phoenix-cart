@@ -9,7 +9,7 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
 
 implementation
 
-uses globals, ui, logger;
+uses globals, ui, logger, genmove;
 
 const
     xOrg = 18;
@@ -414,7 +414,7 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
     var 
         utilDone: boolean;
         ch, sel: char;
-        i, totalMoves, currentMove: integer;
+        i, n, totalMoves, currentMove: integer;
     begin
         utilDone := false;
         totalMoves := getGameMoveCount;
@@ -493,6 +493,9 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
                             plyQS := -Maxint
                         else
                             plyQS := 1 - (ord (ch) - ord ('0'));
+                        showMenuLine ('nodes: ');
+                        readln (n);
+                        setMaxMoves (n);
                         clearUtilityMenu;
                         showPly
                     end;

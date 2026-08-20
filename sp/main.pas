@@ -30,6 +30,7 @@ procedure showMessage (s: string);
 procedure initGame (var mainBoard: TBoardRecord);
     var
         ch: char;
+        n: integer;
     begin
         writeln;
         write (chr (7), 'Enter ply: [1-6]: ');
@@ -44,6 +45,12 @@ procedure initGame (var mainBoard: TBoardRecord);
             plyQS := -Maxint
         else
             plyQS := 1 - (ord (ch) - ord ('0'));
+            
+        writeln ('Min eval nodes (in thousnands)');
+        write ('[0-32767]: ');
+        readln (n);
+        writeln;
+        setMaxMoves (n);
             
         writeln (chr (7), 'Select side: [w]hite/[b]lack');
         if getKeySet (['W', 'B']) = 'B' then
