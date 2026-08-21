@@ -1,0 +1,34 @@
+; Menu/bank switching header GPL header combining Tacticon and Phoenix
+
+	grom    3
+	
+	data	>aa01		; standard header
+	data	>0200		; 2 programs
+	data	>0000		; power up list
+	data	proglist_0	; program list
+	data	>0000		; DSR list
+	data	>0000		; subprogram list
+	data	>0000		; ISR list
+
+proglist_0:
+	data	proglist_1
+	data	tacticon_start
+	stri	'TACTICON'
+
+proglist_1:
+	data	>0000		; no next program
+	data	phoenix_start
+	stri	'PHOENIX CHESS'
+	
+tacticon_start:
+	dst     >6024, @>8300	; start address
+	clr     @>6000		; bank 0
+	xml	>a0
+
+phoenix_start:
+	dst	>603a, @>8300	; start address
+	clr	@>6010		; bank 8
+	xml	>a0
+
+  	end
+
