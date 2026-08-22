@@ -6,3 +6,4 @@
 fpc -Mdelphi convmag.pas
 ./convmag phoenix-light.mag pattern-light.dat
 ./convmag phoenix-dark.mag pattern-dark.dat
+rm convmag

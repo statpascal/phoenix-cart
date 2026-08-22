@@ -350,15 +350,15 @@ function evaluateSide (var sideBoards: TSideRecord; var board: TBoardRecord; sid
         
         evaluatePawns;
         evaluateRooks;
-//        evaluateRookFiles;
+//        evaluateRookFiles;	//
         evaluateKnightsBishops (sideBoards.knightBitboard, KnightScore, KnightValue);
         evaluateKnightsBishops (sideBoards.bishopBitboard, BishopScore, BishopValue);
         evaluateQueen;
         evaluateKing (board.sides [side].kingBitboard, board.sides [1 - side].kingBitBoard);
         
-//        evaluateKingShield;
-//        evaluateIsoPawns;
-//        evaluateMobility;
+//        evaluateKingShield;	//
+//        evaluateIsoPawns;	//
+//        evaluateMobility;	//
             
         evaluateSide := evalScore
     end;
