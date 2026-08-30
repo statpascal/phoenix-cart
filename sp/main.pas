@@ -46,7 +46,7 @@ procedure initGame (var mainBoard: TBoardRecord);
         else
             plyQS := 1 - (ord (ch) - ord ('0'));
             
-        writeln ('Min eval nodes (in thousands)');
+        writeln ('Deepen to k nodes');
         write ('[0-32767]: ');
         readln (n);
         writeln;

@@ -9,7 +9,7 @@ uses bitops
 ;
 
 const    
-    versionString = 'RC3';
+    versionString = '2026';
     bitmasks: array [0..7] of uint8 = ($80, $40, $20, $10, $08, $04, $02, $01);
     maxPly = 9;
     MaxMoves = 20;	// max moves for hased openbook position
