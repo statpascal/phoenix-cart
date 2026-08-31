@@ -31,7 +31,7 @@ const
     PatternSplitNumbers = 0;
     PatternSplitChars = 16;
     
-procedure waitKeypressed;
+procedure waitKeyPressed;
     begin
         while keyPressed do;
         waitkey

@@ -33,24 +33,7 @@ procedure initGame (var mainBoard: TBoardRecord);
         n: integer;
     begin
         writeln;
-        write (chr (7), 'Enter ply: [1-6]: ');
-        ch := getKeySet (['1'..'6']);
-        writeln (ch);
-        gamePly := ord (ch) - ord ('0');
-
-        write ('QS deepening (0-9/u): ');
-        ch := getKeySet (['0'..'9', 'U']);
-        writeln (ch);
-        if ch = 'U' then
-            plyQS := -Maxint
-        else
-            plyQS := 1 - (ord (ch) - ord ('0'));
-            
-        writeln ('Deepen to k nodes');
-        write ('[0-32767]: ');
-        readln (n);
-        writeln;
-        setMaxMoves (n);
+        changePly;
             
         writeln (chr (7), 'Select side: [w]hite/[b]lack');
         if getKeySet (['W', 'B']) = 'B' then
@@ -69,7 +52,8 @@ procedure initGame (var mainBoard: TBoardRecord);
 //            startLogging ('DSK0.phoenix.log');
             
         writeln (chr (7), 'Select pattern: [d]ark/[l]ight');
-        if getKeySet (['D', 'L']) = 'L' then
+        darkMode := getKeySet (['D', 'L']) = 'D';
+        if not darkMode then
             initVideoMode (false);
 
         cWarning := 0            

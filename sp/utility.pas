@@ -5,6 +5,7 @@ interface
 uses board;
 
 procedure Utility (var humanSide: integer; var board: TBoardRecord);
+procedure changePly;
 
 
 implementation
@@ -14,12 +15,12 @@ uses globals, ui, logger, genmove;
 const
     xOrg = 18;
     yOrg = 6;
-    Height = 14;
+    Height = 15;
 
 var
     lineCount: integer;
     
-procedure ClearUtilityMenu;
+procedure clearUtilityMenu;
     var 
         i: integer;
     begin
@@ -105,7 +106,8 @@ procedure ShowUtilityMenu;
         showMenuLine ('K: new game');
         showMenuLine ('L: setup pos');
         showMenuLine ('M: print game');
-        showMenuLine ('N: exit cart')
+        showMenuLine ('N: exit cart');
+        showMenuLine ('O: license')
     end;
     
 procedure printGame;
@@ -249,6 +251,53 @@ procedure saveGame;
             exit;
             
         close (f);
+    end;
+
+procedure refreshBoard (var board: TBoardRecord);
+    begin    
+        clrscr;
+        NewBoard;
+        BoardDisplay (board);
+        showPly;
+        clearUtilityMenu
+    end;
+    
+procedure changePly;
+    var
+        ch: char;
+        n: integer;
+    begin
+        write (chr (7), 'Enter ply: [1-6]: ');
+        ch := getKeySet (['1'..'6']);
+        writeln (ch);
+        gamePly := ord (ch) - ord ('0');
+
+        write ('QS deepening (0-9/u): ');
+        ch := getKeySet (['0'..'9', 'U']);
+        writeln (ch);
+        if ch = 'U' then
+            plyQS := -Maxint
+        else
+            plyQS := 1 - (ord (ch) - ord ('0'));
+            
+        writeln ('Deepen search?');
+        writeln ('[N]one [L]ight [M]edium [H]eavy');
+        writeln ('[C]ustom');
+        ch := getKeySet (['N', 'L', 'M', 'H', 'C']);
+        if ch = 'C' then 
+            begin
+                writeln;
+                writeln ('Custom setting of the minimal');
+                write ('number of positions in thousands');
+                writeln ('to evaluate. This will take');
+                writeln ('1.5 minutes times the value');
+                writeln ('entered.');
+                writeln;
+                write ('Select nodes [0-32767]: ');
+                readln (n);
+                writeln;
+                setMaxMoves (n)
+            end
     end;
 
 procedure replayMove (var board: TBoardRecord; index: integer);
@@ -409,6 +458,54 @@ procedure editBoard (var board: TBoardRecord);
         BoardDisplay (board);
         clearUtilityMenu
     end;
+    
+procedure showLicense;
+    
+    procedure license; external '../resources/GPL.txt';
+    
+    type
+        TLicense = array [0..6000] of char;
+        
+    var
+        licenseText: TLicense absolute license;
+        index, line: integer;
+        
+    procedure showContinueMessage;
+        begin
+            writeln;
+            write ('=== Press any key to continue ===');
+            waitKeyPressed;
+            clrscr
+        end;
+    
+    begin
+        clrscr;
+        setVideoMode (TextMode);
+        if darkMode then
+            begin
+                setTextColor (white);
+                setBackColor (black)
+            end;
+        index := 0;
+        line := 0;
+        while licenseText [index] <> '#' do
+            begin
+                if licenseText [index] = #10 then
+                    begin
+                        inc (line);
+                        writeln;
+                        if line mod 22 = 0 then 
+                            showContinueMessage
+                    end
+                else
+                    write (licenseText [index]);
+                inc (index)
+            end;
+
+        showContinueMessage;        
+        setVideoMode (StandardMode);
+        initVideoMode (darkMode)
+    end;
 
 procedure Utility (var humanSide: integer; var board: TBoardRecord);
     var 
@@ -423,11 +520,11 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
         sel := 'A';
         
         repeat
-            if sel in ['A', 'B', 'H'..'N'] then
+            if sel in ['A', 'B', 'H'..'O'] then
                 showUtilityMenu;
             repeat
                 sel := upcase (getKey)
-            until sel in ['A'..'N'];
+            until sel in ['A'..'O'];
             
             if sel in ['A', 'B', 'H'..'N'] then
                 clearUtilityMenu;
@@ -483,21 +580,9 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
                     humanSide := 1 - humanSide;
                 'H':
                     begin {change ply}
-                        showMenuLine ('ply: ');
-                        ch := getKeySet (['1'..'6']);
-                        write (ch);
-                        gamePly := ord (ch) - ord ('0');
-                        showMenuLine ('qs: ');
-                        ch := getKeySet (['0'..'9', 'U']);
-                        if ch = 'U' then
-                            plyQS := -Maxint
-                        else
-                            plyQS := 1 - (ord (ch) - ord ('0'));
-                        showMenuLine ('nodes: ');
-                        readln (n);
-                        setMaxMoves (n);
-                        clearUtilityMenu;
-                        showPly
+                        clrscr;
+                        changePly;
+                        refreshBoard (board)
                     end;
                 'I':
                     utilDone := true;
@@ -530,6 +615,11 @@ procedure Utility (var humanSide: integer; var board: TBoardRecord);
                             halt;
                         clearUtilityMenu
                     end;
+                'O':
+                    begin
+                        showLicense;
+                        refreshBoard (board)
+                    end
             end;
         until utilDone
     end;

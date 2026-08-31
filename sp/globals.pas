@@ -30,6 +30,7 @@ var
     moveNumHi, moveNumLo: integer;
     plyQS: integer;
     disableAlphaBetaPruning: boolean;
+    darkMode: boolean;
     
 procedure soundBell;	// TODO: move to standard runtime
 
