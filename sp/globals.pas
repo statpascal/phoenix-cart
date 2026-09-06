@@ -28,9 +28,11 @@ var
 //    gameMove: integer;
     gamePly: integer;
     moveNumHi, moveNumLo: integer;
+    limitMovesHi, limitMovesLo: integer;
     plyQS: integer;
     disableAlphaBetaPruning: boolean;
     darkMode: boolean;
+    deepenFactor: uint8;
     
 procedure soundBell;	// TODO: move to standard runtime
 

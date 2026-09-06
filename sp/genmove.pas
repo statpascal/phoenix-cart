@@ -35,10 +35,6 @@ utility,
 resources, logger, bitops, openbook;
 
 var
-    maxMovesDeepening: integer;
-    isDeepening: boolean;
-    
-var
 {$ifdef ti99}
     moveStack: array [0..MoveStackSize] of TMoveRecord absolute $2000;
 {$endif}
@@ -46,10 +42,13 @@ var
     moveStack: array [0..MoveStackSize] of TMoveRecord;
 {$endif}
     moveStackPointer: integer;
+    isDeepening: boolean;
 
 procedure setMaxMoves (val: integer);
     begin
-        maxMovesDeepening := val
+        limitMovesHi := val;
+        limitMovesLo := 0;
+        deepenFactor := 0
     end;
 
 procedure pushMoveStack (var move: TMoveRecord); overload;
@@ -389,9 +388,9 @@ function NegaMax (var board: TBoardRecord; moveScore: TMoveScore; alpha, beta, p
                                         begin
                                             moveNumLo := 0;
                                             inc (moveNumHi);
-                                            if isDeepening and (moveNumHi >= maxMovesDeepening) then
-                                                longjmp (jmpbuf, 1)
-                                        end
+                                        end;
+                                    if isDeepening and (moveNumHi = limitMovesHi) and (moveNumLo = limitMovesLo)  then
+                                        longjmp (jmpbuf, 1)
                                 end
                             else
                                 begin
@@ -443,7 +442,7 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
     var
         moveScore: TMoveScore;
         result1: TMoveScoreRecord;
-        sel, weights, i, totalValue, turn, side, piece, savedHashCount: integer;
+        sel, weights, i, totalValue, turn, side, piece, savedHashCount, movesHi, movesLo: integer;
         moves: TBookMoves;
         
     begin
@@ -511,8 +510,17 @@ function generateMove (ply: integer; var board: TBoardRecord): TMoveScoreRecord;
                     
                 isDeepening := false;
                 result := NegaMax (board, moveScore, alpha, beta, ply, turn);
-
-                if maxMovesDeepening <> 0 then
+                
+                movesHi := deepenFactor * moveNumHi + deepenFactor * moveNumLo div 1000;
+                movesLo := deepenFactor * moveNumLo mod 1000;
+                
+                if movesHi > limitMovesHi then
+                    limitMovesHi := movesHi;
+                if (movesHi = limitMovesHi) and (movesLo > limitMovesLo) then
+                    limitMovesLo := movesLo;
+                
+                if (moveNumHi < limitMovesHi) or
+                   (moveNumHi = limitMovesHi) and (moveNumLo < limitMovesLo) then
                     begin
                         isDeepening := true;
                         savedHashCount := getPositionHashCount;                
@@ -548,8 +556,4 @@ function isMovingSideMate (var board: TBoardRecord): boolean;
             end
     end;
     
-    
-
-begin
-    maxMovesDeepening := 0;
 end.

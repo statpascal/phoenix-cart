@@ -23,8 +23,13 @@ GNU General Public License along with
 this program.  If not, see
 https://www.gnu.org/licenses/.
 
-The sources of this binary
-distribution are available on GitHub:
+------------------------------------
+
+The sources of this cart are avaialble
+on GitHub:
 
 https://github.com/statpascal/phoenix-cart
+
+Unmodified binary distribution is in 
+compliance with the GPLv3 license.
 #

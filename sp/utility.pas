@@ -14,7 +14,7 @@ uses globals, ui, logger, genmove;
 
 const
     xOrg = 18;
-    yOrg = 6;
+    yOrg = 5;
     Height = 15;
 
 var
@@ -263,16 +263,18 @@ procedure refreshBoard (var board: TBoardRecord);
     end;
     
 procedure changePly;
+    const
+        deepenStr = 'None  Light MediumHeavy ';
     var
         ch: char;
-        n: integer;
     begin
         write (chr (7), 'Enter ply: [1-6]: ');
         ch := getKeySet (['1'..'6']);
         writeln (ch);
         gamePly := ord (ch) - ord ('0');
 
-        write ('QS deepening (0-9/u): ');
+        writeln ('Quiescense search level');
+        write ('[0-9/u]: ');
         ch := getKeySet (['0'..'9', 'U']);
         writeln (ch);
         if ch = 'U' then
@@ -282,22 +284,12 @@ procedure changePly;
             
         writeln ('Deepen search?');
         writeln ('[N]one [L]ight [M]edium [H]eavy');
-        writeln ('[C]ustom');
-        ch := getKeySet (['N', 'L', 'M', 'H', 'C']);
-        if ch = 'C' then 
-            begin
-                writeln;
-                writeln ('Custom setting of the minimal');
-                write ('number of positions in thousands');
-                writeln ('to evaluate. This will take');
-                writeln ('1.5 minutes times the value');
-                writeln ('entered.');
-                writeln;
-                write ('Select nodes [0-32767]: ');
-                readln (n);
-                writeln;
-                setMaxMoves (n)
-            end
+        ch := getKeySet (['N', 'L', 'M', 'H']);
+        
+        limitMovesHi := 0;
+        limitMovesLo := 0;
+        deepenFactor := pred (pos (ch, 'NLMH'));
+        writeln ('Deepening: ', copy (deepenStr, succ (6 * deepenFactor), 6));
     end;
 
 procedure replayMove (var board: TBoardRecord; index: integer);
