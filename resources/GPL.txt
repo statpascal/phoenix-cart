@@ -29,7 +29,4 @@ The sources of this cart are avaialble
 on GitHub:
 
 https://github.com/statpascal/phoenix-cart
-
-Unmodified binary distribution is in 
-compliance with the GPLv3 license.
 #

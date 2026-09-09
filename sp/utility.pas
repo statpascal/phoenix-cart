@@ -274,8 +274,8 @@ procedure changePly;
         gamePly := ord (ch) - ord ('0');
 
         writeln ('Quiescense search level');
-        write ('[0-9/u]: ');
-        ch := getKeySet (['0'..'9', 'U']);
+        write ('[0-9]: ');
+        ch := getKeySet (['0'..'9']);
         writeln (ch);
         if ch = 'U' then
             plyQS := -Maxint
@@ -328,7 +328,8 @@ procedure editBoard (var board: TBoardRecord);
         pLoc, pieceType, side, i: integer;
 
     begin
-        showMenuLine ('Clear (y/n)');
+        showMenuLine ('clear board?');
+        showMenuLine ('[y/n]');
         if getKeySet (['Y', 'N']) = 'Y' then
             begin        
                 fillChar (board, sizeof (board), 0);

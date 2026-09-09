@@ -220,7 +220,6 @@ procedure createAllMoves (var board: TBoardRecord; ply, turn, moveStackBegin: in
             end;
             
         if attackMoveCount > 1 then
-
             sortAttackMoves (pred (attackMoveCount));
         for l := 0 to pred (attackMoveCount) do
             moveStack [moveStackPointer + l] := attackMoves [l].move;
