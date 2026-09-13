@@ -69,6 +69,17 @@ The file uci.pas provides the required main program.
 
 Game play of the UCI version is the same as in the cartridge for the TI99.
 
+The UCI engine supports the following command line options:
+
+| option      | description |
+|-------------|-------------|
+| -ply n      | set ply to n |
+| -qs n       | set quiescnese search level to n |
+| -nodes n    | set minimum number of nodes to be evaluated to n * 1000 (increasing ply if not reached after move calculation) |
+| -deepen n   | increases minimum number of n to n times the nodes evaluated in position |
+| -opening fn | load opening book from given file (in the format described above) |
+| -log fn     | log decision tree to given file |
+
 
 ## Acknowledgements
 

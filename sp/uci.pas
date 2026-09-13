@@ -136,6 +136,7 @@ var
 begin
     plyQs := -4;
     gamePly := 6;
+    deepenFactor := 0;
     logging := false;
     Randomize;
     
@@ -144,20 +145,22 @@ begin
             cmd := ParamStr (2 * i + 1);
             v := ParamStr (2 * i + 2);
             if cmd = '-ply' then
-                val (v, gamePly);
-            if cmd = '-qs' then
+                val (v, gamePly)
+            else if cmd = '-qs' then
                 begin
                     val (v, h);
                     plyQs := 1 - h
-                end;
-            if cmd = '-nodes' then
+                end
+            else if cmd = '-nodes' then
                 begin
                     val (v, h);
                     setMaxMoves (h)
-                end;
-            if cmd = '-opening' then
-                loadOpeningBook (v);
-            if cmd = '-log' then
+                end
+            else if cmd = '-deepen' then
+                val (v, deepenFactor)
+            else if cmd = '-opening' then
+                loadOpeningBook (v)
+            else if cmd = '-log' then
                 begin
                     logging := true;
                     startLogging (v)
