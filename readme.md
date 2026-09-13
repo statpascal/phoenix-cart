@@ -71,7 +71,7 @@ Game play of the UCI version is the same as in the cartridge for the TI99.
 
 The UCI engine supports the following command line options:
 
-| option      | description |
+| option           | description |
 |-------------|-------------|
 | -ply n      | set ply to n |
 | -qs n       | set quiescnese search level to n |
