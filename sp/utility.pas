@@ -190,6 +190,7 @@ procedure loadGame (var board: TBoardRecord);
             exit;
         
         setFENPosition (board, s);
+        BoardDisplay (board);
         while not eof (f) do
             begin
                 readln (f, s);
