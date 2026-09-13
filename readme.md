@@ -63,7 +63,7 @@ be loaded in an emulator or executed on the real hardware with an FG99.
 
 ## Building a UCI version
 
-The core engine can be compiled natively to an executable program
+The core engine can be compiled natively to an executable
 providing a UCI interface; thus enabling fast testing on a modern machine.
 The file uci.pas provides the required main program.
 
@@ -79,6 +79,8 @@ The UCI engine supports the following command line options:
 | -deepen n   | increases minimum number of nodes to n times the nodes evaluated in each position. This avoids moving too fast in end game. |
 | -opening fn | load opening book from given file (in the format described above) |
 | -log fn     | log decision tree to given file |
+
+The options -nodes and -deepen should not be used together.
 
 
 ## Acknowledgements
