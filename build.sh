@@ -14,3 +14,9 @@ $XAS99 -R -b -q -L out.lst out.a99 -o phoenix.bin
 
 cat phoenix_b*.bin >phoenix.bin
 
+# pad to 512 KB
+
+while [ $(du -k phoenix.bin | cut -f 1) -lt 512 ]
+do
+    cat phoenix_b00.bin >> phoenix.bin
+done
