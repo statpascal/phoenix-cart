@@ -8,7 +8,7 @@ uses board, globals;
 
 const
     BankSize = 165;
-    OpeningPositions = 2853;
+    OpeningPositions = 2881;
 
 type
     TBookEntry = record
