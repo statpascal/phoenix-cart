@@ -124,9 +124,9 @@ procedure BoardDisplay (var board: TBoardRecord);
         gotoxy(0, 2);
         write ('move: ', board.moveNr, ' turn: ');
         if board.flags and moveBlackFlag = 0 then
-            write ('white')
+            write ('white   ')
         else
-            write ('black')
+            write ('black   ')
     end;
     
 procedure showMove (moveScore: TMoveScoreRecord; isHumanMove: boolean);
